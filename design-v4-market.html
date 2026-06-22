@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Huntch — שוק (Variation 4)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─────────────────────────────────────────────
+       Reset & base
+    ───────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #F5F0EB;
+      --surface:     #FFFFFF;
+      --ink:         #1F1F1F;
+      --secondary:   #5C4A3A;
+      --border:      rgba(31,31,31,0.12);
+      --accent:      #C84B31;
+      --accent-lt:   rgba(200,75,49,0.08);
+      --accent-warm: #E8956D;
+      --green:       #2D6A4F;
+      --highlight:   #FFF3E0;
+      --input-fill:  #EDEBE5;
+      --shadow-card: 0 4px 20px rgba(200,75,49,0.10), 0 1px 4px rgba(31,31,31,0.06);
+      --shadow-sm:   0 2px 8px rgba(31,31,31,0.08);
+      --r-card:      20px;
+      --r-pill:      999px;
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100vh;
+      background: var(--bg);
+      font-family: 'Outfit', sans-serif;
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─────────────────────────────────────────────
+       Variation label
+    ───────────────────────────────────────────── */
+    .variation-label {
+      position: fixed;
+      top: 14px;
+      left: 18px; /* left in RTL page = far end */
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--secondary);
+      opacity: 0.7;
+      letter-spacing: 0.04em;
+      z-index: 999;
+      pointer-events: none;
+    }
+
+    /* ─────────────────────────────────────────────
+       Layout shell
+    ───────────────────────────────────────────── */
+    .page-shell {
+      display: flex;
+      align-items: stretch;
+      min-height: 100vh;
+      gap: 0;
+    }
+
+    /* LEFT PANEL — dashboard */
+    .left-panel {
+      flex: 0 0 60%;
+      width: 60%;
+      background: var(--bg);
+      padding: 28px 32px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      overflow-y: auto;
+      border-left: 1px solid var(--border);
+    }
+
+    /* RIGHT PANEL — form */
+    .right-panel {
+      flex: 0 0 40%;
+      width: 40%;
+      background: var(--surface);
+      padding: 40px 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      overflow-y: auto;
+      box-shadow: -4px 0 30px rgba(31,31,31,0.05);
+    }
+
+    /* ─────────────────────────────────────────────
+       HEADER
+    ───────────────────────────────────────────── */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 18px;
+      color: #fff;
+      flex-shrink: 0;
+      box-shadow: 0 3px 10px rgba(200,75,49,0.30);
+    }
+
+    .brand-name {
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .top-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--input-fill);
+      border-radius: var(--r-pill);
+      padding: 4px;
+    }
+
+    .tab {
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--secondary);
+      border: none;
+      background: transparent;
+      border-radius: var(--r-pill);
+      padding: 6px 14px;
+      cursor: pointer;
+      transition: background 0.18s, color 0.18s;
+      white-space: nowrap;
+    }
+
+    .tab:hover {
+      background: rgba(200,75,49,0.10);
+      color: var(--accent);
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      background: var(--accent-warm);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    /* ─────────────────────────────────────────────
+       HERO
+    ───────────────────────────────────────────── */
+    .hero {
+      background: var(--surface);
+      border-radius: var(--r-card);
+      padding: 28px 28px 24px;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .hero-greeting {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--secondary);
+    }
+
+    .hero-headline {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+      line-height: 1.1;
+    }
+
+    .hero-number {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 52px;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+    }
+
+    .hero-label-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .hero-label-top {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 28px;
+      color: var(--ink);
+      line-height: 1.15;
+    }
+
+    .hero-label-sub {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 500;
+      font-size: 20px;
+      color: var(--secondary);
+      line-height: 1.2;
+    }
+
+    .hero-cta-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    /* ─────────────────────────────────────────────
+       Buttons
+    ───────────────────────────────────────────── */
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--r-pill);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 10px 22px;
+      cursor: pointer;
+      transition: background 0.18s, transform 0.14s, box-shadow 0.18s;
+      box-shadow: 0 3px 12px rgba(200,75,49,0.28);
+      white-space: nowrap;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-warm);
+      transform: scale(1.02);
+      box-shadow: 0 5px 18px rgba(200,75,49,0.35);
+    }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: transparent;
+      color: var(--secondary);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-pill);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: border-color 0.16s, color 0.16s, background 0.16s;
+      white-space: nowrap;
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-lt);
+    }
+
+    .btn-sm-accent {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--r-pill);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 6px 14px;
+      cursor: pointer;
+      transition: background 0.16s, transform 0.12s;
+      white-space: nowrap;
+    }
+
+    .btn-sm-accent:hover {
+      background: var(--accent-warm);
+      transform: scale(1.03);
+    }
+
+    /* ─────────────────────────────────────────────
+       STAT CARDS
+    ───────────────────────────────────────────── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border-radius: var(--r-card);
+      padding: 20px 18px 18px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      border: 1px solid var(--border);
+      transition: box-shadow 0.18s, transform 0.18s;
+    }
+
+    .stat-card:hover {
+      box-shadow: var(--shadow-card);
+      transform: scale(1.01);
+    }
+
+    .stat-number {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 32px;
+      letter-spacing: -0.01em;
+      line-height: 1;
+    }
+
+    .stat-number.accent { color: var(--accent); }
+    .stat-number.ink    { color: var(--ink); }
+
+    .stat-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--secondary);
+      margin-top: 6px;
+    }
+
+    /* ─────────────────────────────────────────────
+       SECTION HEADER
+    ───────────────────────────────────────────── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .section-title-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title {
+      font-weight: 700;
+      font-size: 17px;
+      color: var(--ink);
+    }
+
+    .count-badge {
+      background: var(--accent);
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: var(--r-pill);
+      padding: 2px 9px;
+    }
+
+    /* ─────────────────────────────────────────────
+       CANDIDATE CARDS
+    ───────────────────────────────────────────── */
+    .candidates-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .candidate-card {
+      background: var(--surface);
+      border-radius: var(--r-card);
+      padding: 16px 18px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      transition: box-shadow 0.18s, transform 0.18s, border-color 0.18s;
+      cursor: pointer;
+    }
+
+    .candidate-card:hover {
+      box-shadow: var(--shadow-card);
+      transform: scale(1.01);
+      border-color: rgba(200,75,49,0.20);
+    }
+
+    .candidate-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .candidate-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 16px;
+      color: #fff;
+    }
+
+    .av-1 { background: linear-gradient(135deg, #C84B31 0%, #E8956D 100%); }
+    .av-2 { background: linear-gradient(135deg, #2D6A4F 0%, #52B788 100%); }
+    .av-3 { background: linear-gradient(135deg, #5C4A3A 0%, #9B7B62 100%); }
+
+    .candidate-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .candidate-name {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .candidate-meta {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .candidate-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .score-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: var(--r-pill);
+      padding: 4px 10px;
+      white-space: nowrap;
+    }
+
+    .score-green {
+      background: rgba(45,106,79,0.12);
+      color: var(--green);
+    }
+
+    .score-amber {
+      background: rgba(200,140,49,0.12);
+      color: #8B6914;
+    }
+
+    /* ─────────────────────────────────────────────
+       QR SECTION
+    ───────────────────────────────────────────── */
+    .qr-card {
+      background: var(--surface);
+      border-radius: var(--r-card);
+      padding: 22px 24px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .qr-placeholder {
+      width: 80px;
+      height: 80px;
+      flex-shrink: 0;
+      border: 2px dashed var(--accent);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent-lt);
+    }
+
+    .qr-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 10px);
+      grid-template-rows: repeat(5, 10px);
+      gap: 3px;
+    }
+
+    .qr-dot {
+      border-radius: 2px;
+      background: var(--accent);
+    }
+
+    .qr-dot.off { background: transparent; }
+
+    .qr-info {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+    }
+
+    .qr-title {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--ink);
+    }
+
+    .qr-sub {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--secondary);
+      line-height: 1.4;
+    }
+
+    /* ─────────────────────────────────────────────
+       RIGHT PANEL — Form
+    ───────────────────────────────────────────── */
+    .form-panel-header {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-biz-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--accent-lt);
+      border-radius: var(--r-pill);
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      width: fit-content;
+      margin-bottom: 4px;
+    }
+
+    .form-title {
+      font-weight: 800;
+      font-size: 26px;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+    }
+
+    .form-subtitle {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--secondary);
+      line-height: 1.5;
+      margin-top: 2px;
+    }
+
+    /* Form fields */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .form-input {
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink);
+      background: var(--input-fill);
+      border: 1.5px solid transparent;
+      border-radius: var(--r-pill);
+      padding: 11px 18px;
+      outline: none;
+      width: 100%;
+      transition: border-color 0.16s, background 0.16s, box-shadow 0.16s;
+      direction: rtl;
+    }
+
+    .form-input::placeholder {
+      color: var(--secondary);
+      opacity: 0.6;
+    }
+
+    .form-input:focus {
+      border-color: var(--accent);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(200,75,49,0.12);
+    }
+
+    /* Toggle pills */
+    .toggle-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .toggle-pill {
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-pill);
+      padding: 7px 16px;
+      cursor: pointer;
+      background: var(--input-fill);
+      color: var(--secondary);
+      transition: background 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s;
+      user-select: none;
+    }
+
+    .toggle-pill:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-lt);
+    }
+
+    .toggle-pill.selected {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+      box-shadow: 0 2px 8px rgba(200,75,49,0.25);
+    }
+
+    /* Divider */
+    .form-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 2px 0;
+    }
+
+    /* Submit button */
+    .btn-submit {
+      width: 100%;
+      padding: 14px 24px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--r-pill);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.18s, transform 0.14s, box-shadow 0.18s;
+      box-shadow: 0 4px 16px rgba(200,75,49,0.30);
+      letter-spacing: -0.01em;
+      margin-top: 4px;
+    }
+
+    .btn-submit:hover {
+      background: var(--accent-warm);
+      transform: scale(1.01);
+      box-shadow: 0 6px 22px rgba(200,75,49,0.38);
+    }
+
+    /* Fine print */
+    .form-fine {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--secondary);
+      opacity: 0.7;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    /* ─────────────────────────────────────────────
+       Utility
+    ───────────────────────────────────────────── */
+    .text-secondary { color: var(--secondary); }
+
+    /* ─────────────────────────────────────────────
+       MOBILE
+    ───────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .page-shell {
+        flex-direction: column;
+      }
+
+      .left-panel,
+      .right-panel {
+        flex: none;
+        width: 100%;
+        border-left: none;
+      }
+
+      .left-panel {
+        border-bottom: 1px solid var(--border);
+        padding: 20px 16px 28px;
+      }
+
+      .right-panel {
+        padding: 28px 20px 40px;
+      }
+
+      .hero-number {
+        font-size: 40px;
+      }
+
+      .hero-label-top {
+        font-size: 22px;
+      }
+
+      .hero-label-sub {
+        font-size: 16px;
+      }
+
+      .stats-row {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+
+      .stat-number {
+        font-size: 24px;
+      }
+
+      .top-bar {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .tabs {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+      }
+
+      .variation-label {
+        top: auto;
+        bottom: 12px;
+        left: 12px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Variation label -->
+  <div class="variation-label">Variation 4 — שוק</div>
+
+  <div class="page-shell">
+
+    <!-- ══════════════════════════════════════════
+         LEFT PANEL — Dashboard
+    ═══════════════════════════════════════════ -->
+    <div class="left-panel">
+
+      <!-- Header -->
+      <div class="top-bar">
+        <div class="brand">
+          <div class="brand-mark">H</div>
+          <span class="brand-name">Huntch</span>
+        </div>
+
+        <div class="top-bar-right">
+          <div class="tabs">
+            <button class="tab active">לוח בקרה</button>
+            <button class="tab">משרות</button>
+            <button class="tab">מועמדים</button>
+          </div>
+          <div class="avatar">ל</div>
+        </div>
+      </div>
+
+      <!-- Hero -->
+      <div class="hero">
+        <div class="hero-greeting">בוקר טוב, לוסיה</div>
+
+        <div class="hero-headline">
+          <span class="hero-number">8</span>
+          <div class="hero-label-group">
+            <span class="hero-label-top">מועמדים חדשים</span>
+            <span class="hero-label-sub">זמינים עכשיו</span>
+          </div>
+        </div>
+
+        <div class="hero-cta-row">
+          <button class="btn-primary">פרסם משרה</button>
+          <button class="btn-ghost">הצג הכל</button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-number accent">8</div>
+          <div class="stat-label">מועמדים זמינים</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number ink">3</div>
+          <div class="stat-label">משרות פתוחות</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number ink">12</div>
+          <div class="stat-label">ממוצע גיל מועמד</div>
+        </div>
+      </div>
+
+      <!-- Candidates section -->
+      <div class="section-header">
+        <div class="section-title-group">
+          <span class="section-title">מועמדים מומלצים</span>
+          <span class="count-badge">8</span>
+        </div>
+        <button class="btn-ghost">כל המועמדים</button>
+      </div>
+
+      <div class="candidates-list">
+
+        <!-- Card 1 -->
+        <div class="candidate-card">
+          <div class="candidate-left">
+            <div class="candidate-avatar av-1">נ</div>
+            <div class="candidate-info">
+              <div class="candidate-name">נועם כהן</div>
+              <div class="candidate-meta">פלורנטין · ב׳ + ד׳ + ו׳ · 2 שנות ניסיון</div>
+            </div>
+          </div>
+          <div class="candidate-right">
+            <span class="score-badge score-green">92%</span>
+            <button class="btn-sm-accent">הזמן</button>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="candidate-card">
+          <div class="candidate-left">
+            <div class="candidate-avatar av-2">מ</div>
+            <div class="candidate-info">
+              <div class="candidate-name">מיה לוי</div>
+              <div class="candidate-meta">נווה צדק · א׳ + ג׳ · 1 שנת ניסיון</div>
+            </div>
+          </div>
+          <div class="candidate-right">
+            <span class="score-badge score-green">85%</span>
+            <button class="btn-sm-accent">הזמן</button>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="candidate-card">
+          <div class="candidate-left">
+            <div class="candidate-avatar av-3">ר</div>
+            <div class="candidate-info">
+              <div class="candidate-name">רותם אוחיון</div>
+              <div class="candidate-meta">שוק הכרמל · ה׳ + ש׳ · 3 שנות ניסיון</div>
+            </div>
+          </div>
+          <div class="candidate-right">
+            <span class="score-badge score-amber">67%</span>
+            <button class="btn-sm-accent">הזמן</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- QR Section -->
+      <div class="qr-card">
+        <div class="qr-placeholder" aria-label="QR קוד">
+          <div class="qr-grid">
+            <!-- Row 1 -->
+            <div class="qr-dot"></div><div class="qr-dot"></div><div class="qr-dot"></div><div class="qr-dot off"></div><div class="qr-dot"></div>
+            <!-- Row 2 -->
+            <div class="qr-dot"></div><div class="qr-dot off"></div><div class="qr-dot"></div><div class="qr-dot off"></div><div class="qr-dot"></div>
+            <!-- Row 3 -->
+            <div class="qr-dot"></div><div class="qr-dot"></div><div class="qr-dot"></div><div class="qr-dot"></div><div class="qr-dot off"></div>
+            <!-- Row 4 -->
+            <div class="qr-dot off"></div><div class="qr-dot"></div><div class="qr-dot off"></div><div class="qr-dot"></div><div class="qr-dot off"></div>
+            <!-- Row 5 -->
+            <div class="qr-dot"></div><div class="qr-dot off"></div><div class="qr-dot"></div><div class="qr-dot"></div><div class="qr-dot"></div>
+          </div>
+        </div>
+        <div class="qr-info">
+          <div class="qr-title">QR להצטרפות עובדים</div>
+          <div class="qr-sub">שתפו עם עובדים פוטנציאליים להרשמה מיידית דרך הסמארטפון</div>
+          <button class="btn-ghost" style="width:fit-content;margin-top:4px;">העתק קישור</button>
+        </div>
+      </div>
+
+    </div>
+    <!-- end left-panel -->
+
+
+    <!-- ══════════════════════════════════════════
+         RIGHT PANEL — Worker Join Form
+    ═══════════════════════════════════════════ -->
+    <div class="right-panel">
+
+      <div class="form-panel-header">
+        <div class="form-biz-tag">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="5" cy="5" r="5" fill="#C84B31" opacity="0.3"/>
+            <circle cx="5" cy="5" r="2.5" fill="#C84B31"/>
+          </svg>
+          קפה לבנה — שוק הכרמל
+        </div>
+        <div class="form-title">עבודה קרוב אלייך</div>
+        <div class="form-subtitle">הצטרפו לצוות ומצאו משמרות גמישות בסביבה שלכם. ממלאים פרטים ואנחנו מתאימים.</div>
+      </div>
+
+      <hr class="form-divider" />
+
+      <!-- Full name -->
+      <div class="form-group">
+        <label class="form-label" for="fullname">שם מלא</label>
+        <input class="form-input" id="fullname" type="text" placeholder="לדוגמה: דנה כהן" />
+      </div>
+
+      <!-- Phone -->
+      <div class="form-group">
+        <label class="form-label" for="phone">מספר טלפון</label>
+        <input class="form-input" id="phone" type="tel" placeholder="05X-XXX-XXXX" dir="ltr" style="text-align:right;" />
+      </div>
+
+      <!-- Neighborhood -->
+      <div class="form-group">
+        <label class="form-label" for="neighborhood">שכונה</label>
+        <input class="form-input" id="neighborhood" type="text" placeholder="לדוגמה: פלורנטין" />
+      </div>
+
+      <!-- Role toggles -->
+      <div class="form-group">
+        <label class="form-label">תפקיד מועדף</label>
+        <div class="toggle-group">
+          <div class="toggle-pill selected">מלצר/ית</div>
+          <div class="toggle-pill">בריסטה</div>
+          <div class="toggle-pill">שף/ית</div>
+          <div class="toggle-pill">קופאי/ת</div>
+          <div class="toggle-pill">עוזר/ת מטבח</div>
+        </div>
+      </div>
+
+      <!-- Shift toggles -->
+      <div class="form-group">
+        <label class="form-label">זמינות למשמרות</label>
+        <div class="toggle-group">
+          <div class="toggle-pill selected">בוקר</div>
+          <div class="toggle-pill selected">צהריים</div>
+          <div class="toggle-pill">ערב</div>
+          <div class="toggle-pill">סופ״ש</div>
+          <div class="toggle-pill">גמיש</div>
+        </div>
+      </div>
+
+      <hr class="form-divider" />
+
+      <!-- Experience input -->
+      <div class="form-group">
+        <label class="form-label" for="exp">שנות ניסיון</label>
+        <input class="form-input" id="exp" type="text" placeholder="לדוגמה: 2 שנים בקפה שולה" />
+      </div>
+
+      <!-- Submit -->
+      <button class="btn-submit">שלח/י פרטים</button>
+
+      <div class="form-fine">
+        בלחיצה על שליחה, מסכימ/ה לתנאי השימוש ומדיניות הפרטיות של Huntch.
+        <br/>אנחנו לא מעבירים פרטים ללא הסכמתך.
+      </div>
+
+    </div>
+    <!-- end right-panel -->
+
+  </div><!-- end page-shell -->
+
+  <script>
+    // Toggle pills interactivity
+    document.querySelectorAll('.toggle-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        pill.classList.toggle('selected');
+      });
+    });
+
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+      });
+    });
+  </script>
+
+</body>
+</html>

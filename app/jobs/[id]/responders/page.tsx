@@ -45,7 +45,7 @@ export default function RespondersPage({ params }: { params: Promise<{ id: strin
 
   return (
     <div className="app">
-      <Header />
+      <Header operatorInitial={store.business.operatorName[0] ?? 'ל'} newCount={store.newCandidateCount()} activeJobCount={store.jobs.filter(j => j.status === 'active').length} />
       <div className="body">
         <Sidebar
           newCount={store.newCandidateCount()}
@@ -135,7 +135,7 @@ export default function RespondersPage({ params }: { params: Promise<{ id: strin
               <h3>אין מגיבים עדיין</h3>
               {invitedIds.length === 0 ? (
                 <p>
-                  <Link href={`/jobs/${id}`} style={{ color: '#c47820', fontWeight: 700 }}>
+                  <Link href={`/jobs/${id}`} style={{ color: '#2e6b46', fontWeight: 700 }}>
                     הזמינו מועמדים
                   </Link>{' '}
                   קודם
@@ -154,7 +154,7 @@ export default function RespondersPage({ params }: { params: Promise<{ id: strin
         </main>
       </div>
 
-      <BottomNav onPostJob={() => setPostOpen(true)} />
+      <BottomNav newCount={store.newCandidateCount()} activeJobCount={store.jobs.filter(j => j.status === 'active').length} />
       <PostJobModal open={postOpen} onClose={() => setPostOpen(false)} />
       <GapTriggerModal open={gapOpen} onClose={() => setGapOpen(false)} />
       <Toasts />

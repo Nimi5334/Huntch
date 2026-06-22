@@ -43,7 +43,7 @@ export default function GapTriggerModal({ open, onClose }: Props) {
         </div>
         <div className="modal-sub">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          בחרו תפקיד — נשלוף מהמאגר מיד.
+          בחרו תפקיד — נמצא את ההתאמה הטובה ביותר מיד.
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>

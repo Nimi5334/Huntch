@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Huntch — גלריה v3</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #FFFFFF;
+      --canvas: #FAFAFA;
+      --ink: #111111;
+      --secondary: #6B7280;
+      --tertiary: #9CA3AF;
+      --border: #E5E7EB;
+      --accent: #1B5E20;
+      --accent-light: rgba(27, 94, 32, 0.06);
+      --success: #166534;
+      --font-sans: 'DM Sans', 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+    }
+
+    html, body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+      direction: rtl;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Variation label */
+    .variation-label {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--tertiary);
+      letter-spacing: 0.08em;
+      z-index: 100;
+      direction: ltr;
+    }
+
+    /* Page layout */
+    .page {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* LEFT PANEL — Dashboard */
+    .panel-dashboard {
+      width: 58%;
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    /* RIGHT PANEL — Worker Form */
+    .panel-form {
+      width: 42%;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+    }
+
+    /* ─────────────────────────────────────────
+       HEADER
+    ───────────────────────────────────────── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 40px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-start {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .logo {
+      font-family: var(--font-sans);
+      font-weight: 700;
+      font-size: 17px;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+    }
+
+    .dot-sep {
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: var(--border);
+      display: inline-block;
+    }
+
+    .header-tabs {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+
+    .tab {
+      font-family: var(--font-sans);
+      font-weight: 400;
+      font-size: 13px;
+      color: var(--secondary);
+      padding: 4px 12px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .tab:hover {
+      color: var(--ink);
+    }
+
+    .tab.active {
+      color: var(--ink);
+      font-weight: 500;
+      border-bottom-color: var(--accent);
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      background: var(--accent-light);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--accent);
+      letter-spacing: 0.02em;
+    }
+
+    /* ─────────────────────────────────────────
+       HERO
+    ───────────────────────────────────────── */
+    .hero {
+      padding: 56px 40px 40px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hero-greeting {
+      font-family: var(--font-sans);
+      font-weight: 300;
+      font-size: 16px;
+      color: var(--secondary);
+      margin-bottom: 28px;
+      letter-spacing: 0.01em;
+    }
+
+    .hero-metric {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .hero-number {
+      font-family: var(--font-mono);
+      font-size: 88px;
+      font-weight: 600;
+      color: var(--accent);
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .hero-label {
+      font-family: var(--font-sans);
+      font-weight: 300;
+      font-size: 22px;
+      color: var(--ink);
+      line-height: 1.2;
+      letter-spacing: -0.01em;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 24px;
+      background: var(--accent);
+      color: #FFFFFF;
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 14px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      letter-spacing: 0.01em;
+      transition: opacity 0.15s;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.88;
+    }
+
+    /* ─────────────────────────────────────────
+       STAT ROW
+    ───────────────────────────────────────── */
+    .stat-row {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .stat-item {
+      flex: 1;
+      padding: 28px 40px;
+      border-left: 1px solid var(--border);
+    }
+
+    .stat-item:last-child {
+      border-left: none;
+    }
+
+    .stat-number {
+      font-family: var(--font-mono);
+      font-size: 32px;
+      font-weight: 500;
+      color: var(--ink);
+      line-height: 1;
+      letter-spacing: -0.03em;
+      margin-bottom: 6px;
+    }
+
+    .stat-label {
+      font-family: var(--font-sans);
+      font-weight: 400;
+      font-size: 11px;
+      color: var(--tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* ─────────────────────────────────────────
+       CANDIDATE SECTION
+    ───────────────────────────────────────── */
+    .section {
+      padding: 0;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 40px 16px;
+    }
+
+    .section-title {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 11px;
+      color: var(--secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+    }
+
+    .section-action {
+      font-family: var(--font-sans);
+      font-weight: 400;
+      font-size: 12px;
+      color: var(--tertiary);
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+
+    .section-action:hover {
+      color: var(--secondary);
+    }
+
+    .section-rule {
+      height: 1px;
+      background: var(--border);
+      margin: 0 40px;
+    }
+
+    /* Candidate rows */
+    .candidate-list {
+      padding: 0;
+    }
+
+    .candidate-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 40px;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.1s;
+    }
+
+    .candidate-row:hover {
+      background: var(--canvas);
+    }
+
+    .candidate-initials {
+      width: 34px;
+      height: 34px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+    }
+
+    .initials-a { background: rgba(27,94,32,0.08); color: var(--accent); }
+    .initials-b { background: rgba(107,114,128,0.08); color: var(--secondary); }
+    .initials-c { background: rgba(156,163,175,0.08); color: var(--tertiary); }
+
+    .candidate-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .candidate-name {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 14px;
+      color: var(--ink);
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .candidate-meta {
+      font-family: var(--font-sans);
+      font-weight: 400;
+      font-size: 12px;
+      color: var(--secondary);
+    }
+
+    .candidate-score {
+      font-family: var(--font-mono);
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      min-width: 36px;
+      text-align: center;
+    }
+
+    .score-high { color: var(--success); }
+    .score-mid { color: var(--secondary); }
+
+    .btn-invite {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 12px;
+      color: var(--accent);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 6px 0;
+      white-space: nowrap;
+      transition: opacity 0.15s;
+    }
+
+    .btn-invite:hover {
+      opacity: 0.7;
+    }
+
+    /* ─────────────────────────────────────────
+       QR SECTION
+    ───────────────────────────────────────── */
+    .qr-section {
+      padding: 32px 40px;
+      margin-top: auto;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .qr-box {
+      width: 64px;
+      height: 64px;
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      grid-template-rows: repeat(6, 1fr);
+      gap: 2px;
+      padding: 6px;
+    }
+
+    .qr-cell {
+      background: var(--ink);
+      border-radius: 0;
+    }
+
+    .qr-cell.blank {
+      background: transparent;
+    }
+
+    .qr-info {
+      flex: 1;
+    }
+
+    .qr-url {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--secondary);
+      letter-spacing: 0.02em;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .qr-count {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .qr-count-number {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--ink);
+      letter-spacing: -0.03em;
+    }
+
+    .qr-count-label {
+      font-family: var(--font-sans);
+      font-weight: 400;
+      font-size: 11px;
+      color: var(--tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* ─────────────────────────────────────────
+       RIGHT PANEL — FORM
+    ───────────────────────────────────────── */
+    .form-panel-inner {
+      padding: 56px 40px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .form-heading {
+      font-family: var(--font-sans);
+      font-weight: 700;
+      font-size: 26px;
+      color: var(--ink);
+      letter-spacing: -0.025em;
+      line-height: 1.15;
+      margin-bottom: 6px;
+    }
+
+    .form-subheading {
+      font-family: var(--font-sans);
+      font-weight: 300;
+      font-size: 14px;
+      color: var(--secondary);
+      margin-bottom: 48px;
+    }
+
+    .form-group {
+      margin-bottom: 32px;
+    }
+
+    .form-label {
+      display: block;
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 11px;
+      color: var(--tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 10px;
+    }
+
+    .form-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      border-radius: 0;
+      padding: 8px 0;
+      font-family: var(--font-sans);
+      font-weight: 400;
+      font-size: 15px;
+      color: var(--ink);
+      direction: rtl;
+      outline: none;
+      transition: border-color 0.2s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    .form-input::placeholder {
+      color: var(--tertiary);
+      font-weight: 300;
+    }
+
+    .form-input:focus {
+      border-bottom-color: var(--accent);
+    }
+
+    /* Role toggles */
+    .role-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .role-pill {
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: var(--font-sans);
+      font-weight: 400;
+      font-size: 13px;
+      color: var(--secondary);
+      background: transparent;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+
+    .role-pill:hover {
+      border-color: var(--secondary);
+      color: var(--ink);
+    }
+
+    .role-pill.selected {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: transparent;
+    }
+
+    /* Availability checkboxes — styled as pills */
+    .avail-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .avail-pill {
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--secondary);
+      background: transparent;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+
+    .avail-pill:hover {
+      border-color: var(--secondary);
+      color: var(--ink);
+    }
+
+    .avail-pill.selected {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Submit */
+    .btn-submit {
+      width: 100%;
+      padding: 14px 24px;
+      background: var(--accent);
+      color: #FFFFFF;
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      transition: opacity 0.15s;
+      margin-top: auto;
+    }
+
+    .btn-submit:hover {
+      opacity: 0.88;
+    }
+
+    .form-footer {
+      margin-top: 16px;
+      text-align: center;
+      font-family: var(--font-sans);
+      font-weight: 400;
+      font-size: 11px;
+      color: var(--tertiary);
+    }
+
+    /* ─────────────────────────────────────────
+       FORM PANEL HEADER
+    ───────────────────────────────────────── */
+    .form-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 40px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .form-panel-logo {
+      font-family: var(--font-sans);
+      font-weight: 700;
+      font-size: 17px;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+    }
+
+    .form-panel-caption {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--tertiary);
+      letter-spacing: 0.06em;
+    }
+
+    /* ─────────────────────────────────────────
+       RESPONSIVE
+    ───────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .page {
+        flex-direction: column;
+      }
+
+      .panel-dashboard,
+      .panel-form {
+        width: 100%;
+        border-left: none;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .variation-label {
+        top: 8px;
+        left: 8px;
+      }
+
+      .hero {
+        padding: 40px 24px 32px;
+      }
+
+      .hero-number {
+        font-size: 64px;
+      }
+
+      .hero-label {
+        font-size: 18px;
+      }
+
+      .header {
+        padding: 16px 24px;
+      }
+
+      .stat-item {
+        padding: 20px 24px;
+      }
+
+      .section-header {
+        padding: 16px 24px 12px;
+      }
+
+      .section-rule {
+        margin: 0 24px;
+      }
+
+      .candidate-row {
+        padding: 16px 24px;
+      }
+
+      .qr-section {
+        padding: 24px;
+      }
+
+      .form-panel-inner {
+        padding: 40px 24px;
+      }
+
+      .form-panel-header {
+        padding: 16px 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Variation label -->
+  <div class="variation-label">Variation 3 — גלריה</div>
+
+  <div class="page">
+
+    <!-- ═══════════════════════════════════════════
+         LEFT PANEL — DASHBOARD
+    ════════════════════════════════════════════ -->
+    <div class="panel-dashboard">
+
+      <!-- Header -->
+      <header class="header">
+        <div class="header-start">
+          <span class="logo">Huntch</span>
+          <span class="dot-sep"></span>
+          <nav class="header-tabs">
+            <span class="tab active">מועמדים</span>
+            <span class="tab">משרות</span>
+            <span class="tab">סטטיסטיקות</span>
+          </nav>
+        </div>
+        <div class="avatar">LS</div>
+      </header>
+
+      <!-- Hero -->
+      <section class="hero">
+        <p class="hero-greeting">בוקר טוב, לוסיה</p>
+        <div class="hero-metric">
+          <span class="hero-number">8</span>
+          <span class="hero-label">מועמדים<br />זמינים היום</span>
+        </div>
+        <button class="btn-primary">+ פרסם משרה</button>
+      </section>
+
+      <!-- Stats row -->
+      <div class="stat-row">
+        <div class="stat-item">
+          <div class="stat-number">24</div>
+          <div class="stat-label">סה״כ מועמדים</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">3</div>
+          <div class="stat-label">משרות פתוחות</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">91%</div>
+          <div class="stat-label">שיעור מילוי</div>
+        </div>
+      </div>
+
+      <!-- Candidate list -->
+      <section class="section">
+        <div class="section-header">
+          <span class="section-title">מועמדים</span>
+          <span class="section-action">הצג הכל</span>
+        </div>
+        <div class="section-rule"></div>
+
+        <div class="candidate-list">
+
+          <!-- Candidate 1 -->
+          <div class="candidate-row">
+            <div class="candidate-initials initials-a">נכ</div>
+            <div class="candidate-info">
+              <div class="candidate-name">נועם כהן</div>
+              <div class="candidate-meta">ברמן — פלורנטין</div>
+            </div>
+            <span class="candidate-score score-high">97</span>
+            <button class="btn-invite">הזמן</button>
+          </div>
+
+          <!-- Candidate 2 -->
+          <div class="candidate-row">
+            <div class="candidate-initials initials-b">מל</div>
+            <div class="candidate-info">
+              <div class="candidate-name">מיה לוי</div>
+              <div class="candidate-meta">מלצרית — נווה צדק</div>
+            </div>
+            <span class="candidate-score score-high">92</span>
+            <button class="btn-invite">הזמן</button>
+          </div>
+
+          <!-- Candidate 3 -->
+          <div class="candidate-row">
+            <div class="candidate-initials initials-c">DP</div>
+            <div class="candidate-info">
+              <div class="candidate-name">דניאל פרץ</div>
+              <div class="candidate-meta">שף סו — הצפון הישן</div>
+            </div>
+            <span class="candidate-score score-mid">78</span>
+            <button class="btn-invite">הזמן</button>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- QR section -->
+      <div class="qr-section">
+        <!-- Minimal QR placeholder: actual pixel grid pattern -->
+        <div class="qr-box" aria-label="QR code">
+          <!-- Row 1 -->
+          <div class="qr-cell"></div><div class="qr-cell"></div><div class="qr-cell"></div><div class="qr-cell blank"></div><div class="qr-cell"></div><div class="qr-cell blank"></div>
+          <!-- Row 2 -->
+          <div class="qr-cell"></div><div class="qr-cell blank"></div><div class="qr-cell"></div><div class="qr-cell"></div><div class="qr-cell blank"></div><div class="qr-cell"></div>
+          <!-- Row 3 -->
+          <div class="qr-cell"></div><div class="qr-cell"></div><div class="qr-cell blank"></div><div class="qr-cell blank"></div><div class="qr-cell"></div><div class="qr-cell blank"></div>
+          <!-- Row 4 -->
+          <div class="qr-cell blank"></div><div class="qr-cell"></div><div class="qr-cell blank"></div><div class="qr-cell"></div><div class="qr-cell blank"></div><div class="qr-cell"></div>
+          <!-- Row 5 -->
+          <div class="qr-cell"></div><div class="qr-cell blank"></div><div class="qr-cell"></div><div class="qr-cell blank"></div><div class="qr-cell"></div><div class="qr-cell"></div>
+          <!-- Row 6 -->
+          <div class="qr-cell blank"></div><div class="qr-cell"></div><div class="qr-cell blank"></div><div class="qr-cell"></div><div class="qr-cell blank"></div><div class="qr-cell"></div>
+        </div>
+
+        <div class="qr-info">
+          <span class="qr-url">huntch.app/join/cafe-alma-tlv</span>
+          <div class="qr-count">
+            <span class="qr-count-number">0</span>
+            <span class="qr-count-label">סריקות</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /panel-dashboard -->
+
+
+    <!-- ═══════════════════════════════════════════
+         RIGHT PANEL — WORKER JOIN FORM
+    ════════════════════════════════════════════ -->
+    <div class="panel-form">
+
+      <header class="form-panel-header">
+        <span class="form-panel-logo">Huntch</span>
+        <span class="form-panel-caption">הצטרפות כעובד</span>
+      </header>
+
+      <div class="form-panel-inner">
+
+        <h1 class="form-heading">עבודה קרוב אלייך</h1>
+        <p class="form-subheading">קפה אלמה, תל אביב</p>
+
+        <form onsubmit="return false;">
+
+          <!-- Full name -->
+          <div class="form-group">
+            <label class="form-label">שם מלא</label>
+            <input
+              type="text"
+              class="form-input"
+              placeholder="שם פרטי ושם משפחה"
+              autocomplete="name"
+            />
+          </div>
+
+          <!-- Phone -->
+          <div class="form-group">
+            <label class="form-label">טלפון</label>
+            <input
+              type="tel"
+              class="form-input"
+              placeholder="05X-XXXXXXX"
+              dir="ltr"
+              style="text-align: right;"
+              autocomplete="tel"
+            />
+          </div>
+
+          <!-- Neighborhood -->
+          <div class="form-group">
+            <label class="form-label">שכונה</label>
+            <input
+              type="text"
+              class="form-input"
+              placeholder="לדוגמה: פלורנטין, נווה צדק"
+            />
+          </div>
+
+          <!-- Role -->
+          <div class="form-group">
+            <label class="form-label">תפקיד מועדף</label>
+            <div class="role-grid">
+              <button type="button" class="role-pill selected" onclick="togglePill(this)">מלצר/ית</button>
+              <button type="button" class="role-pill" onclick="togglePill(this)">ברמן/ית</button>
+              <button type="button" class="role-pill" onclick="togglePill(this)">שף/שפית</button>
+              <button type="button" class="role-pill" onclick="togglePill(this)">קופאי/ת</button>
+              <button type="button" class="role-pill" onclick="togglePill(this)">מארח/ת</button>
+              <button type="button" class="role-pill" onclick="togglePill(this)">כלים</button>
+            </div>
+          </div>
+
+          <!-- Availability -->
+          <div class="form-group">
+            <label class="form-label">זמינות</label>
+            <div class="avail-grid">
+              <button type="button" class="avail-pill selected" onclick="toggleAvail(this)">בוקר</button>
+              <button type="button" class="avail-pill" onclick="toggleAvail(this)">צהריים</button>
+              <button type="button" class="avail-pill selected" onclick="toggleAvail(this)">ערב</button>
+              <button type="button" class="avail-pill" onclick="toggleAvail(this)">לילה</button>
+              <button type="button" class="avail-pill" onclick="toggleAvail(this)">סופ״ש</button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-submit">שלח/י פרטים</button>
+
+          <p class="form-footer">המידע מוצג למעסיקים קרובים בלבד</p>
+
+        </form>
+
+      </div><!-- /form-panel-inner -->
+    </div><!-- /panel-form -->
+
+  </div><!-- /page -->
+
+  <script>
+    function togglePill(el) {
+      el.classList.toggle('selected');
+    }
+    function toggleAvail(el) {
+      el.classList.toggle('selected');
+    }
+  </script>
+
+</body>
+</html>

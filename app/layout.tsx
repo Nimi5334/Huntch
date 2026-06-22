@@ -1,15 +1,15 @@
 import type { Metadata } from 'next';
-import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google';
+import { DM_Sans, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 
 // SPA prototype: all pages client-side, skip static prerendering
 // Prevents Turbopack crash on Windows path casing (Huntch vs huntch)
 export const dynamic = 'force-dynamic';
 
-const plusJakarta = Plus_Jakarta_Sans({
+const dmSans = DM_Sans({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
-  variable: '--font-jakarta',
+  weight: ['300', '400', '500', '700'],
+  variable: '--font-jakarta', // keep same var name so globals.css needs no changes
   display: 'swap',
 });
 
@@ -27,12 +27,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  themeColor: '#faf8f4',
+  themeColor: '#16241a',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="he" dir="rtl" className={`${plusJakarta.variable} ${jetbrainsMono.variable}`}>
+    <html lang="he" dir="rtl" className={`${dmSans.variable} ${jetbrainsMono.variable}`}>
       <body>{children}</body>
     </html>
   );

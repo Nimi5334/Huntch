@@ -28,7 +28,7 @@ export default function NewJobPage() {
 
   return (
     <div className="app">
-      <Header />
+      <Header operatorInitial={store.business.operatorName[0] ?? 'ל'} newCount={store.newCandidateCount()} activeJobCount={activeJobs.length} />
       <div className="body">
         <Sidebar
           newCount={store.newCandidateCount()}
@@ -97,7 +97,7 @@ export default function NewJobPage() {
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
                         <span style={{
-                          fontFamily: 'var(--font-mono,monospace)', fontSize: 12, fontWeight: 600, color: '#c47820',
+                          fontFamily: 'var(--font-mono,monospace)', fontSize: 12, fontWeight: 600, color: '#2e6b46',
                         }}>
                           {ranked.length} מתאימים
                         </span>
@@ -130,7 +130,7 @@ export default function NewJobPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
               <span style={{
                 padding: '3px 9px', borderRadius: 100, fontSize: 10.5, fontWeight: 700,
-                background: '#111', color: '#fff',
+                background: '#16241a', color: '#fff',
               }}>פרו</span>
               <span style={{ fontSize: 13.5, fontWeight: 800, color: '#555' }}>Flow 1 — הזמנה אוטומטית</span>
             </div>
@@ -142,7 +142,7 @@ export default function NewJobPage() {
         </main>
       </div>
 
-      <BottomNav onPostJob={() => setPostOpen(true)} />
+      <BottomNav newCount={store.newCandidateCount()} activeJobCount={activeJobs.length} />
       <PostJobModal open={postOpen} onClose={() => { setPostOpen(false); router.push('/'); }} />
       <GapTriggerModal open={gapOpen} onClose={() => setGapOpen(false)} />
       <Toasts />

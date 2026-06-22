@@ -141,8 +141,8 @@ export default function PostJobModal({ open, onClose }: Props) {
           />
         </div>
 
-        <div style={{ background: 'rgba(196,120,32,0.06)', border: '1px solid rgba(196,120,32,0.15)', borderRadius: 10, padding: '10px 14px', fontSize: 11.5, color: '#888', marginBottom: 0 }}>
-          <strong style={{ color: '#a86515' }}>Flow 2 — Surface &amp; Confirm</strong> · אנחנו מוצאים, אתם מאשרים.<br/>
+        <div style={{ background: 'rgba(46,107,70,0.06)', border: '1px solid rgba(46,107,70,0.15)', borderRadius: 10, padding: '10px 14px', fontSize: 11.5, color: '#888', marginBottom: 0 }}>
+          <strong style={{ color: '#2e6b46' }}>Flow 2 — Surface &amp; Confirm</strong> · אנחנו מוצאים, אתם מאשרים.<br/>
           <span style={{ color: '#ccc' }}>Flow 1 (הזמנה אוטומטית) — זמין בפרו</span>
         </div>
 

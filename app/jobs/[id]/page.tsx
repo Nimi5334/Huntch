@@ -59,12 +59,12 @@ export default function JobPage({ params }: { params: Promise<{ id: string }> })
   if (!job) {
     return (
       <div className="app">
-        <Header />
+        <Header operatorInitial={store.business.operatorName[0] ?? 'ל'} newCount={store.newCandidateCount()} activeJobCount={store.jobs.filter(j => j.status === 'active').length} />
         <div className="main">
           <div className="empty-state">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
             <h3>משרה לא נמצאה</h3>
-            <Link href="/" style={{ color: '#c47820', fontWeight: 700, fontSize: 13 }}>חזרה לדאשבורד</Link>
+            <Link href="/" style={{ color: '#2e6b46', fontWeight: 700, fontSize: 13 }}>חזרה לדאשבורד</Link>
           </div>
         </div>
       </div>
@@ -92,7 +92,7 @@ export default function JobPage({ params }: { params: Promise<{ id: string }> })
 
   return (
     <div className="app">
-      <Header />
+      <Header operatorInitial={store.business.operatorName[0] ?? 'ל'} newCount={store.newCandidateCount()} activeJobCount={store.jobs.filter(j => j.status === 'active').length} />
       <div className="body">
         <Sidebar
           newCount={store.newCandidateCount()}
@@ -151,7 +151,7 @@ export default function JobPage({ params }: { params: Promise<{ id: string }> })
                   id="imm-toggle"
                   className={`must-badge`}
                   onClick={() => setMustImmediate(p => !p)}
-                  style={{ background: mustImmediate ? 'rgba(196,120,32,0.15)' : undefined }}
+                  style={{ background: mustImmediate ? 'rgba(46,107,70,0.15)' : undefined }}
                 >
                   {mustImmediate ? 'חובה ✓' : 'לא חובה'}
                 </button>
@@ -223,7 +223,7 @@ export default function JobPage({ params }: { params: Promise<{ id: string }> })
                   }}
                   onSave={() => {
                     store.saveCandidate(c.id);
-                    addToast('a', 'נשמר למאגר שלך');
+                    addToast('a', 'נשמר');
                   }}
                   onDismiss={() => store.dismissCandidate(c.id)}
                 />
@@ -240,7 +240,7 @@ export default function JobPage({ params }: { params: Promise<{ id: string }> })
         </div>
       </div>
 
-      <BottomNav onPostJob={() => setPostOpen(true)} />
+      <BottomNav newCount={store.newCandidateCount()} activeJobCount={store.jobs.filter(j => j.status === 'active').length} />
       <PostJobModal open={postOpen} onClose={() => setPostOpen(false)} />
       <GapTriggerModal open={gapOpen} onClose={() => setGapOpen(false)} />
       <Toasts />

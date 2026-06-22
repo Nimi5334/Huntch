@@ -107,7 +107,7 @@ export default function LoginPage() {
               />
               <button className="btn-full" onClick={handleOtp}>אמת וכנס</button>
               <div style={{ textAlign: 'center', marginTop: 12, fontSize: 12, color: '#bbb' }}>
-                <button onClick={() => setStep('phone')} style={{ color: '#c47820', fontWeight: 700, fontSize: 12 }}>
+                <button onClick={() => setStep('phone')} style={{ color: '#2e6b46', fontWeight: 700, fontSize: 12 }}>
                   שנה מספר
                 </button>
               </div>

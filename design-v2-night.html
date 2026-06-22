@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Huntch — עיצוב v2 לילה</title>
+
+  <!-- Satoshi from Fontshare -->
+  <style>@import url('https://api.fontshare.com/v2/css?f[]=satoshi@700,500,400&display=swap');</style>
+  <!-- JetBrains Mono from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─── Reset ─────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+
+    /* ─── Tokens ─────────────────────────────────────────────── */
+    :root {
+      --bg:          #0E0D0B;
+      --surface1:    #161410;
+      --surface2:    #1E1C18;
+      --surface3:    #252319;   /* hover — 2% lighter */
+      --border:      rgba(255,255,255,0.08);
+      --border-gold: rgba(232,160,32,0.35);
+      --text1:       #F5F0E8;
+      --text2:       #8C8478;
+      --accent:      #E8A020;
+      --accent-dim:  rgba(232,160,32,0.12);
+      --green:       #3ECF8E;
+      --red:         #F87171;
+      --input-fill:  rgba(255,255,255,0.05);
+      --mono:        'JetBrains Mono', monospace;
+      --sans:        'Satoshi', system-ui, sans-serif;
+      --radius:      8px;
+      --radius-sm:   5px;
+    }
+
+    /* ─── Base ───────────────────────────────────────────────── */
+    body {
+      font-family: var(--sans);
+      background-color: var(--bg);
+      color: var(--text1);
+      min-height: 100vh;
+      /* scan-line texture */
+      background-image: repeating-linear-gradient(
+        to bottom,
+        transparent,
+        transparent 1px,
+        rgba(255,255,255,0.012) 1px,
+        rgba(255,255,255,0.012) 2px
+      );
+      position: relative;
+    }
+
+    /* ─── Variation label ────────────────────────────────────── */
+    .variation-label {
+      position: fixed;
+      top: 14px;
+      left: 18px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text2);
+      letter-spacing: 0.08em;
+      z-index: 999;
+      pointer-events: none;
+      direction: ltr;
+    }
+
+    /* ─── Layout ─────────────────────────────────────────────── */
+    .layout {
+      display: flex;
+      flex-direction: row-reverse; /* RTL: left panel renders right in DOM but appears left visually */
+      min-height: 100vh;
+      align-items: stretch;
+    }
+
+    .panel-left  { flex: 0 0 60%; min-width: 0; display: flex; flex-direction: column; }
+    .panel-right { flex: 0 0 40%; min-width: 0; border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+
+    /* ─── Sticky header ──────────────────────────────────────── */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--surface1);
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .logo-mark {
+      width: 30px;
+      height: 30px;
+      background: var(--accent);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--bg);
+      flex-shrink: 0;
+    }
+
+    .logo-name {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--text1);
+      letter-spacing: -0.01em;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 2px;
+      margin-inline-start: 8px;
+      flex: 1;
+    }
+
+    .tab {
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text2);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: color 0.15s, background 0.15s;
+      white-space: nowrap;
+      border: none;
+      background: none;
+      font-family: var(--sans);
+    }
+    .tab:hover { background: var(--surface2); color: var(--text1); }
+    .tab.active {
+      color: var(--accent);
+      background: var(--accent-dim);
+      border-right: 2px solid var(--accent);
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--surface2);
+      border: 1px solid var(--border-gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      font-family: var(--mono);
+      margin-inline-start: auto;
+      flex-shrink: 0;
+    }
+
+    /* ─── Main content area ─────────────────────────────────── */
+    .panel-left-body {
+      flex: 1;
+      padding: 32px 28px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* ─── Hero ───────────────────────────────────────────────── */
+    .hero {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .hero-greeting {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text2);
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      flex-shrink: 0;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    .hero-h1 {
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+
+    .hero-sub {
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--text2);
+      margin-top: 2px;
+    }
+
+    /* ─── Stat cards ─────────────────────────────────────────── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .stat-card {
+      background: var(--surface1);
+      border: 1px solid var(--border);
+      border-right: 2px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: background 0.15s;
+      cursor: default;
+    }
+    .stat-card:hover { background: var(--surface3); }
+
+    .stat-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .stat-value {
+      font-family: var(--mono);
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .stat-value.green { color: var(--green); }
+
+    .stat-delta {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--green);
+      margin-top: 2px;
+    }
+
+    /* ─── Section titles ─────────────────────────────────────── */
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .section-action {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent);
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-family: var(--sans);
+      padding: 0;
+      transition: opacity 0.15s;
+    }
+    .section-action:hover { opacity: 0.75; }
+
+    /* ─── Candidate rows ─────────────────────────────────────── */
+    .candidates-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .candidate-row {
+      background: var(--surface1);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: background 0.15s;
+      cursor: pointer;
+    }
+    .candidate-row:hover { background: var(--surface3); }
+
+    .cand-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .cand-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .cand-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text1);
+      line-height: 1.3;
+    }
+
+    .cand-detail {
+      font-size: 12px;
+      color: var(--text2);
+      margin-top: 1px;
+    }
+
+    .cand-score-block {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+      min-width: 70px;
+    }
+
+    .cand-score {
+      font-family: var(--mono);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .cand-score.high { color: var(--green); }
+
+    .score-bar-track {
+      width: 64px;
+      height: 3px;
+      background: var(--input-fill);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .score-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: var(--accent);
+      transition: width 0.4s ease;
+    }
+    .score-bar-fill.high { background: var(--green); }
+
+    .btn {
+      border-radius: var(--radius-sm);
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, background 0.15s;
+      white-space: nowrap;
+      padding: 8px 16px;
+      border: none;
+    }
+    .btn:hover { opacity: 0.85; }
+
+    .btn-gold {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text2);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover { border-color: var(--border-gold); color: var(--text1); }
+
+    /* ─── QR Panel ───────────────────────────────────────────── */
+    .qr-panel {
+      background: var(--surface1);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .qr-placeholder {
+      width: 88px;
+      height: 88px;
+      border: 1.5px dashed var(--border-gold);
+      border-radius: var(--radius-sm);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Simple QR-like pattern using CSS */
+    .qr-placeholder svg {
+      width: 64px;
+      height: 64px;
+      opacity: 0.55;
+    }
+
+    .qr-info {
+      flex: 1;
+    }
+
+    .qr-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text1);
+      margin-bottom: 4px;
+    }
+
+    .qr-sub {
+      font-size: 12px;
+      color: var(--text2);
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+
+    .qr-url {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+      margin-bottom: 12px;
+      letter-spacing: 0.01em;
+    }
+
+    .qr-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* ─── Right Panel ─────────────────────────────────────────── */
+    .panel-right-body {
+      flex: 1;
+      padding: 40px 28px 32px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    .form-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    .form-logo-mark {
+      width: 26px;
+      height: 26px;
+      background: var(--accent);
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--bg);
+    }
+
+    .form-logo-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text1);
+    }
+
+    .form-headline {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text1);
+      line-height: 1.3;
+      letter-spacing: -0.02em;
+    }
+
+    .form-sub {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.6;
+      margin-top: -8px;
+    }
+
+    .form-divider {
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ─── Form fields ─────────────────────────────────────────── */
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text2);
+      letter-spacing: 0.04em;
+    }
+
+    .field-input {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--input-fill);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text1);
+      font-family: var(--sans);
+      font-size: 14px;
+      font-weight: 400;
+      outline: none;
+      transition: border-color 0.15s, background 0.15s;
+      direction: rtl;
+    }
+    .field-input::placeholder { color: var(--text2); opacity: 0.6; }
+    .field-input:focus {
+      border-color: var(--border-gold);
+      background: rgba(255,255,255,0.07);
+    }
+
+    /* ─── Toggle groups ───────────────────────────────────────── */
+    .toggle-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .toggle-btn {
+      padding: 8px 16px;
+      background: var(--input-fill);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text2);
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .toggle-btn:hover {
+      border-color: var(--border-gold);
+      color: var(--text1);
+      background: var(--surface2);
+    }
+    .toggle-btn.selected {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+      border-right: 2px solid var(--accent);
+    }
+
+    .section-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text2);
+      letter-spacing: 0.06em;
+      margin-bottom: -2px;
+    }
+
+    /* ─── Submit button ───────────────────────────────────────── */
+    .btn-submit {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: var(--bg);
+      font-family: var(--sans);
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: opacity 0.15s;
+      letter-spacing: -0.01em;
+    }
+    .btn-submit:hover { opacity: 0.88; }
+
+    .form-footer {
+      font-size: 11px;
+      color: var(--text2);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    /* ─── Mobile ──────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .layout {
+        flex-direction: column;
+      }
+      .panel-left, .panel-right {
+        flex: none;
+        width: 100%;
+      }
+      .panel-right {
+        border-right: none;
+        border-top: 1px solid var(--border);
+      }
+      .stats-row {
+        grid-template-columns: 1fr 1fr;
+      }
+      .stats-row .stat-card:last-child {
+        grid-column: 1 / -1;
+      }
+      .hero-h1 { font-size: 28px; }
+      .qr-panel { flex-direction: column; align-items: flex-start; gap: 16px; }
+      .variation-label { top: auto; bottom: 14px; left: 14px; }
+    }
+
+    @media (max-width: 480px) {
+      .panel-left-body, .panel-right-body { padding: 24px 18px; }
+      .header { padding: 0 18px; }
+      .stats-row { grid-template-columns: 1fr; }
+      .stats-row .stat-card:last-child { grid-column: auto; }
+      .hero-h1 { font-size: 24px; }
+      .tabs { gap: 0; }
+      .tab { padding: 6px 10px; font-size: 12px; }
+    }
+
+    /* ─── Thin gold rule utility ──────────────────────────────── */
+    .gold-rule {
+      height: 1px;
+      background: linear-gradient(to left, transparent, var(--border-gold) 40%, transparent);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Variation label -->
+  <div class="variation-label">Variation 2 — לילה</div>
+
+  <div class="layout">
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  LEFT PANEL — Dashboard                                -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="panel-left">
+
+      <!-- Sticky header -->
+      <header class="header">
+        <div class="logo-mark">H</div>
+        <span class="logo-name">Huntch</span>
+        <nav class="tabs">
+          <button class="tab active">מועמדים</button>
+          <button class="tab">משרות</button>
+          <button class="tab">המועמדים שלי</button>
+        </nav>
+        <div class="avatar">ל.מ</div>
+      </header>
+
+      <!-- Body -->
+      <div class="panel-left-body">
+
+        <!-- Hero -->
+        <div class="hero">
+          <div class="hero-greeting">
+            <div class="pulse-dot"></div>
+            <span>בוקר טוב, לוסיה</span>
+          </div>
+          <h1 class="hero-h1">8 מועמדים חדשים</h1>
+          <p class="hero-sub">התאימו למשרת הבריסטה — היום, 07:42</p>
+        </div>
+
+        <!-- Stat cards -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-label">מועמדים חדשים</div>
+            <div class="stat-value">8</div>
+            <div class="stat-delta">↑ +3 מאתמול</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">סריקות QR היום</div>
+            <div class="stat-value green">23</div>
+            <div class="stat-delta">↑ +9 מאתמול</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">אחוז התאמה ממוצע</div>
+            <div class="stat-value">81<span style="font-size:16px;font-weight:400;color:var(--text2)">%</span></div>
+            <div class="stat-delta">— יציב</div>
+          </div>
+        </div>
+
+        <div class="gold-rule"></div>
+
+        <!-- Candidate list -->
+        <div>
+          <div class="section-head">
+            <span class="section-title">מועמדים מובילים — בריסטה</span>
+            <button class="section-action">הצג הכל</button>
+          </div>
+
+          <div class="candidates-list">
+
+            <!-- Row 1 -->
+            <div class="candidate-row">
+              <div class="cand-avatar" style="background:rgba(232,160,32,0.18);color:var(--accent);">נ.ל</div>
+              <div class="cand-info">
+                <div class="cand-name">נועה לוי</div>
+                <div class="cand-detail">פלורנטין &middot; ערבים &middot; 2 שנות ניסיון</div>
+              </div>
+              <div class="cand-score-block">
+                <div class="cand-score">87%</div>
+                <div class="score-bar-track">
+                  <div class="score-bar-fill" style="width:87%"></div>
+                </div>
+              </div>
+              <button class="btn btn-gold">הזמן</button>
+            </div>
+
+            <!-- Row 2 -->
+            <div class="candidate-row">
+              <div class="cand-avatar" style="background:rgba(62,207,142,0.15);color:var(--green);">א.כ</div>
+              <div class="cand-info">
+                <div class="cand-name">איתי כהן</div>
+                <div class="cand-detail">לב העיר &middot; בקרים &middot; 1 שנת ניסיון</div>
+              </div>
+              <div class="cand-score-block">
+                <div class="cand-score high">74%</div>
+                <div class="score-bar-track">
+                  <div class="score-bar-fill high" style="width:74%"></div>
+                </div>
+              </div>
+              <button class="btn btn-outline">בדוק</button>
+            </div>
+
+            <!-- Row 3 -->
+            <div class="candidate-row">
+              <div class="cand-avatar" style="background:rgba(167,139,250,0.15);color:#A78BFA;">ש.ב</div>
+              <div class="cand-info">
+                <div class="cand-name">שיר בן דוד</div>
+                <div class="cand-detail">נווה צדק &middot; ערבים &middot; 3 שנות ניסיון</div>
+              </div>
+              <div class="cand-score-block">
+                <div class="cand-score high">91%</div>
+                <div class="score-bar-track">
+                  <div class="score-bar-fill high" style="width:91%"></div>
+                </div>
+              </div>
+              <button class="btn btn-gold">הזמן</button>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="gold-rule"></div>
+
+        <!-- QR Panel -->
+        <div class="qr-panel">
+          <div class="qr-placeholder">
+            <!-- Minimal QR SVG pattern -->
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- Top-left finder -->
+              <rect x="4" y="4" width="18" height="18" rx="2" stroke="#E8A020" stroke-width="2" fill="none"/>
+              <rect x="9" y="9" width="8" height="8" rx="1" fill="#E8A020"/>
+              <!-- Top-right finder -->
+              <rect x="42" y="4" width="18" height="18" rx="2" stroke="#E8A020" stroke-width="2" fill="none"/>
+              <rect x="47" y="9" width="8" height="8" rx="1" fill="#E8A020"/>
+              <!-- Bottom-left finder -->
+              <rect x="4" y="42" width="18" height="18" rx="2" stroke="#E8A020" stroke-width="2" fill="none"/>
+              <rect x="9" y="47" width="8" height="8" rx="1" fill="#E8A020"/>
+              <!-- Data dots -->
+              <rect x="28" y="4"  width="4" height="4" rx="1" fill="#E8A020" opacity=".7"/>
+              <rect x="34" y="4"  width="4" height="4" rx="1" fill="#E8A020" opacity=".4"/>
+              <rect x="28" y="10" width="4" height="4" rx="1" fill="#E8A020" opacity=".5"/>
+              <rect x="34" y="10" width="4" height="4" rx="1" fill="#E8A020" opacity=".9"/>
+              <rect x="28" y="16" width="4" height="4" rx="1" fill="#E8A020" opacity=".3"/>
+              <rect x="34" y="16" width="4" height="4" rx="1" fill="#E8A020" opacity=".7"/>
+              <rect x="4"  y="28" width="4" height="4" rx="1" fill="#E8A020" opacity=".6"/>
+              <rect x="10" y="28" width="4" height="4" rx="1" fill="#E8A020" opacity=".4"/>
+              <rect x="16" y="28" width="4" height="4" rx="1" fill="#E8A020" opacity=".8"/>
+              <rect x="22" y="28" width="4" height="4" rx="1" fill="#E8A020" opacity=".3"/>
+              <rect x="28" y="28" width="4" height="4" rx="1" fill="#E8A020" opacity=".7"/>
+              <rect x="34" y="28" width="4" height="4" rx="1" fill="#E8A020" opacity=".5"/>
+              <rect x="40" y="28" width="4" height="4" rx="1" fill="#E8A020" opacity=".9"/>
+              <rect x="46" y="28" width="4" height="4" rx="1" fill="#E8A020" opacity=".4"/>
+              <rect x="52" y="28" width="4" height="4" rx="1" fill="#E8A020" opacity=".7"/>
+              <rect x="28" y="34" width="4" height="4" rx="1" fill="#E8A020" opacity=".4"/>
+              <rect x="34" y="34" width="4" height="4" rx="1" fill="#E8A020" opacity=".8"/>
+              <rect x="40" y="34" width="4" height="4" rx="1" fill="#E8A020" opacity=".3"/>
+              <rect x="46" y="34" width="4" height="4" rx="1" fill="#E8A020" opacity=".6"/>
+              <rect x="52" y="34" width="4" height="4" rx="1" fill="#E8A020" opacity=".5"/>
+              <rect x="28" y="40" width="4" height="4" rx="1" fill="#E8A020" opacity=".7"/>
+              <rect x="34" y="40" width="4" height="4" rx="1" fill="#E8A020" opacity=".4"/>
+              <rect x="28" y="46" width="4" height="4" rx="1" fill="#E8A020" opacity=".3"/>
+              <rect x="34" y="46" width="4" height="4" rx="1" fill="#E8A020" opacity=".9"/>
+              <rect x="40" y="46" width="4" height="4" rx="1" fill="#E8A020" opacity=".5"/>
+              <rect x="28" y="52" width="4" height="4" rx="1" fill="#E8A020" opacity=".6"/>
+              <rect x="34" y="52" width="4" height="4" rx="1" fill="#E8A020" opacity=".4"/>
+              <rect x="40" y="52" width="4" height="4" rx="1" fill="#E8A020" opacity=".8"/>
+              <rect x="46" y="52" width="4" height="4" rx="1" fill="#E8A020" opacity=".3"/>
+              <rect x="52" y="52" width="4" height="4" rx="1" fill="#E8A020" opacity=".7"/>
+              <rect x="46" y="40" width="4" height="4" rx="1" fill="#E8A020" opacity=".6"/>
+              <rect x="52" y="40" width="4" height="4" rx="1" fill="#E8A020" opacity=".4"/>
+            </svg>
+          </div>
+          <div class="qr-info">
+            <div class="qr-title">קוד QR למשרת בריסטה</div>
+            <div class="qr-sub">סרקו את הקוד בבית הקפה לינה כדי לגייס עובדים מהאיזור</div>
+            <div class="qr-url">huntch.app/q/lina-barista-tlv</div>
+            <div class="qr-actions">
+              <button class="btn btn-gold">העתק קישור</button>
+              <button class="btn btn-outline">שתף בוואטסאפ</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /panel-left -->
+
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  RIGHT PANEL — Worker join form                        -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="panel-right">
+      <div class="panel-right-body">
+
+        <!-- Logo -->
+        <div class="form-logo">
+          <div class="form-logo-mark">H</div>
+          <span class="form-logo-name">Huntch</span>
+        </div>
+
+        <!-- Headline -->
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <h2 class="form-headline">עבודה קרוב אלייך,<br>בבית קפה לינה</h2>
+          <p class="form-sub">מלאו את הפרטים — נשלח לכם הצעות רלוונטיות ישירות לוואטסאפ</p>
+        </div>
+
+        <div class="form-divider"></div>
+
+        <!-- Fields -->
+        <div class="field-group">
+          <label class="field-label" for="name">שם מלא</label>
+          <input class="field-input" id="name" type="text" placeholder="למשל: רון כהן" autocomplete="name" />
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="phone">מספר וואטסאפ</label>
+          <input class="field-input" id="phone" type="tel" placeholder="05X-XXX-XXXX" autocomplete="tel" dir="ltr" style="text-align:right;" />
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="location">שכונה / אזור</label>
+          <input class="field-input" id="location" type="text" placeholder="למשל: פלורנטין, רמת אביב" />
+        </div>
+
+        <!-- Role toggles -->
+        <div>
+          <div class="section-label">תפקיד מועדף</div>
+          <div style="height:10px;"></div>
+          <div class="toggle-group">
+            <button class="toggle-btn selected" onclick="toggleRole(this)">בריסטה</button>
+            <button class="toggle-btn" onclick="toggleRole(this)">מלצר/ית</button>
+            <button class="toggle-btn" onclick="toggleRole(this)">שיפמן</button>
+            <button class="toggle-btn" onclick="toggleRole(this)">מארח/ת</button>
+            <button class="toggle-btn" onclick="toggleRole(this)">קוק</button>
+          </div>
+        </div>
+
+        <!-- Shift toggles -->
+        <div>
+          <div class="section-label">זמינות</div>
+          <div style="height:10px;"></div>
+          <div class="toggle-group">
+            <button class="toggle-btn" onclick="toggleShift(this)">בוקר</button>
+            <button class="toggle-btn selected" onclick="toggleShift(this)">צהריים</button>
+            <button class="toggle-btn" onclick="toggleShift(this)">ערב</button>
+            <button class="toggle-btn" onclick="toggleShift(this)">לילה</button>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <button class="btn-submit">שלח/י פרטים</button>
+
+        <!-- Footer -->
+        <p class="form-footer">
+          בלחיצה על שליחה מסכימים לתנאי השירות ומדיניות הפרטיות.<br>
+          ניצור איתכם קשר תוך 24 שעות בוואטסאפ.
+        </p>
+
+      </div>
+    </div><!-- /panel-right -->
+
+  </div><!-- /layout -->
+
+  <script>
+    // Role toggle — single-select
+    function toggleRole(el) {
+      const group = el.closest('.toggle-group');
+      group.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+
+    // Shift toggle — multi-select
+    function toggleShift(el) {
+      el.classList.toggle('selected');
+    }
+
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+      });
+    });
+
+    // Copy link button
+    document.querySelector('.qr-actions .btn-gold').addEventListener('click', function() {
+      navigator.clipboard.writeText('https://huntch.app/q/lina-barista-tlv').then(() => {
+        const orig = this.textContent;
+        this.textContent = 'הועתק!';
+        setTimeout(() => { this.textContent = orig; }, 1800);
+      }).catch(() => {});
+    });
+  </script>
+
+</body>
+</html>

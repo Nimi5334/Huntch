@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Huntch — עיצוב 1 / ספרייה</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #FAF7F0;
+      --surface:      #FFFFFF;
+      --ink:          #1C1A15;
+      --ink2:         #6B6458;
+      --border:       rgba(28,26,21,0.10);
+      --amber:        #C47820;
+      --amber-light:  rgba(196,120,32,0.08);
+      --amber-mid:    rgba(196,120,32,0.18);
+      --green:        #1D7A50;
+      --green-light:  rgba(29,122,80,0.10);
+      --input-fill:   #EDE9E1;
+      --shadow:       0 2px 12px rgba(28,26,21,0.08);
+      --shadow-md:    0 4px 24px rgba(28,26,21,0.10);
+      --radius-card:  12px;
+      --radius-input: 10px;
+      --radius-toggle:8px;
+      --font-head:    'Cabinet Grotesk', system-ui, sans-serif;
+      --font-mono:    'JetBrains Mono', monospace;
+    }
+
+    html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+
+    body {
+      font-family: var(--font-head);
+      background-color: var(--bg);
+      color: var(--ink);
+      min-height: 100dvh;
+      position: relative;
+    }
+
+    /* Noise texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+      opacity: 0.025;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Variation label */
+    .variation-label {
+      position: fixed;
+      top: 14px;
+      left: 18px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--ink2);
+      letter-spacing: 0.04em;
+      opacity: 0.6;
+      z-index: 1000;
+      user-select: none;
+    }
+
+    /* ── Page Layout ──────────────────────────────────────────────────── */
+    .page-layout {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      min-height: 100dvh;
+      align-items: stretch;
+    }
+
+    /* LEFT: Dashboard — 60% */
+    .panel-dashboard {
+      flex: 0 0 60%;
+      max-width: 60%;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      border-left: 1px solid var(--border);
+    }
+
+    /* RIGHT: Join form — 40% */
+    .panel-form {
+      flex: 0 0 40%;
+      max-width: 40%;
+      background: var(--surface);
+      border-right: none;
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    /* ── Dashboard Header ─────────────────────────────────────────────── */
+    .dash-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(250,247,240,0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .logo-mark {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+      text-decoration: none;
+    }
+
+    .logo-square {
+      width: 28px;
+      height: 28px;
+      background: var(--amber);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .logo-square span {
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 15px;
+      color: #fff;
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .logo-text {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 17px;
+      color: var(--ink);
+      letter-spacing: -0.03em;
+    }
+
+    .dash-tabs {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      background: var(--input-fill);
+      border-radius: 9px;
+      padding: 3px;
+    }
+
+    .dash-tab {
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink2);
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 160ms ease-out;
+      white-space: nowrap;
+      border: none;
+      background: transparent;
+      font-family: var(--font-head);
+    }
+
+    .dash-tab:hover { color: var(--ink); }
+    .dash-tab.active {
+      background: var(--surface);
+      color: var(--ink);
+      font-weight: 600;
+      box-shadow: 0 1px 4px rgba(28,26,21,0.10);
+    }
+
+    .avatar-circle {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--amber-light);
+      border: 1.5px solid var(--amber-mid);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--amber);
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    /* ── Dashboard Scroll Body ────────────────────────────────────────── */
+    .dash-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px 28px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* ── Hero Section ─────────────────────────────────────────────────── */
+    .hero-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .hero-greeting {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .pulse-dot::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      background: var(--green);
+      opacity: 0;
+      animation: pulse-ring 2s ease-out infinite;
+    }
+
+    @keyframes pulse-ring {
+      0% { transform: scale(0.8); opacity: 0.6; }
+      100% { transform: scale(2.4); opacity: 0; }
+    }
+
+    .greeting-text {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink2);
+    }
+
+    .hero-headline {
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 26px;
+      line-height: 1.18;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+      max-width: 520px;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .btn-amber {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--amber);
+      color: #fff;
+      font-family: var(--font-head);
+      font-weight: 600;
+      font-size: 14px;
+      padding: 10px 20px;
+      border-radius: 9px;
+      border: none;
+      cursor: pointer;
+      transition: all 150ms ease-out;
+      white-space: nowrap;
+      text-decoration: none;
+      letter-spacing: -0.01em;
+    }
+
+    .btn-amber:hover {
+      background: #b36a18;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(196,120,32,0.30);
+    }
+
+    .btn-amber:active { transform: translateY(0); }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: transparent;
+      color: var(--ink2);
+      font-family: var(--font-head);
+      font-weight: 500;
+      font-size: 14px;
+      padding: 10px 16px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 150ms ease-out;
+      white-space: nowrap;
+    }
+
+    .btn-ghost:hover { background: var(--amber-light); color: var(--ink); border-color: var(--amber-mid); }
+
+    /* ── Stat Cards ───────────────────────────────────────────────────── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      padding: 18px 20px;
+      border-right: 3px solid var(--amber);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stat-card:nth-child(2) { border-right-color: var(--border); border-right-width: 1px; }
+    .stat-card:nth-child(3) { border-right-color: var(--border); border-right-width: 1px; }
+
+    .stat-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--ink2);
+      letter-spacing: 0.01em;
+    }
+
+    .stat-value {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      font-size: 28px;
+      color: var(--amber);
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+
+    .stat-card:nth-child(2) .stat-value,
+    .stat-card:nth-child(3) .stat-value {
+      color: var(--ink);
+    }
+
+    .stat-sub {
+      font-size: 12px;
+      color: var(--ink2);
+      margin-top: 2px;
+    }
+
+    /* ── Candidates Section ───────────────────────────────────────────── */
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+    }
+
+    .section-link {
+      font-size: 13px;
+      color: var(--amber);
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .section-link:hover { text-decoration: underline; }
+
+    .candidates-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Candidate card */
+    .candidate-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      border-right: 3px solid var(--amber);
+      box-shadow: var(--shadow);
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: box-shadow 160ms ease-out, transform 160ms ease-out;
+      cursor: pointer;
+    }
+
+    .candidate-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+    }
+
+    .candidate-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 13px;
+      color: #fff;
+      flex-shrink: 0;
+      letter-spacing: -0.01em;
+    }
+
+    .av-amber { background: var(--amber); }
+    .av-teal  { background: #1A7A7A; }
+    .av-purple{ background: #6B3FA0; }
+
+    .candidate-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .candidate-name {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .candidate-meta {
+      font-size: 13px;
+      color: var(--ink2);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .candidate-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .score-badge {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 9px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+
+    .score-green {
+      background: var(--green-light);
+      color: var(--green);
+    }
+
+    .score-amber {
+      background: var(--amber-light);
+      color: #9B5E14;
+    }
+
+    .btn-invite {
+      background: var(--amber);
+      color: #fff;
+      font-family: var(--font-head);
+      font-weight: 600;
+      font-size: 13px;
+      padding: 7px 14px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 140ms ease-out;
+      white-space: nowrap;
+    }
+
+    .btn-invite:hover {
+      background: #b36a18;
+      box-shadow: 0 3px 10px rgba(196,120,32,0.28);
+    }
+
+    /* ── QR Panel ─────────────────────────────────────────────────────── */
+    .qr-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      border-right: 3px solid var(--amber);
+      box-shadow: var(--shadow);
+      padding: 22px 24px;
+      display: flex;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .qr-text-block {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .qr-title {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+
+    .qr-subtitle {
+      font-size: 13px;
+      color: var(--ink2);
+      line-height: 1.5;
+      margin-bottom: 14px;
+    }
+
+    .qr-placeholder {
+      width: 120px;
+      height: 120px;
+      flex-shrink: 0;
+      border: 2px dashed var(--amber);
+      border-radius: 10px;
+      background: var(--amber-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .qr-placeholder-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .qr-h-mark {
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 22px;
+      color: var(--amber);
+      letter-spacing: -0.05em;
+    }
+
+    .qr-dots {
+      display: grid;
+      grid-template-columns: repeat(5,6px);
+      grid-template-rows: repeat(5,6px);
+      gap: 2px;
+    }
+
+    .qr-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 1px;
+      background: var(--amber);
+      opacity: 0.35;
+    }
+
+    .qr-dot.filled { opacity: 1; }
+
+    /* ── Form Panel ───────────────────────────────────────────────────── */
+    .form-panel-inner {
+      padding: 36px 32px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .form-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .form-headline {
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 22px;
+      color: var(--ink);
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+
+    .form-headline .cafe-name {
+      color: var(--amber);
+    }
+
+    .form-subtitle {
+      font-size: 14px;
+      color: var(--ink2);
+      line-height: 1.6;
+      margin-bottom: 28px;
+      max-width: 340px;
+    }
+
+    .form-divider {
+      width: 100%;
+      height: 1px;
+      background: var(--border);
+      margin: 22px 0;
+    }
+
+    /* Form fields */
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 0;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+    }
+
+    .field input,
+    .field select {
+      background: var(--input-fill);
+      border: 1.5px solid transparent;
+      border-radius: var(--radius-input);
+      padding: 11px 14px;
+      font-family: var(--font-head);
+      font-size: 15px;
+      color: var(--ink);
+      transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
+      outline: none;
+      width: 100%;
+      min-height: 44px;
+    }
+
+    .field input::placeholder { color: var(--ink2); opacity: 0.6; }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: var(--amber);
+      box-shadow: 0 0 0 3px rgba(196,120,32,0.12);
+      background: var(--surface);
+    }
+
+    /* Phone field — LTR */
+    .field-phone input {
+      direction: ltr;
+      text-align: right;
+    }
+
+    /* Toggles */
+    .toggle-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+      margin-bottom: 8px;
+    }
+
+    .toggle-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .toggle-btn {
+      padding: 7px 13px;
+      border-radius: var(--radius-toggle);
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      font-family: var(--font-head);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink2);
+      cursor: pointer;
+      transition: all 140ms ease-out;
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .toggle-btn:hover {
+      border-color: var(--amber-mid);
+      color: var(--ink);
+      background: var(--amber-light);
+    }
+
+    .toggle-btn.active {
+      background: var(--amber);
+      border-color: var(--amber);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    /* Select */
+    .field select {
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B6458' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: left 12px center;
+      padding-left: 36px;
+      cursor: pointer;
+    }
+
+    /* Salary field wrapper */
+    .salary-wrapper {
+      position: relative;
+    }
+
+    .salary-wrapper input {
+      padding-left: 36px;
+    }
+
+    .salary-symbol {
+      position: absolute;
+      left: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-family: var(--font-mono);
+      font-size: 15px;
+      color: var(--ink2);
+      pointer-events: none;
+    }
+
+    /* Consent */
+    .consent-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .consent-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      min-width: 18px;
+      accent-color: var(--amber);
+      margin-top: 2px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .consent-text {
+      font-size: 12.5px;
+      color: var(--ink2);
+      line-height: 1.55;
+    }
+
+    .consent-text a { color: var(--amber); text-decoration: none; }
+    .consent-text a:hover { text-decoration: underline; }
+
+    /* Submit button */
+    .btn-submit {
+      width: 100%;
+      background: var(--amber);
+      color: #fff;
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 16px;
+      padding: 14px 20px;
+      border-radius: 11px;
+      border: none;
+      cursor: pointer;
+      transition: all 150ms ease-out;
+      letter-spacing: -0.01em;
+      margin-top: 20px;
+      min-height: 52px;
+    }
+
+    .btn-submit:hover {
+      background: #b36a18;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 22px rgba(196,120,32,0.32);
+    }
+
+    .btn-submit:active { transform: translateY(0); }
+
+    /* Privacy note */
+    .privacy-note {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      margin-top: 12px;
+    }
+
+    .privacy-note span {
+      font-size: 11.5px;
+      color: var(--ink2);
+      opacity: 0.7;
+      text-align: center;
+    }
+
+    /* ── Scrollbar styling ────────────────────────────────────────────── */
+    .dash-body::-webkit-scrollbar,
+    .panel-form::-webkit-scrollbar { width: 5px; }
+    .dash-body::-webkit-scrollbar-track,
+    .panel-form::-webkit-scrollbar-track { background: transparent; }
+    .dash-body::-webkit-scrollbar-thumb,
+    .panel-form::-webkit-scrollbar-thumb {
+      background: rgba(28,26,21,0.12);
+      border-radius: 99px;
+    }
+
+    /* ── Thin editorial top-border ────────────────────────────────────── */
+    .amber-topbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--amber);
+      z-index: 9999;
+    }
+
+    /* ── Responsive ───────────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .page-layout {
+        flex-direction: column;
+      }
+
+      .panel-dashboard,
+      .panel-form {
+        flex: none;
+        max-width: 100%;
+        width: 100%;
+      }
+
+      .panel-form {
+        border-left: none;
+        border-top: 1px solid var(--border);
+      }
+
+      .stats-row {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .stats-row .stat-card:nth-child(3) {
+        grid-column: 1 / -1;
+      }
+
+      .hero-headline { font-size: 21px; }
+
+      .dash-body { padding: 20px 16px 40px; }
+
+      .form-panel-inner { padding: 28px 20px 44px; }
+
+      .qr-panel { flex-direction: column; align-items: flex-start; }
+
+      .qr-placeholder { width: 100%; height: 90px; }
+
+      .variation-label { left: 10px; top: 20px; }
+    }
+
+    @media (max-width: 480px) {
+      .dash-tabs { display: none; }
+      .stats-row { grid-template-columns: 1fr; }
+      .stats-row .stat-card:nth-child(3) { grid-column: auto; }
+      .hero-headline { font-size: 19px; }
+      .candidate-card { flex-wrap: wrap; gap: 10px; }
+      .form-headline { font-size: 19px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Amber editorial topbar -->
+  <div class="amber-topbar" aria-hidden="true"></div>
+
+  <!-- Variation label -->
+  <div class="variation-label" aria-hidden="true">Variation 1 — ספרייה</div>
+
+  <div class="page-layout">
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         LEFT PANEL — Dashboard
+    ════════════════════════════════════════════════════════════════ -->
+    <section class="panel-dashboard" aria-label="לוח בקרה">
+
+      <!-- Sticky header -->
+      <header class="dash-header">
+        <!-- Logo mark (right side in RTL) -->
+        <a class="logo-mark" href="#" aria-label="Huntch - דף הבית">
+          <div class="logo-square" aria-hidden="true">
+            <span>H</span>
+          </div>
+          <span class="logo-text">Huntch</span>
+        </a>
+
+        <!-- Center tabs -->
+        <nav class="dash-tabs" role="tablist" aria-label="ניווט ראשי">
+          <button class="dash-tab active" role="tab" aria-selected="true">מועמדים</button>
+          <button class="dash-tab" role="tab" aria-selected="false">משרות</button>
+          <button class="dash-tab" role="tab" aria-selected="false">המועמדים שלי</button>
+        </nav>
+
+        <!-- Avatar (left in RTL = left visual side) -->
+        <div class="avatar-circle" aria-label="פרופיל לוסיה" title="לוסיה">ל</div>
+      </header>
+
+      <!-- Scrollable body -->
+      <div class="dash-body">
+
+        <!-- Hero -->
+        <div class="hero-section">
+          <div class="hero-greeting">
+            <div class="pulse-dot" aria-hidden="true"></div>
+            <span class="greeting-text">בוקר טוב, לוסיה</span>
+          </div>
+          <h1 class="hero-headline">8 מועמדים חדשים התאימו למשרת הבריסטה</h1>
+          <div class="hero-actions">
+            <button class="btn-amber" aria-label="פרסם משרה חדשה">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              פרסם משרה
+            </button>
+            <button class="btn-ghost" aria-label="הצג את כל המועמדים">
+              כל המועמדים
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Stat cards -->
+        <div class="stats-row" role="list" aria-label="סטטיסטיקות">
+          <div class="stat-card" role="listitem">
+            <div class="stat-label">מועמדים חדשים</div>
+            <div class="stat-value" aria-label="8 מועמדים חדשים">8</div>
+            <div class="stat-sub">מאז אתמול</div>
+          </div>
+          <div class="stat-card" role="listitem">
+            <div class="stat-label">הוזמנו לראיון</div>
+            <div class="stat-value" aria-label="3 הוזמנו לראיון">3</div>
+            <div class="stat-sub">השבוע</div>
+          </div>
+          <div class="stat-card" role="listitem">
+            <div class="stat-label">משרות פעילות</div>
+            <div class="stat-value" aria-label="2 משרות פעילות">2</div>
+            <div class="stat-sub">בריסטה + מלצר</div>
+          </div>
+        </div>
+
+        <!-- Candidates section -->
+        <div>
+          <div class="section-header">
+            <h2 class="section-title">מועמדים מומלצים — בריסטה</h2>
+            <a class="section-link" href="#" role="button">הצג הכל</a>
+          </div>
+
+          <div class="candidates-list" role="list" aria-label="מועמדים מומלצים">
+
+            <!-- Candidate 1 -->
+            <article class="candidate-card" role="listitem" aria-label="נועה לוי, 87% התאמה">
+              <div class="candidate-avatar av-amber" aria-hidden="true">נ.ל</div>
+              <div class="candidate-info">
+                <div class="candidate-name">נועה לוי</div>
+                <div class="candidate-meta">פלורנטין · ערבים · 2 שנות בריסטה</div>
+              </div>
+              <div class="candidate-actions">
+                <span class="score-badge score-green" aria-label="87% התאמה">87%</span>
+                <button class="btn-invite" aria-label="הזמן את נועה לוי לראיון">הזמן</button>
+              </div>
+            </article>
+
+            <!-- Candidate 2 -->
+            <article class="candidate-card" role="listitem" aria-label="איתי כהן, 74% התאמה">
+              <div class="candidate-avatar av-teal" aria-hidden="true">א.כ</div>
+              <div class="candidate-info">
+                <div class="candidate-name">איתי כהן</div>
+                <div class="candidate-meta">לב העיר · בקרים וערבים · 1 שנה</div>
+              </div>
+              <div class="candidate-actions">
+                <span class="score-badge score-amber" aria-label="74% התאמה">74%</span>
+                <button class="btn-invite" aria-label="הזמן את איתי כהן לראיון">הזמן</button>
+              </div>
+            </article>
+
+            <!-- Candidate 3 -->
+            <article class="candidate-card" role="listitem" aria-label="שיר בן דוד, 91% התאמה">
+              <div class="candidate-avatar av-purple" aria-hidden="true">ש.ב</div>
+              <div class="candidate-info">
+                <div class="candidate-name">שיר בן דוד</div>
+                <div class="candidate-meta">נווה צדק · ערבים · 3 שנות ניסיון</div>
+              </div>
+              <div class="candidate-actions">
+                <span class="score-badge score-green" aria-label="91% התאמה">91%</span>
+                <button class="btn-invite" aria-label="הזמן את שיר בן דוד לראיון">הזמן</button>
+              </div>
+            </article>
+
+          </div>
+        </div>
+
+        <!-- QR Panel -->
+        <div class="qr-panel" aria-label="קישור גיוס עובדים">
+          <div class="qr-text-block">
+            <div class="qr-title">הקישור שלכם לגיוס עובדים</div>
+            <div class="qr-subtitle">תלו את הקוד בקפה — כל עובד שסורק מגיע ישר אליכם</div>
+            <button class="btn-ghost" aria-label="העתק קישור גיוס">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              העתק קישור
+            </button>
+          </div>
+
+          <!-- QR placeholder visual -->
+          <div class="qr-placeholder" aria-label="קוד QR לסריקה" role="img">
+            <div class="qr-placeholder-inner">
+              <!-- Decorative dot-grid QR mock -->
+              <div class="qr-dots" aria-hidden="true">
+                <div class="qr-dot filled"></div><div class="qr-dot filled"></div><div class="qr-dot filled"></div><div class="qr-dot"></div><div class="qr-dot filled"></div>
+                <div class="qr-dot filled"></div><div class="qr-dot"></div><div class="qr-dot filled"></div><div class="qr-dot filled"></div><div class="qr-dot"></div>
+                <div class="qr-dot filled"></div><div class="qr-dot filled"></div><div class="qr-dot"></div><div class="qr-dot filled"></div><div class="qr-dot filled"></div>
+                <div class="qr-dot"></div><div class="qr-dot filled"></div><div class="qr-dot filled"></div><div class="qr-dot"></div><div class="qr-dot filled"></div>
+                <div class="qr-dot filled"></div><div class="qr-dot"></div><div class="qr-dot filled"></div><div class="qr-dot filled"></div><div class="qr-dot filled"></div>
+              </div>
+              <div class="qr-h-mark" aria-hidden="true">H</div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /dash-body -->
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         RIGHT PANEL — Worker Join Form
+    ════════════════════════════════════════════════════════════════ -->
+    <aside class="panel-form" aria-label="טופס הצטרפות לעובדים">
+      <div class="form-panel-inner">
+
+        <!-- Logo -->
+        <div class="form-logo">
+          <div class="logo-square" aria-hidden="true">
+            <span>H</span>
+          </div>
+          <span class="logo-text">Huntch</span>
+        </div>
+
+        <!-- Headline -->
+        <h2 class="form-headline">עבודה קרוב אלייך,<br /><span class="cafe-name">בבית קפה לינה</span></h2>
+        <p class="form-subtitle">מלאו את הפרטים — נשלח לכם הצעות רלוונטיות ישירות לוואטסאפ</p>
+
+        <form novalidate aria-label="טופס הצטרפות לפלטפורמת Huntch">
+          <div class="field-group">
+
+            <!-- Full name -->
+            <div class="field">
+              <label for="full-name">שם מלא <span aria-hidden="true" style="color:var(--amber)">*</span></label>
+              <input
+                type="text"
+                id="full-name"
+                name="fullName"
+                placeholder="ישראל ישראלי"
+                autocomplete="name"
+                required
+                aria-required="true"
+              />
+            </div>
+
+            <!-- WhatsApp phone — LTR -->
+            <div class="field field-phone">
+              <label for="phone">טלפון WhatsApp <span aria-hidden="true" style="color:var(--amber)">*</span></label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                placeholder="050-000-0000"
+                autocomplete="tel"
+                dir="ltr"
+                required
+                aria-required="true"
+                inputmode="tel"
+              />
+            </div>
+
+            <!-- Neighborhood -->
+            <div class="field">
+              <label for="neighborhood">שכונה / עיר <span aria-hidden="true" style="color:var(--amber)">*</span></label>
+              <input
+                type="text"
+                id="neighborhood"
+                name="neighborhood"
+                placeholder="פלורנטין, תל אביב"
+                autocomplete="address-level2"
+                required
+                aria-required="true"
+              />
+            </div>
+
+          </div>
+
+          <div class="form-divider" role="separator" aria-hidden="true"></div>
+
+          <!-- Role toggles -->
+          <div role="group" aria-labelledby="roles-label">
+            <div class="toggle-label" id="roles-label">תפקיד רצוי</div>
+            <div class="toggle-group" id="roles-group">
+              <button type="button" class="toggle-btn active" aria-pressed="true"   data-group="roles">בריסטה</button>
+              <button type="button" class="toggle-btn"        aria-pressed="false"  data-group="roles">מלצר·ית</button>
+              <button type="button" class="toggle-btn"        aria-pressed="false"  data-group="roles">טבח·ית</button>
+              <button type="button" class="toggle-btn"        aria-pressed="false"  data-group="roles">ברמן·ית</button>
+              <button type="button" class="toggle-btn"        aria-pressed="false"  data-group="roles">קופאי·ת</button>
+              <button type="button" class="toggle-btn"        aria-pressed="false"  data-group="roles">מארח·ת</button>
+              <button type="button" class="toggle-btn"        aria-pressed="false"  data-group="roles">שליח·ה</button>
+              <button type="button" class="toggle-btn"        aria-pressed="false"  data-group="roles">שטיפה</button>
+            </div>
+          </div>
+
+          <div style="height:18px;"></div>
+
+          <!-- Shift toggles -->
+          <div role="group" aria-labelledby="shifts-label">
+            <div class="toggle-label" id="shifts-label">משמרות מועדפות</div>
+            <div class="toggle-group" id="shifts-group">
+              <button type="button" class="toggle-btn" aria-pressed="false" data-group="shifts">בקרים</button>
+              <button type="button" class="toggle-btn active" aria-pressed="true"  data-group="shifts">צהריים</button>
+              <button type="button" class="toggle-btn active" aria-pressed="true"  data-group="shifts">ערבים</button>
+              <button type="button" class="toggle-btn" aria-pressed="false" data-group="shifts">לילות</button>
+              <button type="button" class="toggle-btn" aria-pressed="false" data-group="shifts">סופ״ש</button>
+            </div>
+          </div>
+
+          <div class="form-divider" role="separator" aria-hidden="true"></div>
+
+          <div class="field-group">
+
+            <!-- Experience -->
+            <div class="field">
+              <label for="experience">שנות ניסיון</label>
+              <select id="experience" name="experience" aria-label="בחרו שנות ניסיון">
+                <option value="">בחרו שנות ניסיון</option>
+                <option value="0">ללא ניסיון</option>
+                <option value="0.5">חצי שנה</option>
+                <option value="1">שנה</option>
+                <option value="2">2 שנים</option>
+                <option value="3">3 שנים</option>
+                <option value="4">4+ שנים</option>
+              </select>
+            </div>
+
+            <!-- Salary -->
+            <div class="field">
+              <label for="salary">שכר מבוקש לשעה</label>
+              <div class="salary-wrapper">
+                <span class="salary-symbol" aria-hidden="true">₪</span>
+                <input
+                  type="number"
+                  id="salary"
+                  name="salary"
+                  placeholder="40"
+                  min="32"
+                  max="200"
+                  inputmode="numeric"
+                  aria-label="שכר מבוקש לשעה בשקלים"
+                />
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Consent -->
+          <div class="consent-row" style="margin-top: 16px;">
+            <input type="checkbox" id="consent" name="consent" required aria-required="true" />
+            <label class="consent-text" for="consent">
+              אני מסכים/ה שהמידע יישמר ויועבר לבעלי עסקים רלוונטיים דרך Huntch, בהתאם
+              <a href="#" aria-label="תנאי שימוש">לתנאי השימוש</a> ו<a href="#" aria-label="מדיניות פרטיות">מדיניות הפרטיות</a>.
+            </label>
+          </div>
+
+          <!-- Submit -->
+          <button type="submit" class="btn-submit">
+            שלח/י פרטים
+          </button>
+
+          <!-- Privacy reassurance -->
+          <div class="privacy-note" aria-hidden="true">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>הפרטים שלכם מוגנים ולא יועברו ללא רשות</span>
+          </div>
+
+        </form>
+      </div>
+    </aside>
+
+  </div><!-- /page-layout -->
+
+  <script>
+    // Toggle buttons: multi-select within each group
+    document.querySelectorAll('.toggle-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var isActive = this.classList.contains('active');
+        // Multi-select: toggle individually
+        this.classList.toggle('active', !isActive);
+        this.setAttribute('aria-pressed', String(!isActive));
+      });
+    });
+
+    // Smooth tab switching (visual only)
+    document.querySelectorAll('.dash-tab').forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.dash-tab').forEach(function(t) {
+          t.classList.remove('active');
+          t.setAttribute('aria-selected', 'false');
+        });
+        this.classList.add('active');
+        this.setAttribute('aria-selected', 'true');
+      });
+    });
+
+    // Invite button feedback
+    document.querySelectorAll('.btn-invite').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var original = this.textContent;
+        this.textContent = '✓ נשלח';
+        this.style.background = 'var(--green)';
+        var self = this;
+        setTimeout(function() {
+          self.textContent = original;
+          self.style.background = '';
+        }, 2000);
+      });
+    });
+
+    // Copy link button
+    document.querySelector('[aria-label="העתק קישור גיוס"]').addEventListener('click', function() {
+      var original = this.innerHTML;
+      this.textContent = '✓ הועתק';
+      var self = this;
+      setTimeout(function() { self.innerHTML = original; }, 2000);
+    });
+
+    // Form submit (demo)
+    document.querySelector('form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      var btn = document.querySelector('.btn-submit');
+      btn.textContent = 'שולח...';
+      btn.disabled = true;
+      setTimeout(function() {
+        btn.textContent = '✓ הפרטים התקבלו — נצור קשר בקרוב!';
+        btn.style.background = 'var(--green)';
+        btn.disabled = false;
+      }, 1400);
+    });
+  </script>
+
+</body>
+</html>

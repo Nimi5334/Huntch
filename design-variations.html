@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Huntch — 5 Dashboard Directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;800&family=Assistant:wght@300;400;600;700&family=Frank+Ruhl+Libre:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#e9eaec;color:#18181b;font-family:'Heebo',sans-serif;-webkit-font-smoothing:antialiased}
+
+  /* ===== Gallery shell ===== */
+  .gallery-head{max-width:1200px;margin:0 auto;padding:56px 28px 20px}
+  .gallery-head .kk{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.18em;color:#8a8a90;text-transform:uppercase}
+  .gallery-head h1{font-size:34px;font-weight:800;margin:10px 0 8px;letter-spacing:-.02em}
+  .gallery-head p{font-size:15px;color:#5a5a62;max-width:620px;line-height:1.6}
+  .vwrap{max-width:1200px;margin:0 auto;padding:24px 28px 80px}
+  .vblock{margin-bottom:64px}
+  .vlabel{display:flex;align-items:baseline;gap:14px;margin-bottom:16px;flex-wrap:wrap}
+  .vlabel .num{font-family:'JetBrains Mono',monospace;font-size:13px;color:#fff;background:#18181b;border-radius:6px;padding:3px 9px;font-weight:700}
+  .vlabel .nm{font-size:20px;font-weight:700;letter-spacing:-.01em}
+  .vlabel .dsc{font-size:13px;color:#76767e}
+  .frame{border-radius:20px;overflow:hidden;box-shadow:0 30px 60px -28px rgba(0,0,0,.35),0 0 0 1px rgba(0,0,0,.05)}
+
+  /* shared brand mark */
+  .hmark{width:30px;height:30px;border-radius:8px;background:#18181b;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .hmark.lg{width:36px;height:36px;border-radius:10px}
+
+  /* ============================================================
+     V1 — EDITORIAL MONO  (gallery-airy, asymmetric, serif display)
+     ============================================================ */
+  .v1{background:#fbfbf9;font-family:'Assistant',sans-serif;color:#1a1a18;padding:0}
+  .v1 .top{display:flex;align-items:center;justify-content:space-between;padding:22px 34px;border-bottom:1px solid #e7e6e0}
+  .v1 .brand{display:flex;align-items:center;gap:11px}
+  .v1 .brand b{font-size:19px;font-weight:700;letter-spacing:-.02em}
+  .v1 .nav{display:flex;gap:26px;font-size:14px;color:#86857c}
+  .v1 .nav a{color:#86857c;text-decoration:none}
+  .v1 .nav a.on{color:#1a1a18;font-weight:600}
+  .v1 .av{width:32px;height:32px;border-radius:50%;background:#1a1a18;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+  .v1 .body{display:grid;grid-template-columns:1.4fr 1fr;gap:0}
+  .v1 .lead{padding:46px 34px;border-left:1px solid #e7e6e0}
+  .v1 .eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.2em;color:#a8a79c;text-transform:uppercase;margin-bottom:18px}
+  .v1 .big{font-family:'Frank Ruhl Libre',serif;font-size:96px;line-height:.9;font-weight:900;color:#c2410c;letter-spacing:-.03em}
+  .v1 .leadtxt{font-family:'Frank Ruhl Libre',serif;font-size:27px;font-weight:500;line-height:1.25;margin-top:14px;max-width:340px}
+  .v1 .cta{margin-top:28px;display:inline-flex;align-items:center;gap:8px;background:#1a1a18;color:#fbfbf9;border:none;padding:13px 22px;border-radius:3px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer}
+  .v1 .stats{padding:46px 34px;display:flex;flex-direction:column;gap:0}
+  .v1 .st{padding:18px 0;border-bottom:1px solid #e7e6e0;display:flex;align-items:baseline;justify-content:space-between}
+  .v1 .st:first-child{padding-top:0}
+  .v1 .st .n{font-family:'JetBrains Mono',monospace;font-size:38px;font-weight:500;letter-spacing:-.02em}
+  .v1 .st .l{font-size:14px;color:#86857c}
+  .v1 .list{padding:8px 34px 40px;grid-column:1/-1;border-top:1px solid #e7e6e0}
+  .v1 .row{display:flex;align-items:center;gap:16px;padding:18px 0;border-bottom:1px solid #efeee8}
+  .v1 .ci{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff}
+  .v1 .cn{font-size:16px;font-weight:600}
+  .v1 .cm{font-size:13px;color:#9a998f;margin-top:2px}
+  .v1 .fit{margin-right:auto;font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;color:#c2410c}
+  .v1 .secttl{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.2em;color:#a8a79c;text-transform:uppercase;padding:30px 0 4px}
+
+  /* ============================================================
+     V2 — WARM STUDIO  (daily-app balanced, soft cards, terracotta)
+     ============================================================ */
+  .v2{background:#f5f1ec;font-family:'Heebo',sans-serif;color:#2b2622;display:grid;grid-template-columns:230px 1fr}
+  .v2 .side{background:#fffdfb;border-left:1px solid #ece5dd;padding:24px 18px;display:flex;flex-direction:column;gap:6px}
+  .v2 .side .brand{display:flex;align-items:center;gap:10px;padding:4px 8px 22px}
+  .v2 .side .brand b{font-size:18px;font-weight:700}
+  .v2 .si{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:11px;font-size:14.5px;color:#7c726a;cursor:pointer}
+  .v2 .si .ic{width:18px;height:18px;border-radius:6px;border:1.6px solid currentColor;opacity:.7}
+  .v2 .si.on{background:#b5532f;color:#fff;font-weight:600}
+  .v2 .si.on .ic{border-color:#fff;background:rgba(255,255,255,.25);opacity:1}
+  .v2 .si .bdg{margin-right:auto;font-size:12px;font-weight:700;background:#f0e6dd;color:#b5532f;border-radius:20px;padding:1px 8px}
+  .v2 .si.on .bdg{background:rgba(255,255,255,.25);color:#fff}
+  .v2 .main{padding:30px 34px}
+  .v2 .hi{font-size:14px;color:#9a8d82}
+  .v2 .h1{font-size:27px;font-weight:700;margin:4px 0 24px;letter-spacing:-.01em}
+  .v2 .cards{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:16px;margin-bottom:26px}
+  .v2 .card{background:#fffdfb;border:1px solid #ece5dd;border-radius:18px;padding:20px}
+  .v2 .card.hero{background:#2b2622;color:#fff;border:none}
+  .v2 .card .n{font-size:44px;font-weight:800;letter-spacing:-.02em;line-height:1}
+  .v2 .card.hero .n{color:#f7b79a}
+  .v2 .card .l{font-size:13.5px;color:#9a8d82;margin-top:8px}
+  .v2 .card.hero .l{color:#c9beb6}
+  .v2 .card .pill{display:inline-block;margin-top:14px;background:#b5532f;color:#fff;font-size:12.5px;font-weight:600;padding:7px 14px;border-radius:30px}
+  .v2 .panel{background:#fffdfb;border:1px solid #ece5dd;border-radius:18px;padding:8px 20px 14px}
+  .v2 .ph{display:flex;align-items:center;justify-content:space-between;padding:16px 0 6px}
+  .v2 .ph b{font-size:16px;font-weight:700}
+  .v2 .ph a{font-size:13px;color:#b5532f;text-decoration:none;font-weight:600}
+  .v2 .row{display:flex;align-items:center;gap:14px;padding:14px 0;border-top:1px solid #f1ebe4}
+  .v2 .ci{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:15px}
+  .v2 .cn{font-size:15.5px;font-weight:600}
+  .v2 .cm{font-size:13px;color:#9a8d82;margin-top:2px}
+  .v2 .tag{font-size:11.5px;font-weight:600;color:#7a8a4f;background:#eef0e2;border-radius:20px;padding:3px 10px}
+  .v2 .fit{margin-right:auto;display:flex;align-items:center;gap:12px}
+  .v2 .fit .pc{font-weight:800;font-size:18px;color:#b5532f}
+  .v2 .inv{background:#2b2622;color:#fff;border:none;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+
+  /* ============================================================
+     V3 — PIPELINE BOARD  (kanban, cockpit-dense, indigo-slate)
+     ============================================================ */
+  .v3{background:#f1f3f6;font-family:'Rubik',sans-serif;color:#1e2330}
+  .v3 .top{display:flex;align-items:center;gap:18px;padding:18px 28px;background:#fff;border-bottom:1px solid #e2e6ee}
+  .v3 .brand{display:flex;align-items:center;gap:10px}
+  .v3 .brand b{font-size:18px;font-weight:700}
+  .v3 .search{margin-right:14px;flex:1;max-width:300px;background:#f1f3f6;border:1px solid #e2e6ee;border-radius:9px;padding:9px 14px;font-size:13px;color:#8b91a1}
+  .v3 .top .post{margin-right:auto;background:#3a4ed6;color:#fff;border:none;padding:10px 18px;border-radius:9px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit}
+  .v3 .strip{display:flex;gap:0;background:#fff;border-bottom:1px solid #e2e6ee;padding:0 28px}
+  .v3 .ms{padding:15px 22px 13px;border-bottom:2px solid transparent;display:flex;flex-direction:column;gap:2px}
+  .v3 .ms .n{font-family:'JetBrains Mono',monospace;font-size:21px;font-weight:700}
+  .v3 .ms .l{font-size:12px;color:#8b91a1}
+  .v3 .ms.on{border-bottom-color:#3a4ed6}
+  .v3 .ms.on .n{color:#3a4ed6}
+  .v3 .board{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:22px 28px}
+  .v3 .col{display:flex;flex-direction:column;gap:10px}
+  .v3 .colh{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#5b6172;padding:2px 4px}
+  .v3 .colh .dot{width:8px;height:8px;border-radius:50%}
+  .v3 .colh .c{margin-right:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:#a3a8b6}
+  .v3 .kc{background:#fff;border:1px solid #e2e6ee;border-radius:12px;padding:13px}
+  .v3 .kc .hd{display:flex;align-items:center;gap:10px}
+  .v3 .ci{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:13px}
+  .v3 .cn{font-size:14px;font-weight:600}
+  .v3 .cm{font-size:12px;color:#9298a8;margin-top:1px}
+  .v3 .kc .bar{height:5px;border-radius:4px;background:#eef0f5;margin-top:11px;overflow:hidden}
+  .v3 .kc .bar i{display:block;height:100%;background:#3a4ed6;border-radius:4px}
+  .v3 .kc .ft{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+  .v3 .kc .pc{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:#3a4ed6}
+  .v3 .kc .role{font-size:11px;color:#9298a8}
+
+  /* ============================================================
+     V4 — FOCUS FEED  (single priority column, forest, friendly)
+     ============================================================ */
+  .v4{background:#f4f6f4;font-family:'Heebo',sans-serif;color:#16241a}
+  .v4 .top{display:flex;align-items:center;justify-content:space-between;padding:20px 30px;background:#16241a;color:#fff}
+  .v4 .brand{display:flex;align-items:center;gap:11px}
+  .v4 .brand .hmark{background:#fff}
+  .v4 .brand .hmark svg path{stroke:#16241a!important}
+  .v4 .brand b{font-size:18px;font-weight:700}
+  .v4 .top .r{display:flex;align-items:center;gap:18px;font-size:13.5px;color:#9db3a4}
+  .v4 .av{width:32px;height:32px;border-radius:50%;background:#2e6b46;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+  .v4 .wrap{max-width:560px;margin:0 auto;padding:30px 24px 40px}
+  .v4 .focus{background:#2e6b46;color:#fff;border-radius:20px;padding:24px 26px;margin-bottom:22px}
+  .v4 .focus .k{font-size:12.5px;color:#a7d2b8;letter-spacing:.04em;font-weight:600;text-transform:uppercase}
+  .v4 .focus h2{font-size:23px;font-weight:700;margin:8px 0 4px;letter-spacing:-.01em}
+  .v4 .focus p{font-size:14px;color:#cfe5d7;line-height:1.5}
+  .v4 .focus .b{margin-top:16px;background:#fff;color:#16241a;border:none;padding:12px 20px;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+  .v4 .seg{font-size:12px;font-weight:700;color:#6f8377;letter-spacing:.04em;text-transform:uppercase;margin:6px 4px 12px}
+  .v4 .fc{background:#fff;border:1px solid #e3eae4;border-radius:18px;padding:18px;margin-bottom:12px;display:flex;align-items:center;gap:15px}
+  .v4 .ci{width:50px;height:50px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:17px;flex-shrink:0}
+  .v4 .cn{font-size:16px;font-weight:700}
+  .v4 .cm{font-size:13px;color:#7c8a80;margin-top:3px;line-height:1.4}
+  .v4 .fit{margin-right:auto;text-align:center;flex-shrink:0}
+  .v4 .fit .pc{font-size:26px;font-weight:800;color:#2e6b46;line-height:1}
+  .v4 .fit .pl{font-size:10.5px;color:#9aa89e;margin-top:2px}
+  .v4 . acts{}
+
+  /* ============================================================
+     V5 — COCKPIT  (dense command center, near-dark, amber data)
+     ============================================================ */
+  .v5{background:#15161a;font-family:'Heebo',sans-serif;color:#e8e8ec}
+  .v5 .top{display:flex;align-items:center;gap:16px;padding:16px 26px;border-bottom:1px solid #26282f}
+  .v5 .brand{display:flex;align-items:center;gap:10px}
+  .v5 .brand .hmark{background:#fff}
+  .v5 .brand .hmark svg path{stroke:#15161a!important}
+  .v5 .brand b{font-size:17px;font-weight:700}
+  .v5 .tabs{display:flex;gap:4px;margin-right:20px}
+  .v5 .tabs a{font-size:13px;color:#8b8e98;padding:7px 13px;border-radius:8px;text-decoration:none}
+  .v5 .tabs a.on{background:#26282f;color:#fff}
+  .v5 .av{margin-right:auto;width:30px;height:30px;border-radius:8px;background:#d97706;color:#15161a;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}
+  .v5 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#26282f;border-bottom:1px solid #26282f}
+  .v5 .m{background:#15161a;padding:18px 22px}
+  .v5 .m .n{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:700;letter-spacing:-.02em}
+  .v5 .m .n.a{color:#f59e0b}
+  .v5 .m .l{font-size:12px;color:#8b8e98;margin-top:4px}
+  .v5 .m .d{font-size:11px;color:#5b6470;margin-top:6px;font-family:'JetBrains Mono',monospace}
+  .v5 .lower{display:grid;grid-template-columns:1.6fr 1fr;gap:1px;background:#26282f}
+  .v5 .pane{background:#15161a;padding:18px 22px}
+  .v5 .pane h3{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#8b8e98;margin-bottom:14px;font-weight:600}
+  .v5 .trow{display:flex;align-items:center;gap:13px;padding:11px 0;border-bottom:1px solid #20222a}
+  .v5 .ci{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#15161a;font-size:13px}
+  .v5 .cn{font-size:14px;font-weight:600}
+  .v5 .cm{font-size:12px;color:#7b8088;margin-top:1px;font-family:'JetBrains Mono',monospace}
+  .v5 .fit{margin-right:auto;font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:#f59e0b}
+  .v5 .st{font-size:11px;color:#15161a;font-weight:700;border-radius:5px;padding:3px 8px}
+  .v5 .gauge{display:flex;flex-direction:column;gap:11px}
+  .v5 .grow{}
+  .v5 .grow .gl{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px}
+  .v5 .grow .gl .gv{font-family:'JetBrains Mono',monospace;color:#f59e0b}
+  .v5 .grow .gb{height:6px;background:#26282f;border-radius:4px;overflow:hidden}
+  .v5 .grow .gb i{display:block;height:100%;background:#d97706;border-radius:4px}
+
+  @media(max-width:760px){
+    .v1 .body,.v2,.v3 .board,.v5 .grid,.v5 .lower{grid-template-columns:1fr}
+    .v2 .side{display:none}.v2 .cards{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<div class="gallery-head">
+  <div class="kk">Huntch · Dashboard Concepts</div>
+  <h1>5 Directions for the Business-Owner Dashboard</h1>
+  <p>Five distinct visual systems — each keeps the Huntch mark and name in black &amp; white, uses a single accent, real Hebrew RTL content, and avoids the generic AI dashboard look. Pick one (or mix), then we restructure the real dashboard around it.</p>
+</div>
+
+<div class="vwrap">
+
+  <!-- V1 -->
+  <div class="vblock">
+    <div class="vlabel"><span class="num">01</span><span class="nm">Editorial Mono</span><span class="dsc">Gallery-airy · serif display · asymmetric split · terracotta accent</span></div>
+    <div class="frame"><div class="v1">
+      <div class="top">
+        <div class="brand"><div class="hmark"><svg width="17" height="17" viewBox="0 0 80 80" fill="none"><path d="M22,16 L22,64" stroke="#fff" stroke-width="10" stroke-linecap="round"/><path d="M58,16 L58,64" stroke="#fff" stroke-width="10" stroke-linecap="round"/><path d="M22,42 C22,26 58,26 58,42" stroke="#fff" stroke-width="9" stroke-linecap="round" fill="none"/></svg></div><b>Huntch</b></div>
+        <div class="nav"><a class="on">בית</a><a>משרות</a><a>מאגר</a><a>הזמנות</a></div>
+        <div class="av">ל</div>
+      </div>
+      <div class="body">
+        <div class="lead">
+          <div class="eyebrow">בוקר טוב, לוסיה</div>
+          <div class="big">7</div>
+          <div class="leadtxt">מועמדים חדשים מתאימים למשרת הבריסטה שפרסמת</div>
+          <button class="cta">פרסם משרה חדשה</button>
+        </div>
+        <div class="stats">
+          <div class="st"><span class="n">3</span><span class="l">הוזמנו לראיון</span></div>
+          <div class="st"><span class="n">2</span><span class="l">משרות פעילות</span></div>
+          <div class="st"><span class="n">41</span><span class="l">במאגר השכונתי</span></div>
+        </div>
+        <div class="list">
+          <div class="secttl">מומלצים — בריסטה</div>
+          <div class="row"><div class="ci" style="background:#c2410c">נל</div><div><div class="cn">נועה לוי</div><div class="cm">הדר · 1.2 ק"מ · זמינה מיידית · 3 שנות ניסיון</div></div><div class="fit">94%</div></div>
+          <div class="row"><div class="ci" style="background:#3f6212">אכ</div><div><div class="cn">איתי כהן</div><div class="cm">כרמל · 0.8 ק"מ · בקרים · 2 שנות ניסיון</div></div><div class="fit">88%</div></div>
+          <div class="row"><div class="ci" style="background:#7c2d12">דמ</div><div><div class="cn">דריה מיכאלוב</div><div class="cm">נווה שאנן · 2.4 ק"מ · ערבים · 4 שנות ניסיון</div></div><div class="fit">82%</div></div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- V2 -->
+  <div class="vblock">
+    <div class="vlabel"><span class="num">02</span><span class="nm">Warm Studio</span><span class="dsc">Daily-app balanced · soft rounded cards · sidebar · terracotta on cream</span></div>
+    <div class="frame"><div class="v2">
+      <div class="side">
+        <div class="brand"><div class="hmark"><svg width="17" height="17" viewBox="0 0 80 80" fill="none"><path d="M22,16 L22,64" stroke="#fff" stroke-width="10" stroke-linecap="round"/><path d="M58,16 L58,64" stroke="#fff" stroke-width="10" stroke-linecap="round"/><path d="M22,42 C22,26 58,26 58,42" stroke="#fff" stroke-width="9" stroke-linecap="round" fill="none"/></svg></div><b>Huntch</b></div>
+        <div class="si on"><span class="ic"></span>בית<span class="bdg">7</span></div>
+        <div class="si"><span class="ic"></span>משרות<span class="bdg">2</span></div>
+        <div class="si"><span class="ic"></span>מאגר שכונתי</div>
+        <div class="si"><span class="ic"></span>הזמנות לראיון<span class="bdg">3</span></div>
+        <div class="si"><span class="ic"></span>קוד QR לגיוס</div>
+        <div class="si" style="margin-top:auto"><span class="ic"></span>הגדרות</div>
+      </div>
+      <div class="main">
+        <div class="hi">בוקר טוב</div>
+        <div class="h1">לוסיה, יש 7 מועמדים חדשים בשבילך</div>
+        <div class="cards">
+          <div class="card hero"><div class="n">7</div><div class="l">מועמדים חדשים שהתאימו למשרת הבריסטה</div><span class="pill">צפה בכולם</span></div>
+          <div class="card"><div class="n">3</div><div class="l">הוזמנו לראיון</div></div>
+          <div class="card"><div class="n">41</div><div class="l">במאגר השכונתי</div></div>
+        </div>
+        <div class="panel">
+          <div class="ph"><b>מומלצים למשרת בריסטה</b><a>ראה הכל עם פילטרים ←</a></div>
+          <div class="row"><div class="ci" style="background:#b5532f">נל</div><div><div class="cn">נועה לוי</div><div class="cm">הדר · 1.2 ק"מ · 3 שנות ניסיון</div></div><span class="tag">זמינה מיידית</span><div class="fit"><span class="pc">94%</span><button class="inv">הזמן</button></div></div>
+          <div class="row"><div class="ci" style="background:#5b7a2f">אכ</div><div><div class="cn">איתי כהן</div><div class="cm">כרמל · 0.8 ק"מ · 2 שנות ניסיון</div></div><span class="tag">בקרים</span><div class="fit"><span class="pc">88%</span><button class="inv">הזמן</button></div></div>
+          <div class="row"><div class="ci" style="background:#8a5a2f">דמ</div><div><div class="cn">דריה מיכאלוב</div><div class="cm">נווה שאנן · 2.4 ק"מ · 4 שנות ניסיון</div></div><span class="tag">ערבים</span><div class="fit"><span class="pc">82%</span><button class="inv">הזמן</button></div></div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- V3 -->
+  <div class="vblock">
+    <div class="vlabel"><span class="num">03</span><span class="nm">Pipeline Board</span><span class="dsc">Cockpit-dense · kanban hiring stages · indigo accent · drag-feel cards</span></div>
+    <div class="frame"><div class="v3">
+      <div class="top">
+        <div class="brand"><div class="hmark"><svg width="17" height="17" viewBox="0 0 80 80" fill="none"><path d="M22,16 L22,64" stroke="#fff" stroke-width="10" stroke-linecap="round"/><path d="M58,16 L58,64" stroke="#fff" stroke-width="10" stroke-linecap="round"/><path d="M22,42 C22,26 58,26 58,42" stroke="#fff" stroke-width="9" stroke-linecap="round" fill="none"/></svg></div><b>Huntch</b></div>
+        <div class="search">חיפוש מועמד, משרה או שכונה…</div>
+        <button class="post">+ פרסם משרה</button>
+      </div>
+      <div class="strip">
+        <div class="ms on"><span class="n">7</span><span class="l">חדשים</span></div>
+        <div class="ms"><span class="n">3</span><span class="l">הוזמנו</span></div>
+        <div class="ms"><span class="n">2</span><span class="l">רואיינו</span></div>
+        <div class="ms"><span class="n">1</span><span class="l">התקבל</span></div>
+      </div>
+      <div class="board">
+        <div class="col">
+          <div class="colh"><span class="dot" style="background:#3a4ed6"></span>חדשים<span class="c">7</span></div>
+          <div class="kc"><div class="hd"><div class="ci" style="background:#3a4ed6">נל</div><div><div class="cn">נועה לוי</div><div class="cm">הדר · 1.2 ק"מ</div></div></div><div class="bar"><i style="width:94%"></i></div><div class="ft"><span class="role">בריסטה</span><span class="pc">94%</span></div></div>
+          <div class="kc"><div class="hd"><div class="ci" style="background:#5b3ad6">אכ</div><div><div class="cn">איתי כהן</div><div class="cm">כרמל · 0.8 ק"מ</div></div></div><div class="bar"><i style="width:88%"></i></div><div class="ft"><span class="role">בריסטה</span><span class="pc">88%</span></div></div>
+        </div>
+        <div class="col">
+          <div class="colh"><span class="dot" style="background:#0891b2"></span>הוזמנו<span class="c">3</span></div>
+          <div class="kc"><div class="hd"><div class="ci" style="background:#0891b2">דמ</div><div><div class="cn">דריה מיכאלוב</div><div class="cm">נווה שאנן · 2.4 ק"מ</div></div></div><div class="bar"><i style="width:82%"></i></div><div class="ft"><span class="role">בריסטה</span><span class="pc">82%</span></div></div>
+        </div>
+        <div class="col">
+          <div class="colh"><span class="dot" style="background:#7a8a4f"></span>רואיינו<span class="c">2</span></div>
+          <div class="kc"><div class="hd"><div class="ci" style="background:#5b7a2f">יא</div><div><div class="cn">יוסף אבוטבול</div><div class="cm">מרכז · 1.6 ק"מ</div></div></div><div class="bar"><i style="width:79%"></i></div><div class="ft"><span class="role">מלצר</span><span class="pc">79%</span></div></div>
+        </div>
+        <div class="col">
+          <div class="colh"><span class="dot" style="background:#16a34a"></span>התקבל<span class="c">1</span></div>
+          <div class="kc"><div class="hd"><div class="ci" style="background:#16a34a">שב</div><div><div class="cn">שיר בן דוד</div><div class="cm">כרמל · 0.5 ק"מ</div></div></div><div class="bar"><i style="width:91%"></i></div><div class="ft"><span class="role">בריסטה</span><span class="pc">91%</span></div></div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- V4 -->
+  <div class="vblock">
+    <div class="vlabel"><span class="num">04</span><span class="nm">Focus Feed</span><span class="dsc">One priority column · friendly · forest green · phone-first feel</span></div>
+    <div class="frame"><div class="v4">
+      <div class="top">
+        <div class="brand"><div class="hmark"><svg width="17" height="17" viewBox="0 0 80 80" fill="none"><path d="M22,16 L22,64" stroke="#fff" stroke-width="10" stroke-linecap="round"/><path d="M58,16 L58,64" stroke="#fff" stroke-width="10" stroke-linecap="round"/><path d="M22,42 C22,26 58,26 58,42" stroke="#fff" stroke-width="9" stroke-linecap="round" fill="none"/></svg></div><b>Huntch</b></div>
+        <div class="r"><span>בית</span><span>משרות</span><span>מאגר</span><div class="av">ל</div></div>
+      </div>
+      <div class="wrap">
+        <div class="focus">
+          <div class="k">המשימה של היום</div>
+          <h2>7 מועמדים חדשים מחכים לתשובה</h2>
+          <p>שלושה מהם זמינים מיידית למשרת הבריסטה. ענה היום כדי לא לאבד אותם — מועמדים טובים נחטפים תוך 24 שעות.</p>
+          <button class="b">עבור על המועמדים</button>
+        </div>
+        <div class="seg">הכי מתאימים — בריסטה</div>
+        <div class="fc"><div class="ci" style="background:#2e6b46">נל</div><div><div class="cn">נועה לוי</div><div class="cm">הדר · 1.2 ק"מ ממך · זמינה מיידית · 3 שנות ניסיון בבית קפה</div></div><div class="fit"><div class="pc">94</div><div class="pl">התאמה</div></div></div>
+        <div class="fc"><div class="ci" style="background:#3f6212">אכ</div><div><div class="cn">איתי כהן</div><div class="cm">כרמל · 0.8 ק"מ ממך · בקרים · 2 שנות ניסיון</div></div><div class="fit"><div class="pc">88</div><div class="pl">התאמה</div></div></div>
+        <div class="fc"><div class="ci" style="background:#166534">דמ</div><div><div class="cn">דריה מיכאלוב</div><div class="cm">נווה שאנן · 2.4 ק"מ ממך · ערבים · 4 שנות ניסיון</div></div><div class="fit"><div class="pc">82</div><div class="pl">התאמה</div></div></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- V5 -->
+  <div class="vblock">
+    <div class="vlabel"><span class="num">05</span><span class="nm">Cockpit</span><span class="dsc">Dense command center · near-dark · amber data · monospace numbers</span></div>
+    <div class="frame"><div class="v5">
+      <div class="top">
+        <div class="brand"><div class="hmark"><svg width="17" height="17" viewBox="0 0 80 80" fill="none"><path d="M22,16 L22,64" stroke="#fff" stroke-width="10" stroke-linecap="round"/><path d="M58,16 L58,64" stroke="#fff" stroke-width="10" stroke-linecap="round"/><path d="M22,42 C22,26 58,26 58,42" stroke="#fff" stroke-width="9" stroke-linecap="round" fill="none"/></svg></div><b>Huntch</b></div>
+        <div class="tabs"><a class="on">סקירה</a><a>משרות</a><a>מאגר</a><a>גיוס QR</a></div>
+        <div class="av">ל</div>
+      </div>
+      <div class="grid">
+        <div class="m"><div class="n a">7</div><div class="l">מועמדים חדשים</div><div class="d">+3 מאתמול</div></div>
+        <div class="m"><div class="n">3</div><div class="l">הוזמנו לראיון</div><div class="d">2 ממתינים</div></div>
+        <div class="m"><div class="n">2</div><div class="l">משרות פעילות</div><div class="d">בריסטה · מלצר</div></div>
+        <div class="m"><div class="n">41</div><div class="l">במאגר השכונתי</div><div class="d">רדיוס 3 ק"מ</div></div>
+      </div>
+      <div class="lower">
+        <div class="pane">
+          <h3>מועמדים מומלצים · בריסטה</h3>
+          <div class="trow"><div class="ci" style="background:#f59e0b">נל</div><div><div class="cn">נועה לוי</div><div class="cm">הדר · 1.2km · זמינה מיידית</div></div><span class="st" style="background:#34d399">חדש</span><span class="fit">94%</span></div>
+          <div class="trow"><div class="ci" style="background:#fbbf24">אכ</div><div><div class="cn">איתי כהן</div><div class="cm">כרמל · 0.8km · בקרים</div></div><span class="st" style="background:#34d399">חדש</span><span class="fit">88%</span></div>
+          <div class="trow"><div class="ci" style="background:#d97706">דמ</div><div><div class="cn">דריה מיכאלוב</div><div class="cm">נווה שאנן · 2.4km · ערבים</div></div><span class="st" style="background:#60a5fa">הוזמן</span><span class="fit">82%</span></div>
+          <div class="trow"><div class="ci" style="background:#f59e0b">יא</div><div><div class="cn">יוסף אבוטבול</div><div class="cm">מרכז · 1.6km · גמיש</div></div><span class="st" style="background:#60a5fa">הוזמן</span><span class="fit">79%</span></div>
+        </div>
+        <div class="pane">
+          <h3>איתות גיוס QR</h3>
+          <div class="gauge">
+            <div class="grow"><div class="gl"><span>סריקות השבוע</span><span class="gv">28</span></div><div class="gb"><i style="width:70%"></i></div></div>
+            <div class="grow"><div class="gl"><span>נרשמו דרך הקוד</span><span class="gv">12</span></div><div class="gb"><i style="width:43%"></i></div></div>
+            <div class="grow"><div class="gl"><span>אחוז המרה</span><span class="gv">43%</span></div><div class="gb"><i style="width:43%"></i></div></div>
+            <div class="grow"><div class="gl"><span>זמן מילוי ממוצע</span><span class="gv">11ש׳</span></div><div class="gb"><i style="width:55%"></i></div></div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+</div>
+</body>
+</html>

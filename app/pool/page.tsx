@@ -1,37 +1,49 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useStore } from '@/lib/store';
 import Header from '@/components/Header';
-import Sidebar from '@/components/Sidebar';
 import BottomNav from '@/components/BottomNav';
-import PostJobModal from '@/components/PostJobModal';
-import GapTriggerModal from '@/components/GapTriggerModal';
 import Toasts, { addToast } from '@/components/Toasts';
 import { parseCSV } from '@/lib/csv';
+import type { Role } from '@/lib/types';
+
+const ROLE_HE: Record<string, string> = {
+  barista: 'בריסטה', server: 'מלצרות', cook: 'טבחות', 'line-cook': 'טבח קו',
+  dishwasher: 'שטיפה', bartender: 'ברמנות', cashier: 'קופה', host: 'מארח/ת',
+  delivery: 'שליחות', 'shift-manager': 'אחמ״ש',
+};
+
+const FILTERS: { key: string; label: string }[] = [
+  { key: 'all', label: 'הכל' },
+  { key: 'barista', label: 'בריסטה' },
+  { key: 'server', label: 'מלצרות' },
+  { key: 'cook', label: 'טבחות' },
+  { key: 'dishwasher', label: 'שטיפה' },
+  { key: 'near', label: 'עד 2 ק"מ' },
+];
 
 export default function PoolPage() {
   const store = useStore();
   const [hydrated, setHydrated] = useState(false);
   const [query, setQuery] = useState('');
-  const [postOpen, setPostOpen] = useState(false);
-  const [gapOpen, setGapOpen] = useState(false);
+  const [filter, setFilter] = useState('all');
   const fileRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    useStore.persist.rehydrate();
-    setHydrated(true);
-  }, []);
-
+  useEffect(() => { useStore.persist.rehydrate(); setHydrated(true); }, []);
   if (!hydrated) return null;
 
+  const newCount = store.newCandidateCount();
+  const activeJobCount = store.jobs.filter(j => j.status === 'active').length;
+
   const filtered = store.pool.filter(c => {
-    if (!query) return true;
-    const q = query.toLowerCase();
-    return (
-      c.name.includes(q) ||
-      c.neighborhood.includes(q) ||
-      c.roles.some(r => r.includes(q))
-    );
+    if (query) {
+      const q = query.toLowerCase();
+      if (!(c.name.includes(query) || c.neighborhood.includes(query) || c.roles.some(r => r.includes(q)))) return false;
+    }
+    if (filter === 'near') return c.willingRangeKm <= 2;
+    if (filter !== 'all') return c.roles.includes(filter as Role);
+    return true;
   });
 
   const handleCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,119 +51,65 @@ export default function PoolPage() {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = ev => {
-      const text = ev.target?.result as string;
-      const parsed = parseCSV(text, store.business.id);
+      const parsed = parseCSV(ev.target?.result as string, store.business.id);
       store.bulkAddToPool(parsed);
-      addToast('g', `יובאו ${parsed.length} מועמדים למאגר`);
+      addToast('g', `יובאו ${parsed.length} מועמדים בהצלחה`);
     };
     reader.readAsText(file, 'utf-8');
     e.target.value = '';
   };
 
-  const ROLE_HE: Record<string, string> = {
-    barista: 'בריסטה', server: 'מלצר/ית', cook: 'טבח/ית', 'line-cook': 'טבח קו',
-    dishwasher: 'שטיפה', bartender: 'ברמן/ית', cashier: 'קופאי/ת',
-    host: 'מארח/ת', delivery: 'שליח/ה', 'shift-manager': 'אחמ״ש',
-  };
-
-  const SOURCE_LABEL: Record<string, string> = {
-    'apply-form': 'טופס הגשה', 'csv-import': 'ייבוא CSV', direct: 'ישיר', 'lead-ad': 'מודעת לידים',
-  };
-
   return (
     <div className="app">
-      <Header />
+      <Header operatorInitial={store.business.operatorName[0] ?? 'ל'} newCount={newCount} activeJobCount={activeJobCount} />
       <div className="body">
-        <Sidebar
-          newCount={store.newCandidateCount()}
-          invitedCount={store.invitedCount()}
-          activeJobCount={store.jobs.filter(j => j.status === 'active').length}
-          onPostJob={() => setPostOpen(true)}
-          onGapTrigger={() => setGapOpen(true)}
-        />
-
         <main className="main">
-          <div className="page-title-row">
-            <span className="page-title">מאגר כישרונות</span>
-          </div>
-          <div style={{ fontSize: 12, color: '#aaa', marginBottom: 4 }}>
-            {store.pool.length} מועמדים · כולל הסכמה לקבלת הודעות (opt-in בלבד)
-          </div>
-
-          {/* Toolbar */}
-          <div className="pool-toolbar">
-            <input
-              className="search-input"
-              type="search"
-              placeholder="חפש לפי שם, שכונה, תפקיד..."
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-            />
-            <button className="btn-secondary" onClick={() => fileRef.current?.click()}>
-              <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              ייבוא CSV
-            </button>
-            <input ref={fileRef} type="file" accept=".csv" style={{ display: 'none' }} onChange={handleCSV} />
-          </div>
-
-          {/* CSV hint */}
-          <div style={{ fontSize: 11, color: '#ccc', marginBottom: 16, padding: '8px 12px', background: 'rgba(0,0,0,0.03)', borderRadius: 8 }}>
-            פורמט CSV: name, neighborhood, age, roles, shifts, languages, wagenis, experience
-          </div>
-
-          {/* Pool list */}
-          {filtered.length === 0 ? (
-            <div className="empty-state">
-              <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-              <h3>{query ? 'אין תוצאות' : 'המאגר ריק'}</h3>
-              <p>{query ? 'נסה חיפוש אחר' : 'ייבא מועמדים מ-CSV'}</p>
+          <div className="feed">
+            <div className="scr-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              מאגר שכונתי
+              <button className="btn-ghost" style={{ fontSize: 12.5, padding: '8px 12px' }} onClick={() => fileRef.current?.click()}>ייבוא CSV</button>
+              <input ref={fileRef} type="file" accept=".csv" style={{ display: 'none' }} onChange={handleCSV} />
             </div>
-          ) : (
-            <div className="cands">
-              {filtered.map((c, i) => (
-                <article
-                  key={c.id}
-                  className="cand in"
-                  style={{ animationDelay: `${i * 40}ms` }}
-                >
-                  <div className="av" style={{ background: c.avatarColor }}>{c.initials}</div>
-                  <div className="cand-info">
-                    <div className="cand-name">{c.name}</div>
-                    <div className="cand-facts">
-                      <span>{c.neighborhood}</span>
-                      <span className="cdot" />
-                      <span>{c.roles.slice(0, 2).map(r => ROLE_HE[r] ?? r).join('/')}</span>
-                      <span className="cdot" />
-                      <span>{c.experience.totalYears} שנות ניסיון</span>
-                    </div>
-                  </div>
-                  <div className="cand-right">
-                    <span
-                      style={{
-                        padding: '2px 8px', borderRadius: 100, fontSize: 10.5, fontWeight: 700,
-                        background: 'rgba(0,0,0,0.05)', color: '#aaa', border: '1px solid rgba(0,0,0,0.08)',
-                      }}
-                    >
-                      {SOURCE_LABEL[c.consentSource] ?? c.consentSource}
-                    </span>
-                    <button
-                      className={`ico${store.savedCandidateIds.includes(c.id) ? ' saved' : ''}`}
-                      onClick={() => { store.saveCandidate(c.id); addToast('a', 'נשמר'); }}
-                      aria-label="שמור"
-                    >
-                      <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-                    </button>
-                  </div>
-                </article>
+
+            <div className="search-bar">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input type="search" placeholder="חפש לפי שם, תפקיד או שכונה…" value={query} onChange={e => setQuery(e.target.value)} />
+            </div>
+
+            <div className="filter-row">
+              {FILTERS.map(f => (
+                <button key={f.key} className={`fchip ${filter === f.key ? 'on' : ''}`} onClick={() => setFilter(f.key)}>{f.label}</button>
               ))}
             </div>
-          )}
+
+            <div className="pool-count">{filtered.length} עובדים{filter === 'near' ? ' עד 2 ק"מ' : ' ברדיוס 3 ק"מ'}</div>
+
+            {filtered.length === 0 ? (
+              <div className="empty-state">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                <h3>{query || filter !== 'all' ? 'אין תוצאות' : 'עדיין אין מועמדים'}</h3>
+                <p>{query || filter !== 'all' ? 'נסה סינון אחר' : 'ייבא מועמדים מ-CSV או שתף את קוד ה-QR'}</p>
+              </div>
+            ) : (
+              filtered.map((c, i) => (
+                <Link key={c.id} href={`/candidate/${c.id}`} className="fc in" style={{ transitionDelay: `${i * 30}ms` }}>
+                  <div className="fc-av" style={{ background: c.avatarColor }}>{c.initials}</div>
+                  <div className="fc-info">
+                    <div className="fc-name">{c.name}</div>
+                    <div className="fc-facts">
+                      <span>{ROLE_HE[c.roles[0]] ?? c.roles[0]}</span>
+                      <span className="cdot" /><span>{c.neighborhood}</span>
+                      <span className="cdot" /><span>{c.willingRangeKm} ק"מ</span>
+                    </div>
+                  </div>
+                  <div className="fc-fit"><div className="pc">{c.experience.totalYears}<span style={{ fontSize: 13 }}>ש׳</span></div><div className="pl">ניסיון</div></div>
+                </Link>
+              ))
+            )}
+          </div>
         </main>
       </div>
-
-      <BottomNav onPostJob={() => setPostOpen(true)} />
-      <PostJobModal open={postOpen} onClose={() => setPostOpen(false)} />
-      <GapTriggerModal open={gapOpen} onClose={() => setGapOpen(false)} />
+      <BottomNav newCount={newCount} activeJobCount={activeJobCount} />
       <Toasts />
     </div>
   );

@@ -225,7 +225,7 @@ export default function ApplyPage({ params }: { params: Promise<{ jobId: string 
               id="immediate"
               checked={immediate}
               onChange={e => setImmediate(e.target.checked)}
-              style={{ width: 16, height: 16, accentColor: '#c47820' }}
+              style={{ width: 16, height: 16, accentColor: '#2e6b46' }}
             />
             <label htmlFor="immediate" style={{ fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
               פנוי/ה מיידית

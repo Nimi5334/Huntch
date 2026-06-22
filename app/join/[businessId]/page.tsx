@@ -124,7 +124,7 @@ export default function JoinPage({ params }: { params: Promise<{ businessId: str
               תודה, {name.split(' ')[0]}!
             </h2>
             <p style={{ fontSize: 13, color: '#888', marginBottom: 20 }}>
-              תודה! הצטרפת לבריכה המקומית. כשתהיה הזדמנות עבודה לידך, תקבל/י הודעה ב-WhatsApp.
+              נרשמת בהצלחה! כשתהיה הצעת עבודה רלוונטית לידך, נשלח לך הודעה ישירות בוואטסאפ.
             </p>
             <div style={{
               fontSize: 11, color: '#bbb', padding: '10px 14px',
@@ -194,10 +194,10 @@ export default function JoinPage({ params }: { params: Promise<{ businessId: str
             </div>
           ) : null}
           <h1 style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 4 }}>
-            {business ? `הצטרף/י לבריכת העובדים של ${business.name}` : 'הצטרף לבריכת העובדים של Huntch'}
+            {business ? `עבודה קרוב אלייך, ב${business.name}` : 'מצא/י עבודה קרוב אלייך'}
           </h1>
           <p style={{ fontSize: 12.5, color: '#999', marginBottom: 20 }}>
-            מלאו את הפרטים — כשתהיה הזדמנות עבודה לידכם, תקבלו הודעה ב-WhatsApp.
+            מלאו את הפרטים — נשלח לכם הצעות רלוונטיות ישירות לוואטסאפ.
           </p>
         </div>
 
@@ -304,14 +304,14 @@ export default function JoinPage({ params }: { params: Promise<{ businessId: str
               required
               checked={consent}
               onChange={e => setConsent(e.target.checked)}
-              style={{ width: 16, height: 16, marginTop: 2, accentColor: '#c47820', flexShrink: 0 }}
+              style={{ width: 16, height: 16, marginTop: 2, accentColor: '#2e6b46', flexShrink: 0 }}
             />
             <label htmlFor="qr-consent" style={{ fontSize: 12.5, color: '#555', lineHeight: 1.5, cursor: 'pointer' }}>
               אני מסכים/ה לקבל הצעות עבודה מ-Huntch בוואטסאפ. ניתן להסיר הסכמה בכל עת על-ידי שליחת STOP.
             </label>
           </div>
 
-          <button type="submit" className="btn-full">הצטרפות לבריכה</button>
+          <button type="submit" className="btn-full">שלח/י פרטים</button>
         </form>
       </div>
     </div>
