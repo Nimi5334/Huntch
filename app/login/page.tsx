@@ -119,7 +119,7 @@ export default function LoginPage() {
               {/* Demo hint */}
               <div className="demo-hint">
                 <span className="demo-dot" />
-                הדגמה: <b>050-000-0000</b> / <b>demo123</b>
+                הדגמה: <b>0500000000</b> / <b>533433</b>
               </div>
 
               <div className="field">

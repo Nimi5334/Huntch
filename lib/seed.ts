@@ -9,7 +9,7 @@ export const DEMO_BUSINESS: Business = {
   operatorName: 'לוסיה',
   staffingState: 'has-gaps',
   phone: '0500000000',
-  password: 'demo123',
+  password: '533433',
 };
 
 export const DEMO_JOB: Job = {
