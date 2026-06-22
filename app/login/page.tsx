@@ -95,7 +95,7 @@ export default function LoginPage() {
       <div style={{ width: '100%', maxWidth: 440 }}>
 
         {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 32, justifyContent: 'center' }}>
+        <div className="login-logo" style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 32, justifyContent: 'center' }}>
           <div className="h-mark" style={{ width: 38, height: 38, borderRadius: 11, background: 'var(--ink)', display: 'grid', placeItems: 'center' }}>
             {HMARK}
           </div>
