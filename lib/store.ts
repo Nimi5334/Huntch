@@ -258,7 +258,7 @@ export const useStore = create<HuntchState>()(
       },
     }),
     {
-      name: 'huntch-store',
+      name: 'huntch-store-v1',
       skipHydration: true,
     }
   )
