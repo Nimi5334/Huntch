@@ -1,5 +1,5 @@
 'use client';
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import Toasts, { addToast } from '@/components/Toasts';
@@ -14,8 +14,9 @@ const SHIFT_HE: Record<string, string> = {
 };
 const LANG_HE: Record<string, string> = { he: 'עברית', ar: 'ערבית', en: 'אנגלית', ru: 'רוסית' };
 
-export default function CandidateProfile({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+// Inner component — useSearchParams() MUST live inside a <Suspense> boundary
+// (Next.js App Router webpack requirement; local Turbopack is lenient but Vercel is not)
+function CandidateProfileInner({ id }: { id: string }) {
   const router = useRouter();
   const jobId = useSearchParams().get('job') ?? 'job-1';
   const store = useStore();
@@ -27,7 +28,8 @@ export default function CandidateProfile({ params }: { params: Promise<{ id: str
   const cand = store.pool.find(c => c.id === id);
   if (!cand) {
     return (
-      <div className="app"><div className="back-bar"><span className="ar" onClick={() => router.back()}>→</span><b>פרופיל מועמד</b></div>
+      <div className="app">
+        <div className="back-bar"><span className="ar" style={{ cursor: 'pointer' }} onClick={() => router.back()}>→</span><b>פרופיל מועמד</b></div>
         <div className="empty-state" style={{ paddingTop: 80 }}><h3>המועמד לא נמצא</h3></div>
       </div>
     );
@@ -38,7 +40,7 @@ export default function CandidateProfile({ params }: { params: Promise<{ id: str
   const invited = store.invitedIdsForJob(jobId).includes(id);
   const saved = store.savedCandidateIds.includes(id);
 
-  const distanceTxt = `${cand.willingRangeKm <= 2 ? 'קרוב' : ''} · ${cand.hasCar ? 'ברכב' : 'ברגל / אופניים'}`;
+  const distanceTxt = ` · ${cand.hasCar ? 'ברכב' : 'ברגל / אופניים'}`;
   const availTxt = `${cand.availability.immediate ? 'מיידית' : `החל מ-${cand.availability.earliestStart}`} · ${cand.availability.shifts.map(s => SHIFT_HE[s]).join(', ')}`;
   const expTxt = `${cand.experience.totalYears} שנים${cand.experience.notableWorkplaces.length ? ` — ${cand.experience.notableWorkplaces.slice(0, 2).join(', ')}` : ''}`;
 
@@ -74,5 +76,20 @@ export default function CandidateProfile({ params }: { params: Promise<{ id: str
       </div>
       <Toasts />
     </div>
+  );
+}
+
+// Outer shell — unwraps params, provides Suspense boundary for useSearchParams()
+export default function CandidateProfile({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  return (
+    <Suspense fallback={
+      <div className="app">
+        <div className="back-bar"><b>פרופיל מועמד</b></div>
+        <div className="empty-state" style={{ paddingTop: 80 }}><h3>טוען…</h3></div>
+      </div>
+    }>
+      <CandidateProfileInner id={id} />
+    </Suspense>
   );
 }
