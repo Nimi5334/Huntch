@@ -12,7 +12,7 @@
 
 Huntch is a two-sided local hiring marketplace, and the research is unanimous that hourly-labor marketplaces live or die on **liquidity in one geography before anything else**. For a solo founder with no ad budget, the winning move is not mass enrollment of either side — it is **founder-brokered, concierge liquidity in a single Carmel Center café cluster**:
 
-> Recruit a small **starter bench** of workers → sign a handful of cafés with a **free first hire** → **hand-match every early gap yourself** → let each successful fill fund the next worker and the next café. Automate nothing and expand nowhere until that one cluster is liquid.
+> Recruit a small **starter bench** of workers → sign a handful of cafés on a **free pilot** → **hand-match every early gap yourself** → convert that proven trust into paying monthly subscriptions. Automate nothing and expand nowhere until that one cluster is liquid.
 
 Two structural advantages make this winnable in Haifa specifically: **WhatsApp-native onboarding with no app download** (every competitor forces an app), and a later **Arabic-language supply lever** that no incumbent has (deferred to phase 2, used when expanding down to Hadar / the lower city).
 
@@ -111,20 +111,20 @@ All organic/physical/community/referral. **No paid ads in the engine** — they'
 ## 6. Motion B — How businesses adopt *and keep using* it (demand)
 
 ### The pitch — sell the event, not the product
-> *"מלצר/בריסטה עזב? תקבל/י רשימת מועמדים זמינים מהשכונה בוואטסאפ — מדורגים לפי התאמה — ומשלמ/ת רק כשמישהו שמתקבל באמת מגיע ונשאר."*
+> *"מלצר/בריסטה עזב? תקבל/י רשימת מועמדים זמינים מהשכונה בוואטסאפ — מדורגים לפי התאמה. חינם לחלוטין בתקופת הפיילוט; אחר כך מנוי חודשי פשוט — פחות מעלות של קריאה אחת לחברת כוח אדם."*
 
-It works because it (a) attaches to a real, recurring, painful event, (b) lives on WhatsApp where the owner already operates, (c) reverses risk via the contingency model owners already trust, and (d) sells the thing they value most — **time saved on a task they hate.** For Carmel Center's steadier venues, co-lead with **quality/fit/reliability** ("a barista who actually shows up and suits your room"), not just speed.
+It works because it (a) attaches to a real, recurring, painful event, (b) lives on WhatsApp where the owner already operates, (c) reverses risk via a genuinely free pilot period (not a contingency fee you can't verify), and (d) sells the thing they value most — **time saved on a task they hate.** For Carmel Center's steadier venues, co-lead with **quality/fit/reliability** ("a barista who actually shows up and suits your room"), not just speed.
 
 **Anchor the price against what they pay today:** ~₪90–100/hr for a waiter via a manpower agency, a dishwasher costing up to ₪20k/mo in the shortage, agency placement fees of 15–20% of first-year salary, or simply a capped, under-staffed night of lost covers.
 
 ### Acquiring the first 10 owners — the Toast restaurant playbook (most directly relevant evidence)
 - **Door-to-door, inside the cluster.** In-person converts ~3× remote; owners don't read email and work on-site. This is a solo founder's highest-leverage activity.
 - **Open with the problem, demo on their phone in <5 minutes.** "When someone quits on you on a Friday, what do you actually do?" — then show a real ranked shortlist on the owner's own WhatsApp. That live moment is the "aha."
-- **Free first hire (risk reversal), not freemium.** Free-trial→paid runs ~15–25% for SMB; pure freemium ~2–5% and it devalues the product. Offer money-back on the first placement.
+- **Free pilot period (risk reversal) — not freemium, not pay-per-hire.** A time-boxed free trial of full matching converts at ~15–25% for SMB; pure freemium converts ~2–5% and devalues the product; pay-per-hire is unverifiable and unenforceable (you can't confirm the hire happened or force payment, and it invites disintermediation). The free pilot itself is the risk reversal.
 - **Be a local ecosystem player.** Get plugged into the cluster's suppliers and the scene; owners trust peers and locals, not vendors.
 
 ### Acquiring the next 100 — turn density + peers into a loop
-- **Referral engine, built in.** ~1 in 5 restaurant deals come from referrals; referred customers are far more likely to refer again. Reward = free-hire credit for both sides; on WhatsApp the referral is a single forward.
+- **Referral engine, built in.** ~1 in 5 restaurant deals come from referrals; referred customers are far more likely to refer again. Reward = subscription credit (e.g., a free month) for both sides; on WhatsApp the referral is a single forward.
 - **Density compounds trust.** "3 cafés on מוריה already hire with Huntch" → owners adopt what neighbors use. Saturate Carmel Center to "standard tool" status before moving on.
 - **Borrow incumbent trust (when ready):** POS co-marketing (Tabit sits in owners' hands daily), Wolt merchant-ops referral wedge, and the **Restaurant & Bars Association** — the staffing shortage is *their* headline issue, a natural co-marketing angle (and their annual כנס המסעדנות concentrates owners).
 
@@ -161,13 +161,17 @@ Hiring is the textbook worst case for leakage — high-value, repeat, trust-base
 
 ---
 
-## 9. Pricing (marketing-relevant only)
+## 9. Pricing & monetization
 
-- **Acquisition offer:** first successful hire **free / money-back.** Risk reversal is the proven SMB unlock.
-- **Run rate:** a **low flat monthly** (keeps the matching tool "armed" and builds the habit/relationship) **+** a **modest per-successful-hire fee, set below the 15–20%-of-salary agency benchmark.**
-- **Avoid** *pure* pay-per-hire (trains cherry-picking, builds no habit) and *pure* freemium (2–5% conversion, devalues the product).
-- **Founding lock** for the first ~20 Carmel Center businesses → loyalty + referral fuel at near-zero cost.
-- **Validate before locking numbers:** interview owners for (a) the real cost of an empty shift and (b) actual local agency fees — these are the two persuasion anchors and the only material gaps in the public data.
+**Model: a flat monthly subscription — NOT pay-per-hire.** Pay-per-successful-hire is rejected because it is **unverifiable and unenforceable**: you cannot confirm a hire happened (the owner can simply say "didn't work out" and hire directly), you have no leverage to collect on a one-time event, and it actively *rewards* owners for routing around the platform (disintermediation — the #1 risk). A subscription ties payment to **ongoing access**, which the platform controls — don't pay, lose access to the pool and matching. It is enforceable (card on file via Stripe, service gated on payment), predictable, and builds the habit/"infrastructure" relationship that makes the product sticky. It also defuses disintermediation: you stop policing individual hires and sell continuous access instead — even an owner who hires someone directly once keeps paying for the next match.
+
+**Two-phase rollout:**
+1. **Trust-building (free pilot):** the first ~10 Carmel Center businesses get **full access free for a limited window (~2–3 months)** — long enough to witness real, fast fills and produce the case study. Free during the pilot *is* the risk reversal; the founder hand-brokers every match so it works.
+2. **Monetization:** convert to a flat monthly subscription for **everyone, including the original 10.** The 10 pioneers get a **locked "founding price"** (discount held long-term) as a reward for being first and to fuel referrals. By conversion time they are already habituated and their own pool is built, so churn risk is low.
+
+**Price anchoring:** a modest monthly subscription is trivial against the real alternative — an empty shift, a ₪90–100/hr manpower-agency call, or screening 40 strangers from a Facebook group. The barrier was never price; it is *belief that it works*. That is why the free pilot comes first.
+
+**Validate before locking the number:** interview owners for (a) the real cost of an empty shift and (b) actual local agency fees — the two persuasion anchors and the only material gaps in the public data.
 
 ---
 
@@ -190,19 +194,20 @@ Hiring is the textbook worst case for leakage — high-value, repeat, trust-base
 - Target a **small, fresh, reachable bench** (quality over quantity) concentrated in/near the cluster. Personal WhatsApp welcome to every opt-in within 24h.
 
 ### Weeks 4–6 — First matches, by hand
-- Return to the 10–12 owners. Demo a real shortlist live on their phone in <5 min. Offer **free first hire**.
+- Return to the 10–12 owners. Demo a real shortlist live on their phone in <5 min. Offer the **free pilot** (full matching, time-boxed ~2–3 months).
 - When the first gap comes in: **do not run the algorithm.** Personally review the bench, call candidates first, brief the owner, be reachable during the first shift. **This match must succeed.**
 - Sign 5–8 venues onto the free **bench manager** (standalone value even before they have a gap).
 
 ### Weeks 6–9 — Build the loop
 - Complete ~10 matches, aim for ≥7 successful. Debrief both sides every time.
 - After each success: ask the owner *"מי עוד אתה מכיר שמתמודד עם זה?"* and facilitate the warm intro. Ask the worker for ~3 friends in hospitality.
-- Stand up the double-sided referral (priority-shift access for workers; hire credit for owners).
+- Stand up the double-sided referral (priority-shift access for workers; subscription credit / free month for owners).
 - Start the **proactive "still fully staffed?" WhatsApp cadence** to owners (top-of-mind between rare Carmel gaps).
 
 ### Weeks 9–13 — Prove the cluster, prep the gate
 - Targets by day ~90: ~50 active workers, ~8 active businesses, ~10 completed matches, **1 documented case study** (the specific-crisis → specific-resolution → specific-endorser story).
 - Track the **hard gate**: fulfilled fill rate trending into the 30–60% band per shift-type.
+- As the free-pilot window closes, **convert the pilot businesses to the flat monthly subscription** (founding price for the first 10) — your first real willingness-to-pay signal; treat the conversion rate as a gate too.
 - Only when the gate is cleared, scope neighborhood #2 (logical next: down toward Hadar / lower city — where the **Arabic lever** switches on).
 
 ---
@@ -219,7 +224,7 @@ Hiring is the textbook worst case for leakage — high-value, repeat, trust-base
 
 ## 12. Top risks & mitigations
 
-1. **Disintermediation (#1, existential):** bench manager + one-tap rebooking rail + repeat-coverage focus + carrots over walls (§8).
+1. **Disintermediation (#1, existential):** subscription model — sell ongoing access, never per-hire (§9) — plus bench manager + one-tap rebooking rail + repeat-coverage focus + carrots over walls (§8).
 2. **Worker churn / ghosting:** enroll just ahead of demand; offer within 21 days; reliability ratings; measure fulfilled matches.
 3. **Premature expansion:** hard liquidity gate before neighborhood #2 (Homejoy's grave).
 4. **Amendment 40 / consent:** opt-in only, attorney-reviewed, inbound-initiated; treat compliance as a trust moat.
