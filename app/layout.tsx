@@ -1,0 +1,39 @@
+import type { Metadata } from 'next';
+import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google';
+import './globals.css';
+
+// SPA prototype: all pages client-side, skip static prerendering
+// Prevents Turbopack crash on Windows path casing (Huntch vs huntch)
+export const dynamic = 'force-dynamic';
+
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-jakarta',
+  display: 'swap',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-mono',
+  display: 'swap',
+});
+
+export const metadata: Metadata = {
+  title: 'Huntch',
+  description: 'גיוס חכם לעסקי מזון ואירוח',
+  manifest: '/manifest.json',
+};
+
+export const viewport = {
+  themeColor: '#faf8f4',
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="he" dir="rtl" className={`${plusJakarta.variable} ${jetbrainsMono.variable}`}>
+      <body>{children}</body>
+    </html>
+  );
+}

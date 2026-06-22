@@ -1,0 +1,21 @@
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  webpack: (config) => {
+    // On Windows, the project directory may be referenced as both "Huntch" (capital H, from original
+    // create-next-app) and "huntch" (lowercase, current path). Webpack treats these as separate
+    // modules, causing two React instances and breaking useContext. Force everything to one path.
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      react: resolve(__dirname, 'node_modules/react'),
+      'react-dom': resolve(__dirname, 'node_modules/react-dom'),
+    };
+    return config;
+  },
+};
+
+export default nextConfig;
