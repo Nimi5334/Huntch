@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
@@ -25,6 +26,7 @@ const FILTERS: { key: string; label: string }[] = [
 
 export default function PoolPage() {
   const store = useStore();
+  const router = useRouter();
   const [hydrated, setHydrated] = useState(false);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
@@ -32,6 +34,7 @@ export default function PoolPage() {
 
   useEffect(() => { useStore.persist.rehydrate(); setHydrated(true); }, []);
   if (!hydrated) return null;
+  if (!store.isLoggedIn) { router.replace('/login'); return null; }
 
   const newCount = store.newCandidateCount();
   const activeJobCount = store.jobs.filter(j => j.status === 'active').length;

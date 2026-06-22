@@ -11,6 +11,7 @@ export default function QrPage() {
 
   useEffect(() => { useStore.persist.rehydrate(); setHydrated(true); }, []);
   if (!hydrated) return null;
+  if (!store.isLoggedIn) { router.replace('/login'); return null; }
 
   const bizId = store.business.id;
   const scans = store.qrScansForBusiness(bizId);

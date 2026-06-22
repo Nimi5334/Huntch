@@ -28,7 +28,9 @@ interface HuntchState {
   qrScansForBusiness: (businessId: string) => QrScan[];
 
   // Actions
-  login: (operatorName: string, bizName: string, bizType: Business['type']) => void;
+  signup: (params: { name: string; type: Business['type']; address: string; operatorName: string; phone: string; password: string }) => void;
+  login: (phone: string, password: string) => boolean;
+  logout: () => void;
   postJob: (params: Omit<Job, 'id' | 'businessId' | 'createdAt' | 'flow' | 'status'>) => string;
   addToPool: (candidate: Omit<Candidate, 'id' | 'businessId' | 'addedAt'>) => void;
   bulkAddToPool: (candidates: Omit<Candidate, 'id' | 'businessId' | 'addedAt'>[]) => void;
@@ -52,7 +54,7 @@ export const useStore = create<HuntchState>()(
       invites: [],
       savedCandidateIds: [],
       dismissedCandidateIds: [],
-      isLoggedIn: true, // start logged in for demo
+      isLoggedIn: false, // must sign up / log in
       qrScans: [],
 
       rankedForJob: (jobId) => {
@@ -109,11 +111,39 @@ export const useStore = create<HuntchState>()(
       qrScansForBusiness: (businessId) =>
         get().qrScans.filter(s => s.businessId === businessId),
 
-      login: (operatorName, bizName, bizType) =>
-        set(s => ({
+      signup: (params) => {
+        const bizId = uid();
+        set({
+          business: {
+            id: bizId,
+            name: params.name,
+            type: params.type,
+            address: params.address,
+            location: { lat: 32.0628, lng: 34.7730 }, // default centre; geocoding is phase-2
+            operatorName: params.operatorName,
+            staffingState: 'has-gaps',
+            phone: params.phone,
+            password: params.password,
+          },
+          jobs: [],
+          invites: [],
+          savedCandidateIds: [],
+          dismissedCandidateIds: [],
+          qrScans: [],
           isLoggedIn: true,
-          business: { ...s.business, name: bizName, type: bizType, operatorName },
-        })),
+        });
+      },
+
+      login: (phone, password) => {
+        const biz = get().business;
+        if (biz.phone === phone && biz.password === password) {
+          set({ isLoggedIn: true });
+          return true;
+        }
+        return false;
+      },
+
+      logout: () => set({ isLoggedIn: false }),
 
       postJob: (params) => {
         const id = uid();

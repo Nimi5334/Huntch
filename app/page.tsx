@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
@@ -15,6 +16,7 @@ const ROLE_HE: Record<string, string> = {
 
 export default function Dashboard() {
   const store = useStore();
+  const router = useRouter();
   const [hydrated, setHydrated] = useState(false);
   const arrivedRef = useRef(false);
 
@@ -26,6 +28,7 @@ export default function Dashboard() {
   }, [hydrated]);
 
   if (!hydrated) return null;
+  if (!store.isLoggedIn) { router.replace('/login'); return null; }
 
   const ranked = store.rankedForJob(DEMO_JOB_ID);
   const invitedIds = new Set(store.invitedIdsForJob(DEMO_JOB_ID));

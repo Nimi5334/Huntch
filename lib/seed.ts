@@ -8,6 +8,8 @@ export const DEMO_BUSINESS: Business = {
   location: { lat: 32.0628, lng: 34.7730 },
   operatorName: 'לוסיה',
   staffingState: 'has-gaps',
+  phone: '0500000000',
+  password: 'demo123',
 };
 
 export const DEMO_JOB: Job = {

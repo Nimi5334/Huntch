@@ -26,6 +26,8 @@ export interface Business {
   location: LatLng;
   operatorName: string;
   staffingState: 'fully-staffed' | 'has-gaps';
+  phone?: string;
+  password?: string;
 }
 
 export interface JobWeights {
