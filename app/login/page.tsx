@@ -14,10 +14,10 @@ const VENUE_TYPES: { value: VenueType; label: string }[] = [
 ];
 
 const HMARK = (
-  <svg width="19" height="19" viewBox="0 0 80 80" fill="none">
-    <path d="M22,16 L22,64" stroke="#fff" strokeWidth="10" strokeLinecap="round"/>
-    <path d="M58,16 L58,64" stroke="#fff" strokeWidth="10" strokeLinecap="round"/>
-    <path d="M22,38 C22,58 58,58 58,38" stroke="#fff" strokeWidth="9" strokeLinecap="round" fill="none"/>
+  <svg width="22" height="22" viewBox="0 0 80 80" fill="none">
+    <path d="M20,12 L20,68" stroke="#fff" strokeWidth="16" strokeLinecap="round"/>
+    <path d="M60,12 L60,68" stroke="#fff" strokeWidth="16" strokeLinecap="round"/>
+    <path d="M20,38 C20,56 60,56 60,38" stroke="#fff" strokeWidth="14" strokeLinecap="round" fill="none"/>
   </svg>
 );
 
