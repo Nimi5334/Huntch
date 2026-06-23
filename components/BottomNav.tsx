@@ -1,4 +1,5 @@
 'use client';
+import React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { MenuBar, type MenuBarItem } from '@/components/ui/bottom-menu';
 
@@ -40,6 +41,13 @@ export default function BottomNav({
 }) {
   const path = usePathname() ?? '';
   const router = useRouter();
+
+  React.useEffect(() => {
+    router.prefetch('/');
+    router.prefetch('/hiring');
+    router.prefetch('/workforce');
+    router.prefetch('/activity');
+  }, [router]);
 
   const items: MenuBarItem[] = [
     { icon: ICONS.home, label: `בית${newCount > 0 ? ` · ${newCount} חדשים` : ''}`, onClick: () => router.push('/'), active: isActive(path, '/') },
