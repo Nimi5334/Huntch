@@ -1,11 +1,8 @@
 'use client';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
-import Header from '@/components/Header';
-import BottomNav from '@/components/BottomNav';
-import Toasts, { addToast } from '@/components/Toasts';
+import { addToast } from '@/components/Toasts';
 import Link from 'next/link';
 import type { ShiftType } from '@/lib/types';
 
@@ -18,20 +15,14 @@ const ROLE_HE: Record<string, string> = {
 
 export default function Dashboard() {
   const store = useStore();
-  const router = useRouter();
-  const [hydrated, setHydrated] = useState(false);
   const [showDaily, setShowDaily] = useState(false);
   const arrivedRef = useRef(false);
 
-  useEffect(() => { useStore.persist.rehydrate(); setHydrated(true); }, []);
-  useEffect(() => { if (hydrated && !store.isLoggedIn) router.replace('/login'); }, [hydrated, store.isLoggedIn, router]);
   useEffect(() => {
-    if (!hydrated || !store.isLoggedIn || arrivedRef.current) return;
+    if (arrivedRef.current) return;
     const t = setTimeout(() => { arrivedRef.current = true; addToast('g', 'מועמדת חדשה נכנסה הרגע'); }, 5500);
     return () => clearTimeout(t);
-  }, [hydrated, store.isLoggedIn]);
-
-  if (!hydrated || !store.isLoggedIn) return null;
+  }, []);
 
   const ranked = store.rankedForJob(DEMO_JOB_ID);
   const invitedIds = new Set(store.invitedIdsForJob(DEMO_JOB_ID));
@@ -82,8 +73,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="app">
-      <Header operatorInitial={store.business.operatorName[0] ?? 'ל'} newCount={newCount} activeJobCount={activeJobs.length} />
+    <>
       <div className="body">
         <main className="main">
           <div className="feed">
@@ -163,7 +153,7 @@ export default function Dashboard() {
                           ))}
                         </div>
                       )}
-                      <Link href="/schedule" style={{ display: 'block', marginTop: 8, fontSize: 11, color: '#4a7a5a', textDecoration: 'none' }}>לוח משמרות מלא ←</Link>
+                      <Link href="/workforce/schedule" style={{ display: 'block', marginTop: 8, fontSize: 11, color: '#4a7a5a', textDecoration: 'none' }}>לוח משמרות מלא ←</Link>
                     </div>
                   </motion.div>
                 )}
@@ -173,7 +163,7 @@ export default function Dashboard() {
             {/* MATCHES */}
             <div id="matches" className="feed-seg">
               <span className="t">הכי מתאימים — בריסטה</span>
-              <Link href={`/jobs/${DEMO_JOB_ID}`}>ראה הכל ←</Link>
+              <Link href={`/hiring/jobs/${DEMO_JOB_ID}`}>ראה הכל ←</Link>
             </div>
             {matches.map((c, i) => (
               <Link key={c.id} href={`/candidate/${c.id}?job=${DEMO_JOB_ID}`} className="fc in" style={{ transitionDelay: `${i * 40}ms` }}>
@@ -215,7 +205,7 @@ export default function Dashboard() {
 
             {/* QR COMPACT */}
             <div className="feed-seg"><span className="t">גיוס דרך QR</span></div>
-            <Link href="/qr" className="qr-compact">
+            <Link href="/hiring/qr" className="qr-compact">
               <div className="sq"><div className="qr-glyph" /></div>
               <div>
                 <div className="nm">הקוד שלך לגיוס</div>
@@ -227,8 +217,6 @@ export default function Dashboard() {
           </div>
         </main>
       </div>
-      <BottomNav newCount={newCount} activeJobCount={activeJobs.length} />
-      <Toasts />
-    </div>
+    </>
   );
 }
