@@ -2,9 +2,11 @@ import type { Metadata } from 'next';
 import { DM_Sans, Libre_Baskerville, Frank_Ruhl_Libre, Heebo, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 
-// SPA prototype: all pages client-side, skip static prerendering
-// Prevents Turbopack crash on Windows path casing (Huntch vs huntch)
-export const dynamic = 'force-dynamic';
+// SPA prototype: pages are client components. We let Next statically
+// prerender the route shells (default behaviour) so client-side navigation is
+// served instantly from the prefetched route cache instead of round-tripping
+// the server on every tab switch. (A previous `force-dynamic` here made every
+// route server-rendered on demand, causing slow, inconsistent page loads.)
 
 // ── Chalk & Cedar type system ──
 // UI text: DM Sans (latin) + Heebo (hebrew). Headlines: Libre Baskerville (latin serif) + Frank Ruhl Libre (hebrew serif).
