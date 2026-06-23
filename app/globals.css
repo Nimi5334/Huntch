@@ -41,7 +41,7 @@
 
 /* ─── RESET ─── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; }
+html, body { height: 100%; max-width: 100%; overflow-x: hidden; }
 body {
   font-family: var(--font-ui), var(--font-he), 'Heebo', system-ui, sans-serif;
   background:
@@ -392,6 +392,18 @@ a { text-decoration: none; color: inherit; }
    JOB DETAIL / FILTER / RESPONDERS  (legacy screens, rethemed)
 ════════════════════════════════════════════════════ */
 .job-layout { display: block; flex: 1; }
+.job-head { position: relative; display: flex; align-items: center; justify-content: center; padding: 14px 56px 12px; }
+.job-back { position: absolute; inset-inline-start: 14px; top: 12px; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); transition: all .13s; }
+.job-back:hover { border-color: #c5d6cb; background: var(--paper); }
+.job-back svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2.4; transform: scaleX(-1); }
+.job-head-center { text-align: center; }
+.job-title-big { font-size: 26px; font-weight: 800; letter-spacing: -.02em; color: var(--ink); line-height: 1.1; }
+.job-head-sub { margin-top: 3px; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted2); }
+.cand-count-card { display: flex; align-items: center; gap: 14px; background: var(--ink); color: #fff; border-radius: 16px; padding: 14px 18px; margin-bottom: 14px; box-shadow: 0 8px 24px -14px rgba(0,0,0,0.4); }
+.cand-count-num { font-family: var(--font-mono,'JetBrains Mono'),monospace; font-size: 30px; font-weight: 800; line-height: 1; color: #fff; }
+.cand-count-txt { display: flex; flex-direction: column; gap: 1px; }
+.cand-count-txt strong { font-size: 14px; font-weight: 700; color: #fff; }
+.cand-count-txt span { font-size: 12px; color: rgba(255,255,255,0.6); }
 .filter-panel { padding: 14px 16px; border-bottom: 1px solid var(--line); background: var(--card); }
 .filter-head { font-size: 14px; font-weight: 700; margin-bottom: 16px; }
 .filter-section { margin-bottom: 18px; }
@@ -424,28 +436,30 @@ a { text-decoration: none; color: inherit; }
 .simulate-btn { display: inline-flex; align-items: center; gap: 7px; padding: 12px 18px; background: var(--ink); color: #fff; border-radius: 12px; font-size: 13.5px; font-weight: 700; }
 .simulate-btn svg { width: 14px; height: 14px; fill: none; stroke: #fff; stroke-width: 2; }
 
-/* legacy candidate row (.cand) kept for job detail / responders, rethemed */
+/* candidate card (.cand) — two-row layout so actions always stay inside the frame */
 .cands { display: flex; flex-direction: column; gap: 11px; }
-.cand { display: flex; align-items: center; gap: 14px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 15px; opacity: 0; transform: translateY(8px); transition: opacity .4s, transform .4s, border-color .14s; }
+.cand { display: flex; flex-direction: column; align-items: stretch; gap: 11px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 13px; min-width: 0; opacity: 0; transform: translateY(8px); transition: opacity .4s, transform .4s, border-color .14s; }
 .cand.in { opacity: 1; transform: none; }
 .cand:hover { border-color: #c5d6cb; }
 .cand.invited { background: var(--accent-soft); border-color: rgba(46,107,70,.2); }
 .cand.dismissed { display: none; }
 .cand.arrival { animation: flash .9s ease-out forwards; }
-.av { width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center; font-size: 16px; font-weight: 700; flex: none; color: #fff; }
+.cand-top { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.av { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; font-size: 15.5px; font-weight: 700; flex: none; color: #fff; }
 .cand-info { flex: 1; min-width: 0; }
-.cand-name { font-size: 15.5px; font-weight: 700; }
-.cand-facts { display: flex; align-items: center; font-size: 12.5px; color: var(--muted); margin-top: 3px; flex-wrap: wrap; }
+.cand-name { font-size: 15px; font-weight: 700; }
+.cand-facts { display: flex; align-items: center; font-size: 12px; color: var(--muted); margin-top: 3px; flex-wrap: wrap; }
 .cdot { display: inline-block; width: 2px; height: 2px; border-radius: 50%; background: #cdd6cf; margin: 0 7px; flex: none; }
-.cand-right { display: flex; align-items: center; gap: 10px; flex: none; }
-.badge { padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.cand-top .score { flex: none; margin-inline-start: auto; }
+.cand-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 11px; border-top: 1px solid var(--line); }
+.badge { padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; margin-inline-end: auto; }
 .badge.ex { background: var(--accent-soft); color: var(--accent); }
 .badge.gd { background: var(--accent-soft); color: var(--accent); }
 .badge.md { background: var(--paper); color: var(--muted); }
-.score { font-family: var(--font-mono,'JetBrains Mono'),monospace; font-size: 19px; font-weight: 800; color: var(--accent); min-width: 38px; text-align: center; }
-.btn-invite { font-size: 13px; font-weight: 700; color: #fff; background: var(--accent); border-radius: 10px; padding: 8px 14px; white-space: nowrap; transition: opacity .15s; }
+.score { font-family: var(--font-mono,'JetBrains Mono'),monospace; font-size: 19px; font-weight: 800; color: var(--accent); text-align: center; }
+.btn-invite { font-size: 13px; font-weight: 700; color: #fff; background: var(--accent); border-radius: 10px; padding: 8px 18px; white-space: nowrap; transition: opacity .15s; }
 .btn-invite:hover { opacity: .9; }
-.ico { width: 36px; height: 36px; border-radius: 11px; border: 1px solid var(--line); background: var(--card); display: grid; place-items: center; color: var(--muted2); transition: all .13s; }
+.ico { width: 36px; height: 36px; border-radius: 11px; border: 1px solid var(--line); background: var(--card); display: grid; place-items: center; color: var(--muted2); flex: none; transition: all .13s; }
 .ico:hover { border-color: #c5d6cb; color: var(--muted); }
 .ico.saved { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
 .ico svg { width: 15px; height: 15px; stroke-width: 1.9; fill: none; stroke: currentColor; }

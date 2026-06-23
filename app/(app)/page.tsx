@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/lib/store';
 import { addToast } from '@/components/Toasts';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import MinimalButton from '@/components/ui/minimal-button';
 import type { ShiftType } from '@/lib/types';
 
 const DEMO_JOB_ID = 'job-1';
@@ -15,6 +17,7 @@ const ROLE_HE: Record<string, string> = {
 
 export default function Dashboard() {
   const store = useStore();
+  const router = useRouter();
   const [showDaily, setShowDaily] = useState(false);
   const arrivedRef = useRef(false);
 
@@ -123,11 +126,10 @@ export default function Dashboard() {
                     <div style={{ padding: '11px 14px 9px' }}>
                       <div style={{ fontSize: 9.5, fontWeight: 600, letterSpacing: '0.07em', color: '#7c5c3e', opacity: 0.7, textTransform: 'uppercase', marginBottom: 3 }}>המשימה של היום</div>
                       <div style={{ fontSize: 13, fontWeight: 600, color: '#221b16' }}>{newCount} מועמדים ממתינים לתשובה</div>
-                      <button
-                        className="focus-cta"
-                        style={{ marginTop: 8, fontSize: 12, padding: '5px 12px' }}
-                        onClick={() => { setShowDaily(false); document.getElementById('matches')?.scrollIntoView({ behavior: 'smooth' }); }}
-                      >עבור על המועמדים</button>
+                      <MinimalButton
+                        className="mt-2 w-full text-[12.5px]"
+                        onClick={() => { setShowDaily(false); router.push(`/hiring/jobs/${DEMO_JOB_ID}`); }}
+                      >עבור על המועמדים</MinimalButton>
                     </div>
 
                     <div style={{ height: 1, background: 'rgba(124,92,62,0.1)' }} />

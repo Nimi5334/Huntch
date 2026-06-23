@@ -54,33 +54,38 @@ export default function CandidateCard({
       ref={ref}
       className={`cand${isInvited ? ' invited' : ''}`}
     >
-      <div className="av" style={{ background: c.avatarColor }}>
-        {c.initials}
-      </div>
-
-      <div className="cand-info">
-        <div className="cand-name">{c.name}</div>
-        <div className="cand-facts">
-          {facts.map((f, i) => (
-            <span key={i}>
-              {i > 0 && <span className="cdot" />}
-              {f}
-            </span>
-          ))}
+      <div className="cand-top">
+        <div className="av" style={{ background: c.avatarColor }}>
+          {c.initials}
         </div>
+
+        <div className="cand-info">
+          <div className="cand-name">{c.name}</div>
+          <div className="cand-facts">
+            {facts.map((f, i) => (
+              <span key={i}>
+                {i > 0 && <span className="cdot" />}
+                {f}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {!isInvited && <span className="score">{c.score}%</span>}
       </div>
 
       {isInvited ? (
-        <div className="inv-badge">
-          <svg viewBox="0 0 24 24" style={{ fill: 'currentColor', stroke: 'none' }}>
-            <path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/>
-          </svg>
-          הוזמן/ה לראיון
+        <div className="cand-actions">
+          <span className="inv-badge">
+            <svg viewBox="0 0 24 24" style={{ fill: 'currentColor', stroke: 'none' }}>
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/>
+            </svg>
+            הוזמן/ה לראיון
+          </span>
         </div>
       ) : (
-        <div className="cand-right">
+        <div className="cand-actions">
           <span className={`badge ${c.badge}`}>{BADGE_LABELS[c.badge]}</span>
-          <span className="score">{c.score}%</span>
           <button className="btn-invite" onClick={onInvite}>הזמנה</button>
           <button
             className={`ico${isSaved ? ' saved' : ''}`}

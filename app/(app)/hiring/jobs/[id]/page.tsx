@@ -81,10 +81,19 @@ export default function JobPage({ params }: { params: Promise<{ id: string }> })
   return (
     <div className="body">
       <div className="job-layout">
+        {/* Centered page header: back arrow + bold job title + "פילטרים" */}
+        <div className="job-head">
+          <Link href="/hiring/jobs" className="job-back" aria-label="חזרה למשרות">
+            <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6" /></svg>
+          </Link>
+          <div className="job-head-center">
+            <h1 className="job-title-big">{ROLE_HE[job.role] ?? job.role}</h1>
+            <div className="job-head-sub">פילטרים</div>
+          </div>
+        </div>
+
         {/* Filter panel */}
         <aside className="filter-panel">
-          <div className="filter-head">פילטרים</div>
-
           <div className="filter-section">
             <div className="filter-label">משמרות</div>
             <div className="filter-chips">
@@ -157,18 +166,13 @@ export default function JobPage({ params }: { params: Promise<{ id: string }> })
 
         {/* Match list */}
         <div className="match-main">
-          {/* Breadcrumb */}
-          <div className="page-title-row">
-            <Link href="/hiring/jobs">
-              <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-              משרות
-            </Link>
-            <span className="crumb-sep">›</span>
-            <span className="page-title">{ROLE_HE[job.role] ?? job.role}</span>
-          </div>
-
-          <div className="section-hd" style={{ marginBottom: 16 }}>
-            <span className="section-title">{filtered.length} מועמדים · ממוינים לפי התאמה</span>
+          {/* Dark info card — candidate count */}
+          <div className="cand-count-card">
+            <span className="cand-count-num">{filtered.length}</span>
+            <div className="cand-count-txt">
+              <strong>מועמדים עם ציון</strong>
+              <span>ממוינים לפי התאמה למשרה</span>
+            </div>
           </div>
 
           {/* Bulk invite bar */}
