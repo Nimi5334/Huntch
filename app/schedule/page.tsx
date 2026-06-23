@@ -26,8 +26,8 @@ export default function SchedulePage() {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => { useStore.persist.rehydrate(); setHydrated(true); }, []);
-  if (!hydrated) return null;
-  if (!store.isLoggedIn) { router.replace('/login'); return null; }
+  useEffect(() => { if (hydrated && !store.isLoggedIn) router.replace('/login'); }, [hydrated, store.isLoggedIn, router]);
+  if (!hydrated || !store.isLoggedIn) return null;
 
   const activeJobs = store.jobs.filter(j => j.status === 'active');
   const newCount = store.newCandidateCount();

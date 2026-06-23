@@ -22,14 +22,14 @@ export default function Dashboard() {
   const arrivedRef = useRef(false);
 
   useEffect(() => { useStore.persist.rehydrate(); setHydrated(true); }, []);
+  useEffect(() => { if (hydrated && !store.isLoggedIn) router.replace('/login'); }, [hydrated, store.isLoggedIn, router]);
   useEffect(() => {
-    if (!hydrated || arrivedRef.current) return;
+    if (!hydrated || !store.isLoggedIn || arrivedRef.current) return;
     const t = setTimeout(() => { arrivedRef.current = true; addToast('g', 'מועמדת חדשה נכנסה הרגע'); }, 5500);
     return () => clearTimeout(t);
-  }, [hydrated]);
+  }, [hydrated, store.isLoggedIn]);
 
-  if (!hydrated) return null;
-  if (!store.isLoggedIn) { router.replace('/login'); return null; }
+  if (!hydrated || !store.isLoggedIn) return null;
 
   const ranked = store.rankedForJob(DEMO_JOB_ID);
   const invitedIds = new Set(store.invitedIdsForJob(DEMO_JOB_ID));

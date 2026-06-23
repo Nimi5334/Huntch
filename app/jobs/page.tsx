@@ -31,8 +31,8 @@ export default function JobsPage() {
   const [gapOpen, setGapOpen] = useState(false);
 
   useEffect(() => { useStore.persist.rehydrate(); setHydrated(true); }, []);
-  if (!hydrated) return null;
-  if (!store.isLoggedIn) { router.replace('/login'); return null; }
+  useEffect(() => { if (hydrated && !store.isLoggedIn) router.replace('/login'); }, [hydrated, store.isLoggedIn, router]);
+  if (!hydrated || !store.isLoggedIn) return null;
 
   const jobs = store.jobs;
   const activeJobs = jobs.filter(j => j.status === 'active');
