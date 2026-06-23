@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { MenuBar, type MenuBarItem } from '@/components/ui/bottom-menu';
 
@@ -41,13 +41,37 @@ export default function BottomNav({
 }) {
   const path = usePathname() ?? '';
   const router = useRouter();
+  const [visible, setVisible] = useState(true);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     router.prefetch('/');
     router.prefetch('/hiring');
     router.prefetch('/workforce');
     router.prefetch('/activity');
   }, [router]);
+
+  // Show briefly on mount, then hide; re-show on any scroll
+  useEffect(() => {
+    const startTimer = () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => setVisible(false), 2200);
+    };
+    const onScroll = () => { setVisible(true); startTimer(); };
+    startTimer();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  // Also show briefly whenever route changes
+  useEffect(() => {
+    setVisible(true);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setVisible(false), 2200);
+  }, [path]);
 
   const items: MenuBarItem[] = [
     { icon: ICONS.home, label: `בית${newCount > 0 ? ` · ${newCount} חדשים` : ''}`, onClick: () => router.push('/'), active: isActive(path, '/') },
@@ -61,7 +85,17 @@ export default function BottomNav({
   return (
     <nav
       className="bottom-nav"
-      style={{ background: 'transparent', borderTop: 'none', backdropFilter: 'none', WebkitBackdropFilter: 'none', justifyContent: 'center', boxShadow: 'none' }}
+      style={{
+        background: 'transparent',
+        borderTop: 'none',
+        backdropFilter: 'none',
+        WebkitBackdropFilter: 'none',
+        justifyContent: 'center',
+        boxShadow: 'none',
+        transform: visible ? 'translateY(0)' : 'translateY(110%)',
+        transition: 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
+        willChange: 'transform',
+      }}
     >
       <MenuBar items={items} />
     </nav>

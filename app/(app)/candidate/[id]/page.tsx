@@ -191,6 +191,8 @@ function CandidateProfileInner({ id }: { id: string }) {
         </div>
       )}
 
+      <div aria-hidden="true" style={{ height: 104 }} />
+
       <div className="prof-cta">
         <button className={`save ${saved ? 'on' : ''}`} aria-label="שמור" onClick={() => { store.saveCandidate(id); addToast('a', 'נשמר לרשימה'); }}>
           {saved ? '♥' : '♡'}

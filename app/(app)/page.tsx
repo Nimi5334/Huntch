@@ -6,7 +6,17 @@ import { addToast } from '@/components/Toasts';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import MinimalButton from '@/components/ui/minimal-button';
-import type { ShiftType } from '@/lib/types';
+import Select from '@/components/ui/select';
+import type { ShiftType, Role } from '@/lib/types';
+
+const ROLE_FILTERS = [
+  { id: '0', label: 'הכי מתאימים', value: 'all',      icon: '🎯', description: 'כל המועמדים לפי ציון התאמה' },
+  { id: '1', label: 'בריסטה',      value: 'barista',  icon: '☕', description: 'מועמדים לתפקיד בריסטה' },
+  { id: '2', label: 'מלצר/ית',     value: 'server',   icon: '🍽️', description: 'מועמדים לשירות שולחנות' },
+  { id: '3', label: 'טבח/ית',      value: 'cook',     icon: '👨‍🍳', description: 'מועמדים למטבח' },
+  { id: '4', label: 'ברמן/ית',     value: 'bartender',icon: '🍸', description: 'מועמדים לבר' },
+  { id: '5', label: 'שליח/ה',      value: 'delivery', icon: '🛵', description: 'מועמדים למשלוחים' },
+];
 
 const DEMO_JOB_ID = 'job-1';
 const ROLE_HE: Record<string, string> = {
@@ -19,6 +29,7 @@ export default function Dashboard() {
   const store = useStore();
   const router = useRouter();
   const [showDaily, setShowDaily] = useState(false);
+  const [roleFilter, setRoleFilter] = useState<string>('all');
   const arrivedRef = useRef(false);
 
   useEffect(() => {
@@ -31,7 +42,9 @@ export default function Dashboard() {
   const invitedIds = new Set(store.invitedIdsForJob(DEMO_JOB_ID));
   const newCount = store.newCandidateCount();
   const activeJobs = store.jobs.filter(j => j.status === 'active');
-  const matches = ranked.filter(c => !invitedIds.has(c.id)).slice(0, 5);
+  const matches = roleFilter === 'all'
+    ? ranked.filter(c => !invitedIds.has(c.id)).slice(0, 5)
+    : ranked.filter(c => c.roles.includes(roleFilter as Role) && !invitedIds.has(c.id)).slice(0, 5);
 
   // AI Daily Shift Summary
   const ALL_SHIFTS: ShiftType[] = ['morning', 'afternoon', 'evening'];
@@ -162,10 +175,14 @@ export default function Dashboard() {
               </AnimatePresence>
             </div>
 
-            {/* MATCHES */}
-            <div id="matches" className="feed-seg">
-              <span className="t">הכי מתאימים — בריסטה</span>
-              <Link href={`/hiring/jobs/${DEMO_JOB_ID}`}>ראה הכל ←</Link>
+            {/* MATCHES with animated role filter */}
+            <div id="matches" style={{ marginBottom: 12 }}>
+              <Select
+                data={ROLE_FILTERS}
+                defaultValue="all"
+                onChange={setRoleFilter}
+                placeholder="סינון לפי תפקיד"
+              />
             </div>
             {matches.map((c, i) => (
               <Link key={c.id} href={`/candidate/${c.id}?job=${DEMO_JOB_ID}`} className="fc in" style={{ transitionDelay: `${i * 40}ms` }}>
@@ -184,7 +201,10 @@ export default function Dashboard() {
             {matches.length === 0 && (
               <div className="empty-state">
                 <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                <h3>עברת על כולם</h3><p>אין מועמדים חדשים כרגע. נעדכן כשמישהו חדש מצטרף.</p>
+                {roleFilter === 'all'
+                  ? <><h3>עברת על כולם</h3><p>אין מועמדים חדשים כרגע. נעדכן כשמישהו חדש מצטרף.</p></>
+                  : <><h3>אין מועמדים לתפקיד זה</h3><p>נסה לסנן לפי תפקיד אחר או הרחב את מאגר המועמדים.</p></>
+                }
               </div>
             )}
 

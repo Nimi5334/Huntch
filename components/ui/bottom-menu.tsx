@@ -90,7 +90,13 @@ export function MenuBar({ items, className, ...props }: MenuBarProps) {
           <button
             key={index}
             type="button"
-            onClick={item.onClick}
+            onPointerDown={(e) => {
+              if (e.pointerType !== 'mouse') {
+                e.preventDefault();
+                item.onClick?.();
+              }
+            }}
+            onClick={() => item.onClick?.()}
             className={cn(
               "w-8 h-8 px-3 py-1 rounded-full flex justify-center items-center gap-2 transition-colors",
               item.active ? "bg-primary text-primary-foreground" : "hover:bg-muted/80"
