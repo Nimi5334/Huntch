@@ -91,7 +91,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="login-shell" style={{ background: 'var(--paper)' }}>
+    <div className="login-shell">
       <div style={{ width: '100%', maxWidth: 440 }}>
 
         {/* Logo */}

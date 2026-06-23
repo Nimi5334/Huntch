@@ -3,29 +3,52 @@
    Forest green · phone-first · friendly · anti-generic
 ════════════════════════════════════════════════════ */
 :root{
-  --accent:#2e6b46;        /* primary forest green */
-  --accent-soft:#eef4f0;   /* tinted green surface */
-  --ink:#16241a;           /* deep near-black green (headers, text) */
-  --paper:#f4f6f4;         /* app background */
-  --card:#ffffff;
-  --line:#e3eae4;
-  --muted:#7c8a80;
-  --muted2:#9aa89e;
-  --amber:#f59e0b;
-  --amber-soft:#fef3e2;
-  --amber-ink:#b45309;
+  /* ── Emerald Zenith palette ── */
+  --accent:#2d5e39;          /* Emerald Glow — primary */
+  --accent-deep:#214428;     /* pressed / deep emerald */
+  --accent-soft:#e7f1ea;     /* tinted mint surface */
+  --ink:#13291b;             /* deep emerald near-black (dark surfaces) */
+  --paper:#eef7f1;           /* soft mint solid (fallback surfaces) */
+
+  /* frosted glass */
+  --card: rgba(255,255,255,0.70);   /* translucent surface — frosted with blur */
+  --card-solid:#ffffff;
+  --line: rgba(33,68,40,0.10);      /* ultra-thin emerald hairline */
+  --glass-line: rgba(33,68,40,0.10);
+  --blur: blur(20px) saturate(1.4);
+  --shadow-glass: 0 14px 38px -22px rgba(19,41,27,0.45);
+  --accent-glow: 0 10px 30px -8px rgba(45,94,57,0.50);
+
+  --muted:#5c7565;
+  --muted2:#90a497;
+  --amber:#d59428;
+  --amber-soft:#fbf1de;
+  --amber-ink:#9a6512;
+
+  --radius:24px;
 }
 
 /* ─── RESET ─── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
 body {
-  font-family: var(--font-jakarta, 'Heebo'), system-ui, sans-serif;
-  background: var(--paper);
+  font-family: var(--font-ui), var(--font-he), 'Heebo', system-ui, sans-serif;
+  background:
+    radial-gradient(135% 90% at 50% -10%, rgba(45,94,57,0.06) 0%, rgba(45,94,57,0) 45%),
+    linear-gradient(168deg, #ffffff 0%, #f1f9f4 48%, #e2f1e9 100%) no-repeat;
+  background-color: #eef7f1;
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
   font-weight: 400;
+  min-height: 100vh;
+}
+
+/* ── Headlines: Playfair Display (latin) + Frank Ruhl Libre (hebrew serif) ── */
+.brand-name, .scr-title, .focus-card h2, .prof-hero h2,
+.login-title, .modal h3, .page-title, .ana-card-title {
+  font-family: var(--font-head), var(--font-head-he), Georgia, 'Heebo', serif;
+  letter-spacing: -0.015em;
 }
 button { font-family: inherit; cursor: pointer; border: none; background: none; }
 a { text-decoration: none; color: inherit; }
@@ -668,3 +691,91 @@ a { text-decoration: none; color: inherit; }
 .shift-sum-sep { width: 1px; height: 30px; background: rgba(255,255,255,.12); }
 .shift-sum-link { display: inline-block; font-size: 12.5px; font-weight: 700; color: rgba(255,255,255,.7); text-decoration: none; }
 .shift-sum-link:hover { color: #fff; }
+
+/* ════════════════════════════════════════════════════
+   EMERALD ZENITH — frosted-glass reskin (overrides)
+   white→mint gradient · backdrop-blur cards · emerald glow
+   24px+ corners · medical-grade premium aesthetic
+════════════════════════════════════════════════════ */
+
+/* ── Header → light frosted bar (was dark) ── */
+.hdr {
+  background: rgba(255,255,255,0.60);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  border-bottom: 1px solid var(--glass-line);
+}
+.brand-name { color: var(--ink); font-weight: 700; }
+.h-mark { background: var(--accent); box-shadow: 0 5px 16px -5px rgba(45,94,57,0.65); }
+.h-mark svg path { stroke: #fff; }
+.hdr-tab { color: var(--muted); }
+.hdr-tab:hover { color: var(--ink); }
+.hdr-tab.on { background: var(--accent-soft); color: var(--accent); }
+.hdr-icon-btn { color: var(--muted); }
+.hdr-icon-btn:hover { background: var(--accent-soft); color: var(--accent); }
+.hdr-icon-btn .ping { border-color: #fff; }
+.hdr-burger i { background: var(--ink); }
+
+/* ── True frosted glass on chrome + single-instance hero surfaces (low repaint cost) ── */
+.login-card, .apply-card, .search-bar, .ana-card, .sch-summary,
+.sch-card, .dna-section, .qr-stat, .modal, .filter-panel {
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  box-shadow: var(--shadow-glass);
+}
+
+/* ── High-count list cards: near-opaque glass tint, NO blur (keeps scroll smooth) ── */
+.fc, .inv-row, .job-card, .resp-card, .cand, .ana-kpi, .leaver-card {
+  background: rgba(255,255,255,0.86);
+  box-shadow: var(--shadow-glass);
+}
+.fc.invited, .cand.invited { background: rgba(231,241,234,0.92); }
+.ana-kpi.accent { background: rgba(231,241,234,0.92); }
+.leaver-card { background: rgba(251,241,222,0.85); }
+
+/* ── 24px+ rounded corners on containers ── */
+.fc, .inv-row, .job-card, .resp-card, .cand, .ana-card,
+.sch-card, .dna-section, .search-bar { border-radius: 24px; }
+.login-card, .apply-card { border-radius: 28px; }
+.qr-big { border-radius: 28px; }
+.modal { border-radius: 28px 28px 0 0; }
+@media (min-width: 560px) { .modal { border-radius: 28px; } }
+
+/* ── Frosted floating navigation ── */
+.bottom-nav {
+  background: rgba(255,255,255,0.72);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  border-top: 1px solid var(--glass-line);
+}
+.drawer {
+  background: rgba(255,255,255,0.85);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+}
+.profile-panel {
+  background: rgba(255,255,255,0.82);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+}
+
+/* ── Emerald Glow on primary actions ── */
+.btn-full, .btn-publish, .btn-invite, .prof-cta .inv, .post-btn {
+  box-shadow: var(--accent-glow);
+}
+.btn-full:hover, .btn-publish:hover, .btn-invite:hover, .prof-cta .inv:hover {
+  box-shadow: 0 12px 34px -6px rgba(45,94,57,0.58);
+}
+.focus-card { box-shadow: 0 20px 48px -20px rgba(45,94,57,0.55); }
+
+/* ── Light shells reveal the body gradient ── */
+.login-shell, .apply-shell { background: transparent; }
+
+/* ── Mint inputs over glass ── */
+.field input, .field select, .field textarea, .otp-input {
+  background: rgba(255,255,255,0.55);
+}
+.field input:focus, .field select:focus, .field textarea:focus, .otp-input:focus {
+  background: rgba(255,255,255,0.85);
+  box-shadow: 0 0 0 3px rgba(45,94,57,0.12);
+}
