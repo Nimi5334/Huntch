@@ -7,6 +7,7 @@ import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
 import Toasts, { addToast } from '@/components/Toasts';
 import { parseCSV } from '@/lib/csv';
+import { computeDna, dnaLabel } from '@/lib/dna';
 import type { Role } from '@/lib/types';
 
 const ROLE_HE: Record<string, string> = {
@@ -94,20 +95,34 @@ export default function PoolPage() {
                 <p>{query || filter !== 'all' ? 'נסה סינון אחר' : 'ייבא מועמדים מ-CSV או שתף את קוד ה-QR'}</p>
               </div>
             ) : (
-              filtered.map((c, i) => (
-                <Link key={c.id} href={`/candidate/${c.id}`} className="fc in" style={{ transitionDelay: `${i * 30}ms` }}>
-                  <div className="fc-av" style={{ background: c.avatarColor }}>{c.initials}</div>
-                  <div className="fc-info">
-                    <div className="fc-name">{c.name}</div>
-                    <div className="fc-facts">
-                      <span>{ROLE_HE[c.roles[0]] ?? c.roles[0]}</span>
-                      <span className="cdot" /><span>{c.neighborhood}</span>
-                      <span className="cdot" /><span>{c.willingRangeKm} ק"מ</span>
+              filtered.map((c, i) => {
+                const dna = computeDna(c);
+                return (
+                  <Link key={c.id} href={`/candidate/${c.id}`} className="fc in" style={{ transitionDelay: `${i * 30}ms` }}>
+                    <div className="fc-av" style={{ background: c.avatarColor }}>{c.initials}</div>
+                    <div className="fc-info">
+                      <div className="fc-name" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {c.name}
+                        <span className={`churn-pip ${dna.churnRisk}`} title={dna.churnRisk === 'high' ? 'סיכון עזיבה גבוה' : dna.churnRisk === 'medium' ? 'סיכון בינוני' : 'יציב'} />
+                      </div>
+                      <div className="fc-facts">
+                        <span>{ROLE_HE[c.roles[0]] ?? c.roles[0]}</span>
+                        <span className="cdot" /><span>{c.neighborhood}</span>
+                        <span className="cdot" /><span>{c.willingRangeKm} ק"מ</span>
+                      </div>
+                      {dna.tags.length > 0 && (
+                        <div className="fc-dna-tags">
+                          {dna.tags.slice(0, 2).map(tag => <span key={tag} className="fc-tag">{tag}</span>)}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                  <div className="fc-fit"><div className="pc">{c.experience.totalYears}<span style={{ fontSize: 13 }}>ש׳</span></div><div className="pl">ניסיון</div></div>
-                </Link>
-              ))
+                    <div className="fc-dna">
+                      <div className="fc-dna-score" style={{ color: dna.score >= 70 ? '#16a34a' : dna.score >= 50 ? 'var(--amber-ink)' : '#b91c1c' }}>{dna.score}</div>
+                      <div className="fc-dna-lbl">DNA</div>
+                    </div>
+                  </Link>
+                );
+              })
             )}
           </div>
         </main>

@@ -3,6 +3,7 @@ import { use, useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import Toasts, { addToast } from '@/components/Toasts';
+import { computeDna, dnaLabel, churnLabel } from '@/lib/dna';
 
 const ROLE_HE: Record<string, string> = {
   barista: 'בריסטה', server: 'מלצרות', cook: 'טבחות', 'line-cook': 'טבח קו',
@@ -39,6 +40,7 @@ function CandidateProfileInner({ id }: { id: string }) {
   const score = ranked?.score ?? null;
   const invited = store.invitedIdsForJob(jobId).includes(id);
   const saved = store.savedCandidateIds.includes(id);
+  const dna = computeDna(cand);
 
   const distanceTxt = ` · ${cand.hasCar ? 'ברכב' : 'ברגל / אופניים'}`;
   const availTxt = `${cand.availability.immediate ? 'מיידית' : `החל מ-${cand.availability.earliestStart}`} · ${cand.availability.shifts.map(s => SHIFT_HE[s]).join(', ')}`;
@@ -64,6 +66,48 @@ function CandidateProfileInner({ id }: { id: string }) {
         <div className="prow"><div className="lab">תפקידים</div><div className="chips">{cand.roles.map(r => <span key={r}>{ROLE_HE[r] ?? r}</span>)}</div></div>
         {cand.skills.length > 0 && <div className="prow"><div className="lab">כישורים</div><div className="chips">{cand.skills.map(s => <span key={s}>{s}</span>)}</div></div>}
         <div className="prow" style={{ borderBottom: 'none' }}><div className="lab">שפות</div><div className="chips">{cand.languages.map(l => <span key={l}>{LANG_HE[l] ?? l}</span>)}</div></div>
+      </div>
+
+      {/* DNA SECTION */}
+      <div className="dna-section">
+        <div className="dna-header">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Worker DNA Engine
+        </div>
+        <div className="dna-top">
+          <div className="dna-big">
+            <div className="dna-big-num" style={{ color: dna.score >= 70 ? '#16a34a' : dna.score >= 50 ? 'var(--amber-ink)' : '#b91c1c' }}>{dna.score}</div>
+            <div className="dna-big-lbl">{dnaLabel(dna.score)}</div>
+          </div>
+          <div className="dna-churn-pill" data-risk={dna.churnRisk}>
+            <span className={`churn-pip ${dna.churnRisk}`} />
+            {churnLabel(dna.churnRisk)}
+          </div>
+        </div>
+
+        <div className="dna-sub-bars">
+          <div className="dna-sub-row">
+            <span className="dna-sub-lbl">אמינות</span>
+            <div className="dna-sub-track"><div className="dna-sub-fill" style={{ width: `${dna.reliability}%` }} /></div>
+            <span className="dna-sub-val">{dna.reliability}</span>
+          </div>
+          <div className="dna-sub-row">
+            <span className="dna-sub-lbl">מהירות מענה</span>
+            <div className="dna-sub-track"><div className="dna-sub-fill" style={{ width: `${dna.responseSpeed}%` }} /></div>
+            <span className="dna-sub-val">{dna.responseSpeed}</span>
+          </div>
+          <div className="dna-sub-row">
+            <span className="dna-sub-lbl">פעילות לאחרונה</span>
+            <div className="dna-sub-track"><div className="dna-sub-fill" style={{ width: `${dna.recency}%` }} /></div>
+            <span className="dna-sub-val">{dna.recency}</span>
+          </div>
+        </div>
+
+        {dna.tags.length > 0 && (
+          <div className="dna-tags">
+            {dna.tags.map(tag => <span key={tag} className="dna-tag">{tag}</span>)}
+          </div>
+        )}
       </div>
 
       <div className="prof-cta">

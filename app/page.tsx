@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
 import Toasts, { addToast } from '@/components/Toasts';
 import Link from 'next/link';
+import type { ShiftType } from '@/lib/types';
 
 const DEMO_JOB_ID = 'job-1';
 const ROLE_HE: Record<string, string> = {
@@ -36,6 +37,35 @@ export default function Dashboard() {
   const activeJobs = store.jobs.filter(j => j.status === 'active');
   const matches = ranked.filter(c => !invitedIds.has(c.id)).slice(0, 5);
 
+  // AI Daily Shift Summary
+  const ALL_SHIFTS: ShiftType[] = ['morning', 'afternoon', 'evening'];
+  const shiftSummaryData = activeJobs.map(job => {
+    const required: ShiftType[] = job.shifts.length > 0 ? job.shifts as ShiftType[] : ALL_SHIFTS;
+    const respondedCands = store.invites
+      .filter(i => i.jobId === job.id && i.status === 'responded')
+      .map(i => store.pool.find(c => c.id === i.candidateId))
+      .filter(Boolean);
+    const covered = new Set<ShiftType>();
+    respondedCands.forEach(c => c!.availability.shifts.forEach(s => covered.add(s as ShiftType)));
+    const gaps = required.filter(s => !covered.has(s));
+    return { job, required, gaps, confirmedCount: respondedCands.length };
+  });
+  const totalSlots = shiftSummaryData.reduce((s, d) => s + d.required.length, 0);
+  const totalGaps = shiftSummaryData.reduce((s, d) => s + d.gaps.length, 0);
+  const totalConfirmed = shiftSummaryData.reduce((s, d) => s + d.confirmedCount, 0);
+  const SHIFT_HE: Record<string, string> = { morning: 'בוקר', afternoon: 'צהריים', evening: 'ערב', night: 'לילה', weekend: 'סופ״ש' };
+
+  const aiShiftLine = (() => {
+    if (activeJobs.length === 0) return 'אין משרות פעילות — פרסם משרה כדי להתחיל.';
+    if (totalGaps === 0 && totalSlots > 0) return `כל ${totalSlots} המשמרות מכוסות — העסק ערוך להיום. 🎉`;
+    if (totalGaps > 0) {
+      const urgentJob = shiftSummaryData.find(d => d.gaps.length > 0);
+      const gapNames = urgentJob?.gaps.map(g => SHIFT_HE[g]).join(', ') ?? '';
+      return `${totalGaps} משמרות פתוחות${gapNames ? ` (${gapNames})` : ''} — המלצה: שלח הזמנות מהמאגר.`;
+    }
+    return 'עדכן את לוח המשמרות כדי לקבל תחזית.';
+  })();
+
   const sentInvites = store.invites.slice(0, 4).map(inv => {
     const cand = store.pool.find(c => c.id === inv.candidateId);
     return cand ? { inv, cand } : null;
@@ -65,6 +95,39 @@ export default function Dashboard() {
                 עבור על המועמדים
               </button>
             </section>
+
+            {/* AI DAILY SHIFT SUMMARY */}
+            <div className="shift-sum-card">
+              <div className="shift-sum-header">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                סיכום משמרות יומי — AI
+              </div>
+              <div className="shift-sum-ai-line">{aiShiftLine}</div>
+              {activeJobs.length > 0 && (
+                <div className="shift-sum-stats">
+                  <div className="shift-sum-stat">
+                    <span className="shift-sum-num" style={{ color: '#16a34a' }}>{totalSlots - totalGaps}</span>
+                    <span className="shift-sum-lbl">מכוסות</span>
+                  </div>
+                  <div className="shift-sum-sep" />
+                  <div className="shift-sum-stat">
+                    <span className="shift-sum-num" style={{ color: totalGaps > 0 ? '#b91c1c' : '#16a34a' }}>{totalGaps}</span>
+                    <span className="shift-sum-lbl">חסרות</span>
+                  </div>
+                  <div className="shift-sum-sep" />
+                  <div className="shift-sum-stat">
+                    <span className="shift-sum-num">{totalConfirmed}</span>
+                    <span className="shift-sum-lbl">מאושרים</span>
+                  </div>
+                  <div className="shift-sum-sep" />
+                  <div className="shift-sum-stat">
+                    <span className="shift-sum-num">{activeJobs.length}</span>
+                    <span className="shift-sum-lbl">משרות</span>
+                  </div>
+                </div>
+              )}
+              <Link href="/schedule" className="shift-sum-link">לוח משמרות מלא ←</Link>
+            </div>
 
             {/* MATCHES */}
             <div id="matches" className="feed-seg">
