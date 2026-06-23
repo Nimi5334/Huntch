@@ -88,12 +88,12 @@ export default function Dashboard() {
         <main className="main">
           <div className="feed">
 
-            {/* "מה חדש היום" — gradient toggle button → reveals daily cards */}
-            <div className="flex justify-center pt-1">
+            {/* "מה חדש היום" — gradient toggle → compact floating panel */}
+            <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', paddingTop: 4, marginBottom: 16 }}>
               <button
                 type="button"
                 onClick={() => setShowDaily(v => !v)}
-                className="mb-4 inline-flex items-center justify-center whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold text-white shadow-md transition-all hover:opacity-90 border-0 cursor-pointer"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold text-white shadow-md transition-all hover:opacity-90 border-0 cursor-pointer"
                 style={{ background: 'linear-gradient(130deg, #4a7a5a 0%, #7c5c3e 100%)' }}
                 aria-label="מה חדש היום"
               >
@@ -104,67 +104,71 @@ export default function Dashboard() {
                 </span>
                 {`מה חדש היום, ${store.business.operatorName || 'מנהל'}`}
               </button>
-            </div>
 
-            {/* Daily cards — hidden until button pressed */}
-            <AnimatePresence>
-              {showDaily && (
-                <motion.div
-                  key="daily-panel"
-                  initial={{ opacity: 0, x: 10, y: 10, filter: 'blur(10px)' }}
-                  animate={{ opacity: 1, x: 0, y: 0, filter: 'blur(0px)' }}
-                  exit={{ opacity: 0, x: 10, y: 10, filter: 'blur(10px)' }}
-                  transition={{ duration: 0.6, type: 'spring', stiffness: 300, damping: 20 }}
-                >
-                  <section className="focus-card">
-                    <div className="focus-k">המשימה של היום</div>
-                    <h2>{newCount} מועמדים חדשים מחכים לתשובה</h2>
-                    <p>חלקם זמינים מיידית למשרת הבריסטה. ענה היום כדי לא לאבד אותם — מועמדים טובים נחטפים תוך 24 שעות.</p>
-                    <button className="focus-cta" onClick={() => document.getElementById('matches')?.scrollIntoView({ behavior: 'smooth' })}>
-                      עבור על המועמדים
-                    </button>
-                  </section>
-
+              <AnimatePresence>
+                {showDaily && (
                   <motion.div
-                    initial={{ opacity: 0, x: 10, y: 10, filter: 'blur(10px)' }}
-                    animate={{ opacity: 1, x: 0, y: 0, filter: 'blur(0px)' }}
-                    transition={{ duration: 0.6, type: 'spring', stiffness: 300, damping: 20, delay: 0.05 }}
+                    key="daily-panel"
+                    dir="rtl"
+                    initial={{ opacity: 0, y: -8, filter: 'blur(10px)' }}
+                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                    exit={{ opacity: 0, y: -8, filter: 'blur(10px)' }}
+                    transition={{ duration: 0.5, type: 'spring', stiffness: 300, damping: 22 }}
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: '50%',
+                      marginLeft: -136,
+                      marginTop: 8,
+                      width: 272,
+                      zIndex: 50,
+                      background: '#ffffff',
+                      border: '1px solid rgba(124,92,62,0.14)',
+                      borderRadius: 18,
+                      boxShadow: '0 8px 28px rgba(124,92,62,0.14)',
+                      overflow: 'hidden',
+                    }}
                   >
-                    <div className="shift-sum-card">
-                      <div className="shift-sum-header">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                        סיכום משמרות יומי — AI
+                    {/* Task */}
+                    <div style={{ padding: '11px 14px 9px' }}>
+                      <div style={{ fontSize: 9.5, fontWeight: 600, letterSpacing: '0.07em', color: '#7c5c3e', opacity: 0.7, textTransform: 'uppercase', marginBottom: 3 }}>המשימה של היום</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#221b16' }}>{newCount} מועמדים ממתינים לתשובה</div>
+                      <button
+                        className="focus-cta"
+                        style={{ marginTop: 8, fontSize: 12, padding: '5px 12px' }}
+                        onClick={() => { setShowDaily(false); document.getElementById('matches')?.scrollIntoView({ behavior: 'smooth' }); }}
+                      >עבור על המועמדים</button>
+                    </div>
+
+                    <div style={{ height: 1, background: 'rgba(124,92,62,0.1)' }} />
+
+                    {/* Shifts */}
+                    <div style={{ padding: '9px 14px 11px' }}>
+                      <div style={{ fontSize: 9.5, fontWeight: 600, letterSpacing: '0.07em', color: '#7c5c3e', opacity: 0.7, textTransform: 'uppercase', marginBottom: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        סיכום משמרות — AI
                       </div>
-                      <div className="shift-sum-ai-line">{aiShiftLine}</div>
+                      <div style={{ fontSize: 11.5, color: '#7c6f63', lineHeight: 1.45 }}>{aiShiftLine}</div>
                       {activeJobs.length > 0 && (
-                        <div className="shift-sum-stats">
-                          <div className="shift-sum-stat">
-                            <span className="shift-sum-num" style={{ color: '#16a34a' }}>{totalSlots - totalGaps}</span>
-                            <span className="shift-sum-lbl">מכוסות</span>
-                          </div>
-                          <div className="shift-sum-sep" />
-                          <div className="shift-sum-stat">
-                            <span className="shift-sum-num" style={{ color: totalGaps > 0 ? '#b91c1c' : '#16a34a' }}>{totalGaps}</span>
-                            <span className="shift-sum-lbl">חסרות</span>
-                          </div>
-                          <div className="shift-sum-sep" />
-                          <div className="shift-sum-stat">
-                            <span className="shift-sum-num">{totalConfirmed}</span>
-                            <span className="shift-sum-lbl">מאושרים</span>
-                          </div>
-                          <div className="shift-sum-sep" />
-                          <div className="shift-sum-stat">
-                            <span className="shift-sum-num">{activeJobs.length}</span>
-                            <span className="shift-sum-lbl">משרות</span>
-                          </div>
+                        <div style={{ display: 'flex', marginTop: 8 }}>
+                          {[
+                            { n: totalSlots - totalGaps, l: 'מכוסות', c: '#16a34a' },
+                            { n: totalGaps, l: 'חסרות', c: totalGaps > 0 ? '#b91c1c' : '#16a34a' },
+                            { n: totalConfirmed, l: 'מאושרים', c: '#221b16' },
+                          ].map((s, i) => (
+                            <div key={i} style={{ flex: 1, textAlign: 'center', borderRight: i > 0 ? '1px solid rgba(124,92,62,0.1)' : 'none' }}>
+                              <div style={{ fontSize: 16, fontWeight: 700, color: s.c, fontFamily: 'var(--font-mono)' }}>{s.n}</div>
+                              <div style={{ fontSize: 10, color: '#7c6f63' }}>{s.l}</div>
+                            </div>
+                          ))}
                         </div>
                       )}
-                      <Link href="/schedule" className="shift-sum-link">לוח משמרות מלא ←</Link>
+                      <Link href="/schedule" style={{ display: 'block', marginTop: 8, fontSize: 11, color: '#4a7a5a', textDecoration: 'none' }}>לוח משמרות מלא ←</Link>
                     </div>
                   </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                )}
+              </AnimatePresence>
+            </div>
 
             {/* MATCHES */}
             <div id="matches" className="feed-seg">
