@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import Toasts, { addToast } from '@/components/Toasts';
+import { ExpandableCard } from '@/components/ui/expandable-card';
 
 export default function QrPage() {
   const store = useStore();
@@ -21,13 +22,31 @@ export default function QrPage() {
   const scanWeek = Math.max(signups, signups * 2 + 4); // demo signal
   const conv = scanWeek > 0 ? Math.round((signups / scanWeek) * 100) : 0;
   const shareText = `הצטרפו לצוות של ${store.business.name} דרך Huntch — מצאו משמרות קרובות אליכם 👈 ${joinUrl}`;
+  const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=12&data=${encodeURIComponent(joinUrl)}`;
 
   return (
     <div className="app">
       <div className="back-bar"><span className="ar" style={{ cursor: 'pointer' }} onClick={() => router.back()}>→</span><b>גיוס דרך QR</b></div>
 
       <div className="qr-page">
-        <div className="qr-big"><div className="qr-glyph" /></div>
+        {/* Tap to expand — framer-motion shared-layout opening transition */}
+        <div className="flex justify-center" dir="ltr">
+          <ExpandableCard
+            title={store.business.name || 'Huntch'}
+            src={qrImg}
+            description="גיוס דרך QR"
+            className="!bg-white !border-[#e8ddd5]"
+            classNameExpanded="!bg-white"
+          >
+            <div dir="rtl" className="w-full">
+              <p className="text-base text-zinc-600">
+                תלה את הקוד ליד הקופה. כל סורק מצטרף למאגר שלך ומגיש מועמדות ישירות — בלי לשלוח הודעות.
+              </p>
+              <p className="mt-3 font-semibold text-zinc-900" style={{ fontFamily: 'var(--font-mono)', direction: 'ltr' }}>{shortUrl}</p>
+              <p className="mt-1 text-sm text-zinc-500">סרקו אותי כדי להצטרף לצוות 👆</p>
+            </div>
+          </ExpandableCard>
+        </div>
         <div className="qr-url">{shortUrl}</div>
         <p className="qr-note">תלה את הקוד ליד הקופה. כל סורק מצטרף למאגר שלך ומגיש מועמדות ישירות — בלי לשלוח הודעות.</p>
 

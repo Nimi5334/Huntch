@@ -7,6 +7,8 @@ import BottomNav from '@/components/BottomNav';
 import Toasts, { addToast } from '@/components/Toasts';
 import Link from 'next/link';
 import type { ShiftType } from '@/lib/types';
+import { HeroPill, StarIcon } from '@/components/ui/hero-pill';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 const DEMO_JOB_ID = 'job-1';
 const ROLE_HE: Record<string, string> = {
@@ -85,6 +87,45 @@ export default function Dashboard() {
       <div className="body">
         <main className="main">
           <div className="feed">
+
+            {/* "מה חדש היום" — hero-pill trigger → today's task + shifts popover */}
+            <div className="flex justify-center pt-1">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button type="button" className="group bg-transparent p-0 border-0" aria-label="מה חדש היום">
+                    <HeroPill
+                      icon={<StarIcon />}
+                      text={`מה חדש היום, ${store.business.operatorName || 'מנהל'}`}
+                    />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="center" sideOffset={6} showArrow className="w-80 p-1" dir="rtl">
+                  <div className="flex items-baseline justify-between gap-4 px-3 py-2">
+                    <div className="text-sm font-semibold text-foreground">מה חדש היום</div>
+                    <Link href="/schedule" className="text-xs font-medium text-primary hover:underline">לוח מלא</Link>
+                  </div>
+                  <div role="separator" className="-mx-1 my-1 h-px bg-border" />
+                  {[
+                    { t: `${newCount} מועמדים חדשים`, s: 'ממתינים לתשובה — חלקם זמינים מיידית', unread: newCount > 0 },
+                    { t: `${totalGaps} משמרות פתוחות`, s: totalGaps > 0 ? 'מומלץ לשלוח הזמנות מהמאגר' : 'כל המשמרות מכוסות 🎉', unread: totalGaps > 0 },
+                    { t: `${totalConfirmed} עובדים אישרו`, s: 'מתוך ההזמנות שנשלחו השבוע', unread: false },
+                    { t: `${scanCount} נרשמו דרך QR`, s: 'נכנסו למאגר השכונתי שלך', unread: scanCount > 0 },
+                  ].map((n, i) => (
+                    <div key={i} className="rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent">
+                      <div className="relative flex items-start pe-3">
+                        <div className="flex-1 space-y-0.5">
+                          <div className="font-medium text-foreground">{n.t}</div>
+                          <div className="text-xs text-muted-foreground">{n.s}</div>
+                        </div>
+                        {n.unread && (
+                          <span className="absolute end-0 top-1 h-1.5 w-1.5 rounded-full" style={{ background: '#4a7a5a' }} aria-label="חדש" />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </PopoverContent>
+              </Popover>
+            </div>
 
             {/* FOCUS — today's task */}
             <section className="focus-card">

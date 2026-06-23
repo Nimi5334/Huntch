@@ -1,31 +1,42 @@
+/* Tailwind layers — preflight disabled in tailwind.config.js so the
+   plain-CSS design system below is untouched; utilities power /components/ui */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* ════════════════════════════════════════════════════
    HUNTCH — FOCUS FEED design system
-   Forest green · phone-first · friendly · anti-generic
+   Chalk & Cedar · warm paper · cedar + sage · phone & desktop
 ════════════════════════════════════════════════════ */
 :root{
-  /* ── Emerald Zenith palette ── */
-  --accent:#2d5e39;          /* Emerald Glow — primary */
-  --accent-deep:#214428;     /* pressed / deep emerald */
-  --accent-soft:#e7f1ea;     /* tinted mint surface */
-  --ink:#13291b;             /* deep emerald near-black (dark surfaces) */
-  --paper:#eef7f1;           /* soft mint solid (fallback surfaces) */
+  /* ── Chalk & Cedar palette ── */
+  --accent:#4a7a5a;          /* sage — primary action */
+  --accent-deep:#3c6349;     /* pressed / deep sage */
+  --accent-soft:#e8efe9;     /* tinted sage surface */
+  --cedar:#7c5c3e;           /* warm cedar — secondary / focus */
+  --cedar-soft:#f1e9e1;      /* tinted cedar surface */
+  --ink:#221b16;             /* warm near-black ink */
+  --paper:#fdfcfa;           /* chalk paper (fallback surfaces) */
 
-  /* frosted glass */
-  --card: rgba(255,255,255,0.70);   /* translucent surface — frosted with blur */
+  /* surfaces */
+  --card:#ffffff;            /* solid chalk card */
   --card-solid:#ffffff;
-  --line: rgba(33,68,40,0.10);      /* ultra-thin emerald hairline */
-  --glass-line: rgba(33,68,40,0.10);
-  --blur: blur(20px) saturate(1.4);
-  --shadow-glass: 0 14px 38px -22px rgba(19,41,27,0.45);
-  --accent-glow: 0 10px 30px -8px rgba(45,94,57,0.50);
+  --line: rgba(124,92,62,0.14);     /* cedar hairline */
+  --glass-line: rgba(124,92,62,0.12);
+  --blur: blur(16px) saturate(1.25);
+  --shadow-glass: 0 8px 24px -16px rgba(124,92,62,0.28);   /* warm cedar shadow */
+  --accent-glow: 0 12px 30px -12px rgba(74,122,90,0.45);
 
-  --muted:#5c7565;
-  --muted2:#90a497;
-  --amber:#d59428;
-  --amber-soft:#fbf1de;
-  --amber-ink:#9a6512;
+  --muted:#7c6f63;
+  --muted2:#a89c8f;
+  --amber:#c08a2e;
+  --amber-soft:#f7ecd8;
+  --amber-ink:#8a5e17;
 
-  --radius:24px;
+  --radius:22px;
+
+  /* ── shadcn/ui token surface (Chalk & Cedar) — consumed by Tailwind theme ── */
+  --sh-radius:0.75rem;
 }
 
 /* ─── RESET ─── */
@@ -34,9 +45,9 @@ html, body { height: 100%; }
 body {
   font-family: var(--font-ui), var(--font-he), 'Heebo', system-ui, sans-serif;
   background:
-    radial-gradient(135% 90% at 50% -10%, rgba(45,94,57,0.06) 0%, rgba(45,94,57,0) 45%),
-    linear-gradient(168deg, #ffffff 0%, #f1f9f4 48%, #e2f1e9 100%) no-repeat;
-  background-color: #eef7f1;
+    radial-gradient(130% 90% at 50% -10%, rgba(124,92,62,0.05) 0%, rgba(124,92,62,0) 45%),
+    linear-gradient(168deg, #ffffff 0%, #fdfbf8 50%, #f6efe7 100%) no-repeat;
+  background-color: #fdfcfa;
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
@@ -693,89 +704,117 @@ a { text-decoration: none; color: inherit; }
 .shift-sum-link:hover { color: #fff; }
 
 /* ════════════════════════════════════════════════════
-   EMERALD ZENITH — frosted-glass reskin (overrides)
-   white→mint gradient · backdrop-blur cards · emerald glow
-   24px+ corners · medical-grade premium aesthetic
+   CHALK & CEDAR — warm paper reskin (overrides)
+   chalk header · solid white cards · cedar hairlines + shadows
+   sage→cedar hero · serif headlines · mono data · phone & desktop
 ════════════════════════════════════════════════════ */
 
-/* ── Header → light frosted bar (was dark) ── */
+/* ── Header → warm chalk bar (was dark), subtle frost for depth ── */
 .hdr {
-  background: rgba(255,255,255,0.60);
+  background: rgba(253,252,250,0.78);
   -webkit-backdrop-filter: var(--blur);
   backdrop-filter: var(--blur);
   border-bottom: 1px solid var(--glass-line);
 }
 .brand-name { color: var(--ink); font-weight: 700; }
-.h-mark { background: var(--accent); box-shadow: 0 5px 16px -5px rgba(45,94,57,0.65); }
-.h-mark svg path { stroke: #fff; }
+/* Brand H-mark — black & white, as originally (white square, ink H) */
+.h-mark { background: #ffffff; box-shadow: 0 2px 8px -4px rgba(124,92,62,0.5); }
+.h-mark svg path { stroke: var(--ink); }
 .hdr-tab { color: var(--muted); }
 .hdr-tab:hover { color: var(--ink); }
-.hdr-tab.on { background: var(--accent-soft); color: var(--accent); }
+.hdr-tab.on { background: var(--accent-soft); color: var(--accent-deep); font-weight: 600; }
 .hdr-icon-btn { color: var(--muted); }
-.hdr-icon-btn:hover { background: var(--accent-soft); color: var(--accent); }
-.hdr-icon-btn .ping { border-color: #fff; }
+.hdr-icon-btn:hover { background: var(--accent-soft); color: var(--accent-deep); }
+.hdr-icon-btn .ping { border-color: #fdfcfa; }
 .hdr-burger i { background: var(--ink); }
 
-/* ── True frosted glass on chrome + single-instance hero surfaces (low repaint cost) ── */
+/* ── Solid chalk surfaces with cedar hairline + warm shadow ── */
 .login-card, .apply-card, .search-bar, .ana-card, .sch-summary,
-.sch-card, .dna-section, .qr-stat, .modal, .filter-panel {
-  -webkit-backdrop-filter: var(--blur);
-  backdrop-filter: var(--blur);
-  box-shadow: var(--shadow-glass);
-}
-
-/* ── High-count list cards: near-opaque glass tint, NO blur (keeps scroll smooth) ── */
+.sch-card, .dna-section, .qr-stat, .modal, .filter-panel,
 .fc, .inv-row, .job-card, .resp-card, .cand, .ana-kpi, .leaver-card {
-  background: rgba(255,255,255,0.86);
+  background: #ffffff;
+  border: 1px solid var(--line);
   box-shadow: var(--shadow-glass);
 }
-.fc.invited, .cand.invited { background: rgba(231,241,234,0.92); }
-.ana-kpi.accent { background: rgba(231,241,234,0.92); }
-.leaver-card { background: rgba(251,241,222,0.85); }
+.fc.invited, .cand.invited { background: var(--accent-soft); border-color: rgba(74,122,90,0.22); }
+.ana-kpi.accent { background: var(--accent-soft); border-color: rgba(74,122,90,0.22); }
+.leaver-card { background: var(--cedar-soft); border-color: rgba(124,92,62,0.22); }
 
-/* ── 24px+ rounded corners on containers ── */
+/* ── Rounded corners on containers (Chalk & Cedar radii) ── */
 .fc, .inv-row, .job-card, .resp-card, .cand, .ana-card,
-.sch-card, .dna-section, .search-bar { border-radius: 24px; }
+.sch-card, .dna-section, .search-bar { border-radius: 22px; }
 .login-card, .apply-card { border-radius: 28px; }
 .qr-big { border-radius: 28px; }
 .modal { border-radius: 28px 28px 0 0; }
 @media (min-width: 560px) { .modal { border-radius: 28px; } }
 
-/* ── Frosted floating navigation ── */
+/* ── Sage → cedar hero focus card ── */
+.focus-card {
+  background: linear-gradient(130deg, #4a7a5a 0%, #7c5c3e 100%);
+  border-radius: 24px;
+  box-shadow: 0 14px 38px -16px rgba(74,122,90,0.5);
+}
+.focus-k { color: rgba(255,255,255,0.78); }
+.focus-card p { color: rgba(255,255,255,0.86); }
+
+/* ── Floating navigation — warm chalk ── */
 .bottom-nav {
-  background: rgba(255,255,255,0.72);
+  background: rgba(253,252,250,0.82);
   -webkit-backdrop-filter: var(--blur);
   backdrop-filter: var(--blur);
   border-top: 1px solid var(--glass-line);
 }
 .drawer {
-  background: rgba(255,255,255,0.85);
+  background: rgba(253,252,250,0.94);
   -webkit-backdrop-filter: var(--blur);
   backdrop-filter: var(--blur);
 }
 .profile-panel {
-  background: rgba(255,255,255,0.82);
+  background: rgba(253,252,250,0.94);
   -webkit-backdrop-filter: var(--blur);
   backdrop-filter: var(--blur);
 }
 
-/* ── Emerald Glow on primary actions ── */
+/* ── Sage glow on primary actions ── */
 .btn-full, .btn-publish, .btn-invite, .prof-cta .inv, .post-btn {
   box-shadow: var(--accent-glow);
 }
 .btn-full:hover, .btn-publish:hover, .btn-invite:hover, .prof-cta .inv:hover {
-  box-shadow: 0 12px 34px -6px rgba(45,94,57,0.58);
+  box-shadow: 0 14px 32px -10px rgba(74,122,90,0.5);
 }
-.focus-card { box-shadow: 0 20px 48px -20px rgba(45,94,57,0.55); }
+
+/* ── Mono figures for data / scores (Chalk & Cedar) ── */
+.ana-kpi-num, .ana-dna-score, .sch-suggest-score, .sch-sum-num,
+.qr-stat .n, .shift-sum-num, .pp-snum {
+  font-family: var(--font-mono), 'JetBrains Mono', ui-monospace, monospace;
+  font-feature-settings: 'tnum' 1;
+  letter-spacing: -0.01em;
+}
 
 /* ── Light shells reveal the body gradient ── */
 .login-shell, .apply-shell { background: transparent; }
 
-/* ── Mint inputs over glass ── */
+/* ── Warm chalk inputs ── */
 .field input, .field select, .field textarea, .otp-input {
-  background: rgba(255,255,255,0.55);
+  background: #fffdfb;
 }
 .field input:focus, .field select:focus, .field textarea:focus, .otp-input:focus {
-  background: rgba(255,255,255,0.85);
-  box-shadow: 0 0 0 3px rgba(45,94,57,0.12);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(74,122,90,0.14);
 }
+
+/* ════════════════════════════════════════════════════
+   CHALK & CEDAR — responsive (desktop refinements)
+   Phone-first base above; widen comfortably on larger screens.
+════════════════════════════════════════════════════ */
+@media (min-width: 900px) {
+  .main { max-width: 760px; margin-inline: auto; }
+  .feed { padding-inline: 8px; }
+}
+
+/* ════════════════════════════════════════════════════
+   bottom-menu.tsx — tooltip / pill keyframes (from spec)
+════════════════════════════════════════════════════ */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes menuSlideIn { from { transform: translateY(-5px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.tooltip-animation { animation: fadeIn 0.3s ease-in-out, menuSlideIn 0.3s ease-in-out; }

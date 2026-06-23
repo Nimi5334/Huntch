@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
+import WorkersTable from '@/components/WorkersTable';
 import Toasts, { addToast } from '@/components/Toasts';
 import { parseCSV } from '@/lib/csv';
 import { computeDna, dnaLabel } from '@/lib/dna';
@@ -95,7 +96,14 @@ export default function PoolPage() {
                 <p>{query || filter !== 'all' ? 'נסה סינון אחר' : 'ייבא מועמדים מ-CSV או שתף את קוד ה-QR'}</p>
               </div>
             ) : (
-              filtered.map((c, i) => {
+            <>
+            {/* Desktop: sortable data table */}
+            <div className="hidden md:block">
+              <WorkersTable rows={filtered} />
+            </div>
+            {/* Mobile: candidate cards */}
+            <div className="md:hidden">
+              {filtered.map((c, i) => {
                 const dna = computeDna(c);
                 return (
                   <Link key={c.id} href={`/candidate/${c.id}`} className="fc in" style={{ transitionDelay: `${i * 30}ms` }}>
@@ -122,7 +130,9 @@ export default function PoolPage() {
                     </div>
                   </Link>
                 );
-              })
+              })}
+            </div>
+            </>
             )}
           </div>
         </main>

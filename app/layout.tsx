@@ -1,14 +1,15 @@
 import type { Metadata } from 'next';
-import { Inter, Playfair_Display, Frank_Ruhl_Libre, Heebo, JetBrains_Mono } from 'next/font/google';
+import { DM_Sans, Libre_Baskerville, Frank_Ruhl_Libre, Heebo, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 
 // SPA prototype: all pages client-side, skip static prerendering
 // Prevents Turbopack crash on Windows path casing (Huntch vs huntch)
 export const dynamic = 'force-dynamic';
 
-// ── Emerald Zenith type system ──
-// UI text: Inter (latin) + Heebo (hebrew). Headlines: Playfair Display (latin) + Frank Ruhl Libre (hebrew serif)
-const inter = Inter({
+// ── Chalk & Cedar type system ──
+// UI text: DM Sans (latin) + Heebo (hebrew). Headlines: Libre Baskerville (latin serif) + Frank Ruhl Libre (hebrew serif).
+// Data / numbers: JetBrains Mono.
+const dmSans = DM_Sans({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-ui',
@@ -22,9 +23,9 @@ const heebo = Heebo({
   display: 'swap',
 });
 
-const playfair = Playfair_Display({
+const libreBaskerville = Libre_Baskerville({
   subsets: ['latin'],
-  weight: ['500', '600', '700', '800'],
+  weight: ['400', '700'],
   variable: '--font-head',
   display: 'swap',
 });
@@ -50,7 +51,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  themeColor: '#f1f8f3',
+  themeColor: '#fdfcfa',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -58,7 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="he"
       dir="rtl"
-      className={`${inter.variable} ${heebo.variable} ${playfair.variable} ${frankRuhl.variable} ${jetbrainsMono.variable}`}
+      className={`${dmSans.variable} ${heebo.variable} ${libreBaskerville.variable} ${frankRuhl.variable} ${jetbrainsMono.variable}`}
     >
       <body>{children}</body>
     </html>
