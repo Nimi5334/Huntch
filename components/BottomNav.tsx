@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { MenuBar, type MenuBarItem } from '@/components/ui/bottom-menu';
 
@@ -41,47 +41,27 @@ export default function BottomNav({
 }) {
   const path = usePathname() ?? '';
   const router = useRouter();
-  const [visible, setVisible] = useState(true);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Prefetch the four primary tab destinations so tapping a tab navigates
+  // instantly. '/workforce' is a server redirect to '/workforce/pool', so we
+  // prefetch and navigate to the real target and skip the extra round-trip.
   useEffect(() => {
     router.prefetch('/');
     router.prefetch('/hiring');
-    router.prefetch('/workforce');
+    router.prefetch('/workforce/pool');
     router.prefetch('/activity');
   }, [router]);
-
-  // Show briefly on mount, then hide; re-show on any scroll
-  useEffect(() => {
-    const startTimer = () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => setVisible(false), 2200);
-    };
-    const onScroll = () => { setVisible(true); startTimer(); };
-    startTimer();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, []);
-
-  // Also show briefly whenever route changes
-  useEffect(() => {
-    setVisible(true);
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => setVisible(false), 2200);
-  }, [path]);
 
   const items: MenuBarItem[] = [
     { icon: ICONS.home, label: `בית${newCount > 0 ? ` · ${newCount} חדשים` : ''}`, onClick: () => router.push('/'), active: isActive(path, '/') },
     { icon: ICONS.hiring, label: `גיוס${activeJobCount > 0 ? ` · ${activeJobCount}` : ''}`, onClick: () => router.push('/hiring'), active: isActive(path, '/hiring') },
-    { icon: ICONS.workforce, label: 'כוח אדם', onClick: () => router.push('/workforce'), active: isActive(path, '/workforce') },
+    { icon: ICONS.workforce, label: 'כוח אדם', onClick: () => router.push('/workforce/pool'), active: isActive(path, '/workforce') },
     { icon: ICONS.activity, label: 'פעילות', onClick: () => router.push('/activity'), active: isActive(path, '/activity') },
   ];
 
   // Reuse the existing .bottom-nav fixed/positioning + show-on-mobile rules,
-  // but render the animated MenuBar pill centered inside it.
+  // but render the animated MenuBar pill centered inside it. The bar stays
+  // visible at all times so navigation is always one tap away.
   return (
     <nav
       className="bottom-nav"
@@ -92,9 +72,6 @@ export default function BottomNav({
         WebkitBackdropFilter: 'none',
         justifyContent: 'center',
         boxShadow: 'none',
-        transform: visible ? 'translateY(0)' : 'translateY(110%)',
-        transition: 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
-        willChange: 'transform',
       }}
     >
       <MenuBar items={items} />
