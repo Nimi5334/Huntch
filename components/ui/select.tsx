@@ -58,10 +58,7 @@ const Select = ({ data, defaultValue, onChange, placeholder = "בחר סינון
               animate={{ borderRadius: 30 }}
               layout
               layoutId="role-dropdown"
-              onPointerDown={(e: React.PointerEvent) => {
-                if (e.pointerType !== 'mouse') { e.preventDefault(); setOpen(true); }
-              }}
-              onClick={() => setOpen(true)}
+              onTap={() => setOpen(true)}
               className="overflow-hidden rounded-[30px] border border-input bg-background shadow-sm cursor-pointer"
             >
               <SelectItem item={selected} placeholder={placeholder} />
@@ -108,13 +105,12 @@ const Head = ({ setOpen, title }: { setOpen: (open: boolean) => void; title: str
     <motion.strong layout className="text-foreground text-sm">
       {title}
     </motion.strong>
-    <button
-      onPointerDown={(e) => { if (e.pointerType !== 'mouse') { e.preventDefault(); setOpen(false); } }}
-      onClick={() => setOpen(false)}
+    <motion.button
+      onTap={() => setOpen(false)}
       className="flex h-6 w-6 items-center justify-center rounded-full bg-secondary"
     >
       <X className="text-secondary-foreground" size={12} />
-    </button>
+    </motion.button>
   </motion.div>
 )
 
@@ -150,10 +146,7 @@ const SelectItem = ({ item, noDescription = true, order, onChange, placeholder }
     animate="visible"
     exit="exit"
     custom={order ?? "0"}
-    onPointerDown={(e: React.PointerEvent) => {
-      if (e.pointerType !== 'mouse' && onChange) { e.preventDefault(); onChange(order as string); }
-    }}
-    onClick={() => onChange?.(order as string)}
+    onTap={() => onChange?.(order as string)}
   >
     <div className="flex items-center gap-3">
       <motion.div
