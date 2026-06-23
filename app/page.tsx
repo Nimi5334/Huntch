@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import Header from '@/components/Header';
@@ -7,8 +8,6 @@ import BottomNav from '@/components/BottomNav';
 import Toasts, { addToast } from '@/components/Toasts';
 import Link from 'next/link';
 import type { ShiftType } from '@/lib/types';
-import { HeroPill, StarIcon } from '@/components/ui/hero-pill';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 const DEMO_JOB_ID = 'job-1';
 const ROLE_HE: Record<string, string> = {
@@ -21,6 +20,7 @@ export default function Dashboard() {
   const store = useStore();
   const router = useRouter();
   const [hydrated, setHydrated] = useState(false);
+  const [showDaily, setShowDaily] = useState(false);
   const arrivedRef = useRef(false);
 
   useEffect(() => { useStore.persist.rehydrate(); setHydrated(true); }, []);
@@ -88,87 +88,83 @@ export default function Dashboard() {
         <main className="main">
           <div className="feed">
 
-            {/* "מה חדש היום" — hero-pill trigger → today's task + shifts popover */}
+            {/* "מה חדש היום" — gradient toggle button → reveals daily cards */}
             <div className="flex justify-center pt-1">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button type="button" className="group bg-transparent p-0 border-0" aria-label="מה חדש היום">
-                    <HeroPill
-                      icon={<StarIcon />}
-                      text={`מה חדש היום, ${store.business.operatorName || 'מנהל'}`}
-                    />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent align="center" sideOffset={6} showArrow className="w-80 p-1" dir="rtl">
-                  <div className="flex items-baseline justify-between gap-4 px-3 py-2">
-                    <div className="text-sm font-semibold text-foreground">מה חדש היום</div>
-                    <Link href="/schedule" className="text-xs font-medium text-primary hover:underline">לוח מלא</Link>
-                  </div>
-                  <div role="separator" className="-mx-1 my-1 h-px bg-border" />
-                  {[
-                    { t: `${newCount} מועמדים חדשים`, s: 'ממתינים לתשובה — חלקם זמינים מיידית', unread: newCount > 0 },
-                    { t: `${totalGaps} משמרות פתוחות`, s: totalGaps > 0 ? 'מומלץ לשלוח הזמנות מהמאגר' : 'כל המשמרות מכוסות 🎉', unread: totalGaps > 0 },
-                    { t: `${totalConfirmed} עובדים אישרו`, s: 'מתוך ההזמנות שנשלחו השבוע', unread: false },
-                    { t: `${scanCount} נרשמו דרך QR`, s: 'נכנסו למאגר השכונתי שלך', unread: scanCount > 0 },
-                  ].map((n, i) => (
-                    <div key={i} className="rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent">
-                      <div className="relative flex items-start pe-3">
-                        <div className="flex-1 space-y-0.5">
-                          <div className="font-medium text-foreground">{n.t}</div>
-                          <div className="text-xs text-muted-foreground">{n.s}</div>
-                        </div>
-                        {n.unread && (
-                          <span className="absolute end-0 top-1 h-1.5 w-1.5 rounded-full" style={{ background: '#4a7a5a' }} aria-label="חדש" />
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            {/* FOCUS — today's task */}
-            <section className="focus-card">
-              <div className="focus-k">המשימה של היום</div>
-              <h2>{newCount} מועמדים חדשים מחכים לתשובה</h2>
-              <p>חלקם זמינים מיידית למשרת הבריסטה. ענה היום כדי לא לאבד אותם — מועמדים טובים נחטפים תוך 24 שעות.</p>
-              <button className="focus-cta" onClick={() => document.getElementById('matches')?.scrollIntoView({ behavior: 'smooth' })}>
-                עבור על המועמדים
+              <button
+                type="button"
+                onClick={() => setShowDaily(v => !v)}
+                className="mb-4 inline-flex items-center justify-center whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold text-white shadow-md transition-all hover:opacity-90 border-0 cursor-pointer"
+                style={{ background: 'linear-gradient(130deg, #4a7a5a 0%, #7c5c3e 100%)' }}
+                aria-label="מה חדש היום"
+              >
+                <span className="ml-2 flex shrink-0 border-l border-white/30 pl-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width={12} height={12} fill="none">
+                    <path fill="white" d="M6.958.713a1 1 0 0 0-1.916 0l-.999 3.33-3.33 1a1 1 0 0 0 0 1.915l3.33.999 1 3.33a1 1 0 0 0 1.915 0l.999-3.33 3.33-1a1 1 0 0 0 0-1.915l-3.33-.999-1-3.33Z"/>
+                  </svg>
+                </span>
+                {`מה חדש היום, ${store.business.operatorName || 'מנהל'}`}
               </button>
-            </section>
-
-            {/* AI DAILY SHIFT SUMMARY */}
-            <div className="shift-sum-card">
-              <div className="shift-sum-header">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                סיכום משמרות יומי — AI
-              </div>
-              <div className="shift-sum-ai-line">{aiShiftLine}</div>
-              {activeJobs.length > 0 && (
-                <div className="shift-sum-stats">
-                  <div className="shift-sum-stat">
-                    <span className="shift-sum-num" style={{ color: '#16a34a' }}>{totalSlots - totalGaps}</span>
-                    <span className="shift-sum-lbl">מכוסות</span>
-                  </div>
-                  <div className="shift-sum-sep" />
-                  <div className="shift-sum-stat">
-                    <span className="shift-sum-num" style={{ color: totalGaps > 0 ? '#b91c1c' : '#16a34a' }}>{totalGaps}</span>
-                    <span className="shift-sum-lbl">חסרות</span>
-                  </div>
-                  <div className="shift-sum-sep" />
-                  <div className="shift-sum-stat">
-                    <span className="shift-sum-num">{totalConfirmed}</span>
-                    <span className="shift-sum-lbl">מאושרים</span>
-                  </div>
-                  <div className="shift-sum-sep" />
-                  <div className="shift-sum-stat">
-                    <span className="shift-sum-num">{activeJobs.length}</span>
-                    <span className="shift-sum-lbl">משרות</span>
-                  </div>
-                </div>
-              )}
-              <Link href="/schedule" className="shift-sum-link">לוח משמרות מלא ←</Link>
             </div>
+
+            {/* Daily cards — hidden until button pressed */}
+            <AnimatePresence>
+              {showDaily && (
+                <motion.div
+                  key="daily-panel"
+                  initial={{ opacity: 0, x: 10, y: 10, filter: 'blur(10px)' }}
+                  animate={{ opacity: 1, x: 0, y: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, x: 10, y: 10, filter: 'blur(10px)' }}
+                  transition={{ duration: 0.6, type: 'spring', stiffness: 300, damping: 20 }}
+                >
+                  <section className="focus-card">
+                    <div className="focus-k">המשימה של היום</div>
+                    <h2>{newCount} מועמדים חדשים מחכים לתשובה</h2>
+                    <p>חלקם זמינים מיידית למשרת הבריסטה. ענה היום כדי לא לאבד אותם — מועמדים טובים נחטפים תוך 24 שעות.</p>
+                    <button className="focus-cta" onClick={() => document.getElementById('matches')?.scrollIntoView({ behavior: 'smooth' })}>
+                      עבור על המועמדים
+                    </button>
+                  </section>
+
+                  <motion.div
+                    initial={{ opacity: 0, x: 10, y: 10, filter: 'blur(10px)' }}
+                    animate={{ opacity: 1, x: 0, y: 0, filter: 'blur(0px)' }}
+                    transition={{ duration: 0.6, type: 'spring', stiffness: 300, damping: 20, delay: 0.05 }}
+                  >
+                    <div className="shift-sum-card">
+                      <div className="shift-sum-header">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        סיכום משמרות יומי — AI
+                      </div>
+                      <div className="shift-sum-ai-line">{aiShiftLine}</div>
+                      {activeJobs.length > 0 && (
+                        <div className="shift-sum-stats">
+                          <div className="shift-sum-stat">
+                            <span className="shift-sum-num" style={{ color: '#16a34a' }}>{totalSlots - totalGaps}</span>
+                            <span className="shift-sum-lbl">מכוסות</span>
+                          </div>
+                          <div className="shift-sum-sep" />
+                          <div className="shift-sum-stat">
+                            <span className="shift-sum-num" style={{ color: totalGaps > 0 ? '#b91c1c' : '#16a34a' }}>{totalGaps}</span>
+                            <span className="shift-sum-lbl">חסרות</span>
+                          </div>
+                          <div className="shift-sum-sep" />
+                          <div className="shift-sum-stat">
+                            <span className="shift-sum-num">{totalConfirmed}</span>
+                            <span className="shift-sum-lbl">מאושרים</span>
+                          </div>
+                          <div className="shift-sum-sep" />
+                          <div className="shift-sum-stat">
+                            <span className="shift-sum-num">{activeJobs.length}</span>
+                            <span className="shift-sum-lbl">משרות</span>
+                          </div>
+                        </div>
+                      )}
+                      <Link href="/schedule" className="shift-sum-link">לוח משמרות מלא ←</Link>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* MATCHES */}
             <div id="matches" className="feed-seg">
