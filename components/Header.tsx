@@ -28,6 +28,8 @@ const TABS = [
   { label: 'בית', href: '/' },
   { label: 'משרות', href: '/jobs' },
   { label: 'מאגר', href: '/pool' },
+  { label: 'לו״ז', href: '/schedule' },
+  { label: 'אנליטיקה', href: '/analytics' },
 ];
 
 function isActive(path: string, href: string) {
@@ -172,6 +174,14 @@ export default function Header({
         <Link href="/qr" className={`drawer-row ${isActive(path, '/qr') ? 'on' : ''}`} onClick={() => setDrawer(false)}>
           <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 21v.01M21 14v.01M14 21v.01"/></svg>
           <span>גיוס דרך QR</span>
+        </Link>
+        <Link href="/schedule" className={`drawer-row ${isActive(path, '/schedule') ? 'on' : ''}`} onClick={() => setDrawer(false)}>
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span>לוח משמרות</span>
+        </Link>
+        <Link href="/analytics" className={`drawer-row ${isActive(path, '/analytics') ? 'on' : ''}`} onClick={() => setDrawer(false)}>
+          <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <span>אנליטיקה</span>
         </Link>
         <button className="drawer-row" style={{ marginTop: 'auto', color: '#b91c1c' }} onClick={handleLogout}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
