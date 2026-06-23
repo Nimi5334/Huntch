@@ -39,10 +39,9 @@ export default function JobPage({ params }: { params: Promise<{ id: string }> })
   const [gapOpen, setGapOpen] = useState(false);
 
   // Filter state
-  const [maxDist, setMaxDist] = useState(10);
+  const [maxDist, setMaxDist] = useState(50);
   const [selectedShifts, setSelectedShifts] = useState<ShiftType[]>([]);
   const [mustImmediate, setMustImmediate] = useState(false);
-  const [minScore, setMinScore] = useState(70);
 
   const job = store.jobs.find(j => j.id === id);
   if (!job) {
@@ -73,7 +72,6 @@ export default function JobPage({ params }: { params: Promise<{ id: string }> })
   });
 
   const invitedIds = new Set(store.invitedIdsForJob(id));
-  const aboveThreshold = filtered.filter(c => c.score >= minScore && !invitedIds.has(c.id));
 
   const toggleShift = (s: ShiftType) =>
     setSelectedShifts(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
@@ -113,21 +111,10 @@ export default function JobPage({ params }: { params: Promise<{ id: string }> })
             <div className="filter-label">מרחק מקסימלי</div>
             <div className="filter-range">
               <input
-                type="range" min={1} max={20} value={maxDist}
+                type="range" min={0} max={100} value={maxDist}
                 onChange={e => setMaxDist(+e.target.value)}
               />
               <span className="filter-range-val">עד {maxDist} ק״מ</span>
-            </div>
-          </div>
-
-          <div className="filter-section">
-            <div className="filter-label">ציון מינימלי להזמנה bulk</div>
-            <div className="filter-range">
-              <input
-                type="range" min={50} max={95} step={5} value={minScore}
-                onChange={e => setMinScore(+e.target.value)}
-              />
-              <span className="filter-range-val">≥ {minScore}%</span>
             </div>
           </div>
 
@@ -166,31 +153,14 @@ export default function JobPage({ params }: { params: Promise<{ id: string }> })
 
         {/* Match list */}
         <div className="match-main">
-          {/* Dark info card — candidate count */}
+          {/* Dark info card — candidates matching the active filters */}
           <div className="cand-count-card">
             <span className="cand-count-num">{filtered.length}</span>
             <div className="cand-count-txt">
-              <strong>מועמדים עם ציון</strong>
-              <span>ממוינים לפי התאמה למשרה</span>
+              <strong>מועמדים מתאימים</strong>
+              <span>עומדים בדרישות הסינון שהגדרת</span>
             </div>
           </div>
-
-          {/* Bulk invite bar */}
-          {aboveThreshold.length > 0 && (
-            <div className="bulk-bar">
-              <div className="bulk-bar-txt">
-                <strong>{aboveThreshold.length} מועמדים</strong> עם ציון ≥{minScore}% ממתינים
-              </div>
-              <div className="bulk-bar-actions">
-                <button className="btn-bulk primary" onClick={() => {
-                  store.bulkInvite(id, minScore);
-                  addToast('g', `הוזמנו ${aboveThreshold.length} מועמדים בבת אחת`);
-                }}>
-                  הזמן הכל
-                </button>
-              </div>
-            </div>
-          )}
 
           <div className="cands">
             {filtered.map(c => (
