@@ -163,33 +163,78 @@ interface PlatformSignals {
 | `responseSpeedHours` | Form Q: "How fast do you reply?" | Updated from message send → reply time |
 | `lastActiveDaysAgo` | Starts at 0 (fresh signup) | Updated to days since last WhatsApp interaction |
 
-### DNA Feeder Form Questions (app/join/[businessId]/page.tsx)
+### DNA Feeder — 3-Phase WhatsApp Mini-Interview
 
-Add these 4 questions to the QR form to properly seed `PlatformSignals`:
+**Reference:** See `DNA-FEEDER-SPEC.md` in project root for full research basis and implementation details.
 
-```typescript
-// Q1: Prior jobs completed
-const priorJobsCompleted = parseInt(formData.priorJobs || '0');
-signals.priorHires = Math.min(10, priorJobsCompleted);  // cap at 10
+The DNA feeder is a progressive WhatsApp Business API conversation that takes 5–10 minutes and captures retention-first signals before performance signals.
 
-// Q2: Response speed self-assessment
-const responseSpeedSelf = formData.responseSpeed; // "immediate" | "within-hour" | "within-day" | "slow"
-const responseSpeedMap = {
-  'immediate': 0.5,      // responds within 30 min → 0.5 hrs avg
-  'within-hour': 1,      // responds within 1 hr → 1 hr avg
-  'within-day': 8,       // responds within a day → 8 hrs avg
-  'slow': 12,            // slow responder → 12 hrs avg
-};
-signals.responseSpeedHours = responseSpeedMap[responseSpeedSelf] || 1;
-
-// Q3: Experience level
-signals.applicationCount = experience > 2 ? 3 : experience > 0 ? 2 : 1;  // boost for experienced
-
-// Q4: Availability
-signals.lastActiveDaysAgo = 0;  // always 0 at signup
+#### Phase 1: Core Match (~2 min, all taps)
+```
+Q1: Which roles interest you?                    → roles
+Q2: Hours per week?                              → availability.hoursPerWeek
+Q3: Which shifts?                                → availability.shifts
+Q4: When can you start?                          → availability.immediate, earliestStart
+Q5: How do you commute?                          → hasCar
+Q6: Max travel distance?                         → willingRangeKm
+Q7: Expected hourly wage?                        → expectedWageNis
 ```
 
-These questions transform the QR form from a simple signup into a **DNA data collection point**.
+#### Phase 2: Needs-Supplies Fit (~2 min, highest-value retention signals)
+```
+Q8: What matters most? (pick up to 3)           → needsSuppliesFit[] (new field)
+    Options: steady_income, flexible_hours, predictable_schedule, 
+    good_team, close_to_home, growth, fast_pace, calm_pace
+
+Q9: How important is a fixed schedule?          → scheduleTolerance (new field)
+    Buttons: very / nice to have / flexible
+
+Q10: Anything else important? (optional text)   → needsSuppliesFit notes
+```
+
+**Why Phase 2 first?** Needs-supplies fit is the single strongest predictor of turnover (β=−.58, p<.001). If candidate drops off mid-interview, this signal is already captured.
+
+#### Phase 3: Experience & Behavioral (optional, ~2–4 min)
+Offered after Phase 2 with: *"כמה שאלות נוספות כדי שנוכל להתאים לך בצורה הטובה ביותר — אופציונלי"*
+
+```
+Q11: Years of experience?                       → experience.totalYears
+     Buttons: none / <1yr / 1–2 / 3–5 / 5+
+
+Q12: Where have you worked? (optional text)     → experience.notableWorkplaces
+
+Q13: [Scored] Busy shift, angry customer        → interviewScores.serviceHandling (0–2)
+     What do you do? (text prose answer)
+     Rubric: 0=avoids, 1=handles but defensive, 2=owns+de-escalates+empathy
+
+Q14: [Scored] Tell us about a shift you're      → interviewScores.ownership (0–2)
+     proud of (text prose answer)
+     Rubric: 0=vague, 1=real example thin, 2=concrete+result+reflection
+```
+
+Role-family variants exist for Q13/Q14 (kitchen team, retail, delivery, etc.)
+
+#### Cold-Start DNA Score
+
+Replace `priorHires / applicationCount` with:
+
+```
+ColdStartDNA.score = (
+  retentionFit   * 0.40   // needsSuppliesFit ⋈ scheduleTolerance
+  performance    * 0.30   // mean(serviceHandling, ownership) from Phase 3
+  logisticsFit   * 0.15   // distance, availability, wage overlap
+  experience     * 0.15   // capped totalYears (nonlinear)
+)
+
+Display: "68 ± 12" (Wilson score interval, not point estimate)
+Confidence narrows as real hires accumulate (Empirical-Bayes shrinkage)
+```
+
+#### Implementation Location
+- Form: `app/join/[businessId]/page.tsx` (currently hardcoded defaults)
+- DNA computation: `lib/dna.ts` (add `computeColdsStartDna()`)
+- Types: `lib/types.ts` (add `needsSuppliesFit`, `scheduleTolerance`, `interviewScores` to Candidate)
+- WhatsApp integration: backend DNA Feeder service (Phase 2)
 
 ### computeDna() formula (lib/dna.ts)
 
@@ -415,6 +460,22 @@ Mobile-first. `html, body { max-width: 100%; overflow-x: hidden; }` — no horiz
 
 ---
 
+## Research Basis for DNA Feeder
+
+The 3-phase design is research-backed:
+
+| Signal | Finding | Source | Confidence |
+|---|---|---|---|
+| Needs-supplies fit | β=−.58 for turnover intent | PMC12480616 | High |
+| Schedule instability | +50% turnover | Choper/Schneider/Harknett ILR Review 2022 | High |
+| Structured interview Q's | ~.42 performance validity | Sackett et al. 2022 (meta-analysis) | High |
+| Experience ceilings at ~5yr | Diminishing returns | Schmidt & Oh 2016 | High |
+| Reply speed as signal | Does NOT prove quality | Hart et al. 2024 | High |
+
+**Critical caveat:** Huntch must validate these coefficients against real retention outcomes once data accumulates.
+
+---
+
 ## What NOT to do
 
 - ❌ Never show "pool" or "מאגר" as a UI label for the workforce tab
@@ -425,3 +486,5 @@ Mobile-first. `html, body { max-width: 100%; overflow-x: hidden; }` — no horiz
 - ❌ Never use purple/blue gradients — Chalk & Cedar palette only
 - ❌ Never use emoji as navigation/UI icons — SVG only
 - ❌ Never mix employees into pool or vice versa
+- ❌ Never display reply latency as a quality score (passive signals affect confidence band only)
+- ❌ Never collapse zero-history DNA to 0 — use Empirical-Bayes shrinkage toward population mean
