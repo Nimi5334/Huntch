@@ -70,7 +70,7 @@ export const useStore = create<HuntchState>()(
       invites: [],
       savedCandidateIds: [],
       dismissedCandidateIds: [],
-      isLoggedIn: false, // must sign up / log in
+      isLoggedIn: true, // auto-login to demo for MVP
       qrScans: [],
       employeeRequests: SEED_REQUESTS,
 
