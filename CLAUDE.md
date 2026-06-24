@@ -56,12 +56,21 @@ No emoji as icons (use SVG). No purple/blue AI gradients. Hebrew RTL at all time
 
 This is the core product flow. Every feature maps to one of these phases.
 
-### Phase 1 — Discovery & Onboarding
+### Phase 1 — Discovery & Onboarding (with DNA Seeding)
 ```
 Worker scans QR at venue
-  → 30-second AI interview (experience, availability, wage, transport)
-  → Profile created, added to store.pool
+  → AI interview form (30 seconds):
+    • How many years of experience?
+    • Which shifts available?
+    • Have you worked before? How many prior jobs?
+    • How quickly do you respond to messages?
+    • What's your phone number, neighborhood?
+  → Profile created with initial PlatformSignals seeded from answers
+  → Added to store.pool
   → No app download required
+  
+Current state: Form exists but DNA questions are defaults
+Next: Add the 4 DNA feeder questions to the form
 ```
 
 ### Phase 2 — Manager Search & Ranking
@@ -109,14 +118,29 @@ Hired worker visible in כוח אדם → עובדים
 
 ## DNA Engine — How It Actually Works
 
-### The Signal Source: WhatsApp API
+### Two phases of DNA signal collection
 
-DNA is NOT a static score. It is computed from `PlatformSignals` — a live feed of behavioral events that come **primarily from WhatsApp API interactions**.
+#### Phase 1A: QR Scan → DNA Feeder Questions (Initial seeding)
+When a worker scans the QR code, they fill out an AI interview form (`app/join/[businessId]/page.tsx`). The form asks:
+- "How many years of experience?" → seeds `experience.totalYears`
+- "Which shifts are you available for?" → seeds `availability.shifts`
+- **"Have you worked before? How many times?" → seeds `priorHires`**
+- **"How quickly do you usually respond to messages?" → seeds `responseSpeedHours`**
+- etc.
+
+These answers populate their initial `PlatformSignals` at sign-up time. Currently hardcoded as defaults; production form should ask these "DNA feeder" questions.
+
+#### Phase 1B: After hired — WhatsApp API (Live updates)
+DNA is NOT static. It is computed from `PlatformSignals` — a live feed of behavioral events that come **primarily from WhatsApp API interactions**.
 
 Every time Huntch sends a message to a worker via WhatsApp API and the worker responds (or doesn't), that event is logged and feeds the DNA engine.
 
 ```
+QR form answers → initial PlatformSignals
+         ↓
 WhatsApp API event → PlatformSignals update → computeDna() → updated score
+         ↓
+Voice logging (manager input) → PlatformSignals override
 ```
 
 ### PlatformSignals (lib/types.ts)
@@ -132,12 +156,40 @@ interface PlatformSignals {
 
 ### What feeds each signal
 
-| Signal | WhatsApp API event that updates it |
-|---|---|
-| `applicationCount` | Every invite message sent to worker |
-| `priorHires` | Worker accepted + showed up → confirmed by manager |
-| `responseSpeedHours` | Time between message sent and worker reply |
-| `lastActiveDaysAgo` | Days since last any reply from worker |
+| Signal | **Initial seeding (QR form)** | **Live updates (WhatsApp API)** |
+|---|---|---|
+| `applicationCount` | Starts at 1 | Increments with each invite sent |
+| `priorHires` | Form Q: "Prior jobs completed?" | Increments when worker accepts + shows up |
+| `responseSpeedHours` | Form Q: "How fast do you reply?" | Updated from message send → reply time |
+| `lastActiveDaysAgo` | Starts at 0 (fresh signup) | Updated to days since last WhatsApp interaction |
+
+### DNA Feeder Form Questions (app/join/[businessId]/page.tsx)
+
+Add these 4 questions to the QR form to properly seed `PlatformSignals`:
+
+```typescript
+// Q1: Prior jobs completed
+const priorJobsCompleted = parseInt(formData.priorJobs || '0');
+signals.priorHires = Math.min(10, priorJobsCompleted);  // cap at 10
+
+// Q2: Response speed self-assessment
+const responseSpeedSelf = formData.responseSpeed; // "immediate" | "within-hour" | "within-day" | "slow"
+const responseSpeedMap = {
+  'immediate': 0.5,      // responds within 30 min → 0.5 hrs avg
+  'within-hour': 1,      // responds within 1 hr → 1 hr avg
+  'within-day': 8,       // responds within a day → 8 hrs avg
+  'slow': 12,            // slow responder → 12 hrs avg
+};
+signals.responseSpeedHours = responseSpeedMap[responseSpeedSelf] || 1;
+
+// Q3: Experience level
+signals.applicationCount = experience > 2 ? 3 : experience > 0 ? 2 : 1;  // boost for experienced
+
+// Q4: Availability
+signals.lastActiveDaysAgo = 0;  // always 0 at signup
+```
+
+These questions transform the QR form from a simple signup into a **DNA data collection point**.
 
 ### computeDna() formula (lib/dna.ts)
 
