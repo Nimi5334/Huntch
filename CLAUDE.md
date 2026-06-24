@@ -107,6 +107,70 @@ Hired worker visible in כוח אדם → עובדים
 
 ---
 
+## DNA Engine — How It Actually Works
+
+### The Signal Source: WhatsApp API
+
+DNA is NOT a static score. It is computed from `PlatformSignals` — a live feed of behavioral events that come **primarily from WhatsApp API interactions**.
+
+Every time Huntch sends a message to a worker via WhatsApp API and the worker responds (or doesn't), that event is logged and feeds the DNA engine.
+
+```
+WhatsApp API event → PlatformSignals update → computeDna() → updated score
+```
+
+### PlatformSignals (lib/types.ts)
+
+```typescript
+interface PlatformSignals {
+  applicationCount:    number   // how many times invited/contacted total
+  priorHires:          number   // how many times actually hired
+  responseSpeedHours:  number   // avg hours to respond to a WhatsApp message
+  lastActiveDaysAgo:   number   // days since last WhatsApp interaction
+}
+```
+
+### What feeds each signal
+
+| Signal | WhatsApp API event that updates it |
+|---|---|
+| `applicationCount` | Every invite message sent to worker |
+| `priorHires` | Worker accepted + showed up → confirmed by manager |
+| `responseSpeedHours` | Time between message sent and worker reply |
+| `lastActiveDaysAgo` | Days since last any reply from worker |
+
+### computeDna() formula (lib/dna.ts)
+
+```typescript
+reliability    = (priorHires / applicationCount) × 150  // capped at 100
+responseSpeed  = 100 - (responseSpeedHours × 9)         // fast reply = high score
+recency        = 100 - (lastActiveDaysAgo × 7)          // active recently = high score
+
+DNA score      = reliability×0.40 + responseSpeed×0.30 + recency×0.30
+
+churnRisk = 'high'   if lastActiveDaysAgo > 11 OR responseSpeedHours > 9
+churnRisk = 'medium' if lastActiveDaysAgo > 5  OR responseSpeedHours > 4
+churnRisk = 'low'    otherwise
+```
+
+### Demo vs Production
+
+**Demo (current):** `PlatformSignals` is seeded statically in `lib/seed.ts` — hardcoded numbers per candidate. `computeDna()` reads them as if they were real.
+
+**Production (Phase 2):** WhatsApp Business API webhook receives delivery/read/reply events → a backend "DNA Feeder" service parses each event → writes to `PlatformSignals` in the database → next time `computeDna()` runs, it picks up the real behavioral data.
+
+The DNA feeder is therefore the **bridge between WhatsApp API events and the DNA scoring engine**. The formula in `lib/dna.ts` stays the same — only the data source changes from seed to live.
+
+### Voice Logging also feeds DNA
+When the manager uses voice input ("דניאל איחר ב-15 דקות"), the extracted event:
+- Decrements reliability for Daniel
+- Updates `lastActiveDaysAgo` context
+- May trigger a churnRisk re-evaluation
+
+So DNA has two live input channels in production: **WhatsApp API** (automatic) and **voice logging** (manual override by manager).
+
+---
+
 ## Data Model — THE MOST IMPORTANT THING
 
 Three separate concepts. Do NOT confuse them.
