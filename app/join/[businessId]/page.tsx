@@ -1,6 +1,7 @@
 'use client';
 import { use, useEffect, useRef, useState } from 'react';
 import { useStore } from '@/lib/store';
+import { createCandidate, createQrScan } from '@/lib/supabase';
 import type { Role, ShiftType, Language } from '@/lib/types';
 
 const ALL_ROLES: { value: Role; label: string }[] = [
@@ -63,47 +64,78 @@ export default function JoinPage({ params }: { params: Promise<{ businessId: str
   const toggleShift = (s: ShiftType) =>
     setShifts(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !phone || !consent) return;
 
     const colorIdx = Math.abs(name.charCodeAt(0)) % AVATAR_COLORS.length;
     const formCompletionSec = Math.round((Date.now() - formStartRef.current) / 1000);
+    const candidateId = `cand-${Date.now()}`;
 
-    const candidateId = store.addViaQr(
-      {
-        name,
-        phone,
-        initials: getInitials(name),
-        avatarColor: AVATAR_COLORS[colorIdx],
-        neighborhood: neighborhood || 'לא צוין',
-        location: store.business.location,
-        hasCar: false,
-        willingRangeKm: 10,
-        availability: {
-          days: ['sun', 'mon', 'tue', 'wed', 'thu'],
-          shifts: shifts.length ? shifts : ['morning'],
-          hoursPerWeek: 35,
-          earliestStart: new Date().toISOString().slice(0, 10),
-          immediate: false,
-        },
-        roles: roles.length ? roles : ['server'],
-        experience: {
-          totalYears: parseInt(experience, 10) || 0,
-          roles: roles.length ? roles : ['server'],
-          venueTypes: ['cafe'],
-          notableWorkplaces: [],
-        },
-        skills: [],
-        languages: ['he'] as Language[],
-        hasWorkPermit: true,
-        age: 25,
-        expectedWageNis: parseFloat(wage) || 50,
-        signals: { applicationCount: 1, priorHires: 0, responseSpeedHours: 1, lastActiveDaysAgo: 0 },
-        consentSource: 'qr-scan',
+    const candidateData = {
+      id: candidateId,
+      business_id: businessId,
+      name,
+      phone,
+      initials: getInitials(name),
+      avatar_color: AVATAR_COLORS[colorIdx],
+      neighborhood: neighborhood || 'לא צוין',
+      location: store.business.location,
+      has_car: false,
+      willing_range_km: 10,
+      availability: {
+        days: ['sun', 'mon', 'tue', 'wed', 'thu'],
+        shifts: shifts.length ? shifts : ['morning'],
+        hoursPerWeek: 35,
+        earliestStart: new Date().toISOString().slice(0, 10),
+        immediate: false,
       },
-      businessId
-    );
+      roles: roles.length ? roles : ['server'],
+      experience: {
+        totalYears: parseInt(experience, 10) || 0,
+        roles: roles.length ? roles : ['server'],
+        venueTypes: ['cafe'],
+        notableWorkplaces: [],
+      },
+      skills: [],
+      languages: ['he'] as Language[],
+      has_work_permit: true,
+      age: 25,
+      expected_wage_nis: parseFloat(wage) || 50,
+      signals: { applicationCount: 1, priorHires: 0, responseSpeedHours: 1, lastActiveDaysAgo: 0 },
+      consent_source: 'qr-scan',
+    };
+
+    // Try Supabase first, fall back to localStorage only
+    try {
+      await createCandidate(candidateData);
+      await createQrScan({
+        id: `scan-${Date.now()}`,
+        business_id: businessId,
+        candidate_id: candidateId,
+      });
+    } catch (supabaseErr) {
+      console.warn('[Supabase] Failed to save candidate (falling back to local):', supabaseErr);
+      // Still add to local store for demo mode
+      store.addViaQr(
+        {
+          name, phone, initials: getInitials(name),
+          avatarColor: AVATAR_COLORS[colorIdx],
+          neighborhood: neighborhood || 'לא צוין',
+          location: store.business.location,
+          hasCar: false, willingRangeKm: 10,
+          availability: candidateData.availability,
+          roles: candidateData.roles,
+          experience: candidateData.experience,
+          skills: [], languages: ['he'] as Language[],
+          hasWorkPermit: true, age: 25,
+          expectedWageNis: candidateData.expected_wage_nis,
+          signals: candidateData.signals,
+          consentSource: 'qr-scan',
+        },
+        businessId
+      );
+    }
 
     // Fire-and-forget — start the WhatsApp DNA Feeder conversation
     fetch('/api/whatsapp/trigger', {
@@ -111,10 +143,10 @@ export default function JoinPage({ params }: { params: Promise<{ businessId: str
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         candidateId,
-        candidateName:  name,
+        candidateName: name,
         phone,
         businessId,
-        businessName:   store.business.name,
+        businessName: store.business.name,
         formCompletionSec,
       }),
     }).catch(err => console.warn('[DNA Feeder trigger]', err));
