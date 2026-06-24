@@ -29,7 +29,7 @@ interface HuntchState {
   pendingRequestCount: () => number;
 
   // QR actions
-  addViaQr: (candidateData: Omit<Candidate, 'id' | 'businessId' | 'addedAt'>, businessId: string) => void;
+  addViaQr: (candidateData: Omit<Candidate, 'id' | 'businessId' | 'addedAt'>, businessId: string) => string;
   qrScansForBusiness: (businessId: string) => QrScan[];
 
   // Employee request actions
@@ -123,6 +123,7 @@ export const useStore = create<HuntchState>()(
           scannedAt: new Date().toISOString(),
         };
         set(s => ({ pool: [candidate, ...s.pool], qrScans: [scan, ...s.qrScans] }));
+        return candidateId;
       },
 
       qrScansForBusiness: (businessId) =>

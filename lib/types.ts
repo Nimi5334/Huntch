@@ -88,12 +88,16 @@ export interface PlatformSignals {
   priorHires: number;
   responseSpeedHours: number;
   lastActiveDaysAgo: number;
+  /** Passive signal — confidence nudge only, never displayed as quality */
+  formCompletionSec?: number;
+  firstReplyLatencySec?: number;
 }
 
 export interface Candidate {
   id: string;
   businessId: string;
   name: string;
+  phone?: string;
   initials: string;
   avatarColor: string;
   neighborhood: string;
@@ -111,6 +115,12 @@ export interface Candidate {
   signals: PlatformSignals;
   consentSource: ConsentSource;
   addedAt: string;
+  // ── DNA Feeder enrichment (populated via WhatsApp mini-interview) ──────────
+  needsSuppliesFit?: string[];
+  scheduleTolerance?: 'very' | 'nice' | 'flexible';
+  interviewScores?: { serviceHandling?: number; ownership?: number };
+  dnaSource?: 'cold_start' | 'platform_history' | 'hybrid';
+  dnaConfidence?: number;
 }
 
 export interface RankedCandidate extends Candidate {
@@ -137,6 +147,8 @@ export interface Application {
   source: ConsentSource;
 }
 
+// ─── Employee requests (from master) ─────────────────────────────────────────
+
 export type RequestType = 'leave' | 'shift-swap' | 'schedule-change' | 'other';
 
 export const REQUEST_TYPE_HE: Record<RequestType, string> = {
@@ -154,4 +166,39 @@ export interface EmployeeRequest {
   status: 'pending' | 'approved' | 'denied';
   submittedAt: string;
   details?: string;
+}
+
+// ─── DNA Feeder — WhatsApp mini-interview answers ─────────────────────────────
+
+export interface DnaFeederAnswers {
+  roles?: string[];
+  hoursPerWeek?: string;
+  shifts?: string[];
+  start?: 'immediate' | 'two_weeks' | 'one_month';
+  transport?: 'car' | 'public' | 'walk';
+  distanceKm?: number;
+  wageNis?: number;
+  needsSuppliesFit?: string[];
+  scheduleTolerance?: 'very' | 'nice' | 'flexible';
+  needsNotes?: string;
+  experienceYears?: number;
+  notableWorkplaces?: string;
+  serviceHandling?: string;
+  ownership?: string;
+  serviceHandlingScore?: number;   // 0–2, rubric-scored
+  ownershipScore?: number;         // 0–2, rubric-scored
+}
+
+export interface WaInterviewResult {
+  candidateId: string;
+  completedAt: string;
+  phasesCompleted: 1 | 2 | 3;
+  answers: DnaFeederAnswers;
+  dna: {
+    score: number;
+    confidence: number;            // 0–1: 0.30 / 0.60 / 0.90 by phases
+    retentionFit: number;          // 0–100
+    performance: number;           // 0–100
+    churnRisk: 'low' | 'medium' | 'high';
+  };
 }

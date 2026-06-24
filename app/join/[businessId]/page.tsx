@@ -1,5 +1,5 @@
 'use client';
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useRef, useState } from 'react';
 import { useStore } from '@/lib/store';
 import type { Role, ShiftType, Language } from '@/lib/types';
 
@@ -46,6 +46,7 @@ export default function JoinPage({ params }: { params: Promise<{ businessId: str
   const [experience, setExperience] = useState('0');
   const [wage, setWage] = useState('');
   const [consent, setConsent] = useState(false);
+  const formStartRef = useRef<number>(Date.now());
 
   useEffect(() => {
     useStore.persist.rehydrate();
@@ -67,10 +68,12 @@ export default function JoinPage({ params }: { params: Promise<{ businessId: str
     if (!name || !phone || !consent) return;
 
     const colorIdx = Math.abs(name.charCodeAt(0)) % AVATAR_COLORS.length;
+    const formCompletionSec = Math.round((Date.now() - formStartRef.current) / 1000);
 
-    store.addViaQr(
+    const candidateId = store.addViaQr(
       {
         name,
+        phone,
         initials: getInitials(name),
         avatarColor: AVATAR_COLORS[colorIdx],
         neighborhood: neighborhood || 'לא צוין',
@@ -101,6 +104,20 @@ export default function JoinPage({ params }: { params: Promise<{ businessId: str
       },
       businessId
     );
+
+    // Fire-and-forget — start the WhatsApp DNA Feeder conversation
+    fetch('/api/whatsapp/trigger', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        candidateId,
+        candidateName:  name,
+        phone,
+        businessId,
+        businessName:   store.business.name,
+        formCompletionSec,
+      }),
+    }).catch(err => console.warn('[DNA Feeder trigger]', err));
 
     setSubmitted(true);
   };
