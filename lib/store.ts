@@ -1,8 +1,8 @@
 'use client';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Business, Job, Candidate, Invite, RankedCandidate, QrScan } from './types';
-import { DEMO_BUSINESS, DEMO_JOB, SEED_CANDIDATES, SEED_EMPLOYEES } from './seed';
+import type { Business, Job, Candidate, Invite, RankedCandidate, QrScan, EmployeeRequest } from './types';
+import { DEMO_BUSINESS, DEMO_JOB, SEED_CANDIDATES, SEED_EMPLOYEES, SEED_REQUESTS } from './seed';
 import { rankPool } from './matching';
 
 interface HuntchState {
@@ -18,6 +18,7 @@ interface HuntchState {
   dismissedCandidateIds: string[];
   isLoggedIn: boolean;
   qrScans: QrScan[];
+  employeeRequests: EmployeeRequest[];
 
   // Derived / computed
   rankedForJob: (jobId: string) => RankedCandidate[];
@@ -25,10 +26,15 @@ interface HuntchState {
   invitedIdsForJob: (jobId: string) => string[];
   newCandidateCount: () => number;
   invitedCount: () => number;
+  pendingRequestCount: () => number;
 
   // QR actions
   addViaQr: (candidateData: Omit<Candidate, 'id' | 'businessId' | 'addedAt'>, businessId: string) => void;
   qrScansForBusiness: (businessId: string) => QrScan[];
+
+  // Employee request actions
+  addEmployeeRequest: (req: Omit<EmployeeRequest, 'id' | 'businessId' | 'submittedAt'>) => void;
+  respondToRequest: (requestId: string, decision: 'approved' | 'denied') => void;
 
   // Actions
   signup: (params: { name: string; type: Business['type']; address: string; operatorName: string; phone: string; password: string }) => void;
@@ -66,6 +72,7 @@ export const useStore = create<HuntchState>()(
       dismissedCandidateIds: [],
       isLoggedIn: false, // must sign up / log in
       qrScans: [],
+      employeeRequests: SEED_REQUESTS,
 
       rankedForJob: (jobId) => {
         const job = get().jobs.find(j => j.id === jobId);
@@ -121,6 +128,27 @@ export const useStore = create<HuntchState>()(
       qrScansForBusiness: (businessId) =>
         get().qrScans.filter(s => s.businessId === businessId),
 
+      pendingRequestCount: () =>
+        get().employeeRequests.filter(r => r.status === 'pending').length,
+
+      addEmployeeRequest: (raw) => {
+        const req: EmployeeRequest = {
+          ...raw,
+          id: uid(),
+          businessId: get().business.id,
+          submittedAt: new Date().toISOString(),
+        };
+        set(s => ({ employeeRequests: [req, ...s.employeeRequests] }));
+      },
+
+      respondToRequest: (requestId, decision) => {
+        set(s => ({
+          employeeRequests: s.employeeRequests.map(r =>
+            r.id === requestId ? { ...r, status: decision } : r,
+          ),
+        }));
+      },
+
       signup: (params) => {
         const bizId = uid();
         set({
@@ -142,6 +170,7 @@ export const useStore = create<HuntchState>()(
           savedCandidateIds: [],
           dismissedCandidateIds: [],
           qrScans: [],
+          employeeRequests: [],
           isLoggedIn: true,
         });
       },
@@ -293,7 +322,7 @@ export const useStore = create<HuntchState>()(
       },
     }),
     {
-      name: 'huntch-store-v1',
+      name: 'huntch-store-v2',
       skipHydration: true,
     }
   )

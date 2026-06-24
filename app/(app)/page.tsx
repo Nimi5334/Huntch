@@ -4,14 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/lib/store';
 import { addToast } from '@/components/Toasts';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import MinimalButton from '@/components/ui/minimal-button';
 import { ROLE_HE } from '@/lib/venue';
-import type { ShiftType } from '@/lib/types';
+import { computeDailyFeed } from '@/lib/daily-feed';
+import type { DailyFeedItem } from '@/lib/daily-feed';
 
 export default function Dashboard() {
   const store = useStore();
-  const router = useRouter();
   const [showDaily, setShowDaily] = useState(false);
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const arrivedRef = useRef(false);
@@ -30,37 +28,7 @@ export default function Dashboard() {
   const featuredJobId = featuredJob?.id ?? null;
   const ranked = featuredJobId ? store.rankedForJob(featuredJobId) : [];
   const invitedIds = new Set(featuredJobId ? store.invitedIdsForJob(featuredJobId) : []);
-  const newCount = store.pool.filter(c => !invitedIds.has(c.id)).length;
   const matches = ranked.filter(c => !invitedIds.has(c.id)).slice(0, 5);
-
-  // AI Daily Shift Summary
-  const ALL_SHIFTS: ShiftType[] = ['morning', 'afternoon', 'evening'];
-  const shiftSummaryData = activeJobs.map(job => {
-    const required: ShiftType[] = job.shifts.length > 0 ? job.shifts as ShiftType[] : ALL_SHIFTS;
-    const respondedCands = store.invites
-      .filter(i => i.jobId === job.id && i.status === 'responded')
-      .map(i => store.pool.find(c => c.id === i.candidateId))
-      .filter(Boolean);
-    const covered = new Set<ShiftType>();
-    respondedCands.forEach(c => c!.availability.shifts.forEach(s => covered.add(s as ShiftType)));
-    const gaps = required.filter(s => !covered.has(s));
-    return { job, required, gaps, confirmedCount: respondedCands.length };
-  });
-  const totalSlots = shiftSummaryData.reduce((s, d) => s + d.required.length, 0);
-  const totalGaps = shiftSummaryData.reduce((s, d) => s + d.gaps.length, 0);
-  const totalConfirmed = shiftSummaryData.reduce((s, d) => s + d.confirmedCount, 0);
-  const SHIFT_HE: Record<string, string> = { morning: 'בוקר', afternoon: 'צהריים', evening: 'ערב', night: 'לילה', weekend: 'סופ״ש' };
-
-  const aiShiftLine = (() => {
-    if (activeJobs.length === 0) return 'אין משרות פעילות — פרסם משרה כדי להתחיל.';
-    if (totalGaps === 0 && totalSlots > 0) return `כל ${totalSlots} המשמרות מכוסות — העסק ערוך להיום. 🎉`;
-    if (totalGaps > 0) {
-      const urgentJob = shiftSummaryData.find(d => d.gaps.length > 0);
-      const gapNames = urgentJob?.gaps.map(g => SHIFT_HE[g]).join(', ') ?? '';
-      return `${totalGaps} משמרות פתוחות${gapNames ? ` (${gapNames})` : ''} — המלצה: שלח הזמנות מהמאגר.`;
-    }
-    return 'עדכן את לוח המשמרות כדי לקבל תחזית.';
-  })();
 
   const sentInvites = store.invites.slice(0, 4).map(inv => {
     const cand = store.pool.find(c => c.id === inv.candidateId);
@@ -68,6 +36,25 @@ export default function Dashboard() {
   }).filter(Boolean) as { inv: typeof store.invites[number]; cand: typeof store.pool[number] }[];
 
   const scanCount = store.qrScansForBusiness(store.business.id).length;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const dailyFeed = computeDailyFeed({
+    today,
+    pool: store.pool,
+    invites: store.invites,
+    jobs: store.jobs,
+    qrScans: store.qrScans,
+    employeeRequests: store.employeeRequests,
+    featuredJobId,
+  });
+  const totalActionable = dailyFeed.reduce((s, item) => s + item.count, 0);
+
+  const urgencyColor = (u: DailyFeedItem['urgency'], hasCount: boolean) => {
+    if (!hasCount) return '#e0d8d0';
+    if (u === 'high') return '#b91c1c';
+    if (u === 'medium') return '#c08a2e';
+    return '#4a7a5a';
+  };
 
   const inviteStatusBadge = (status: string) => {
     if (status === 'responded') return <span className="inv-badge2 b-yes">אישר/ה ✓</span>;
@@ -87,9 +74,16 @@ export default function Dashboard() {
                 type="button"
                 onClick={() => setShowDaily(v => !v)}
                 className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold text-white shadow-md transition-all hover:opacity-90 border-0 cursor-pointer"
-                style={{ background: 'linear-gradient(130deg, #4a7a5a 0%, #7c5c3e 100%)' }}
+                style={{ background: 'linear-gradient(130deg, #4a7a5a 0%, #7c5c3e 100%)', position: 'relative' }}
                 aria-label="מה חדש היום"
               >
+                {totalActionable > 0 && (
+                  <span style={{
+                    position: 'absolute', top: -3, insetInlineStart: -3,
+                    width: 10, height: 10, borderRadius: '50%',
+                    background: '#b91c1c', border: '2px solid #fff',
+                  }} />
+                )}
                 <span className="ml-2 flex shrink-0 border-l border-white/30 pl-2">
                   <svg xmlns="http://www.w3.org/2000/svg" width={12} height={12} fill="none">
                     <path fill="white" d="M6.958.713a1 1 0 0 0-1.916 0l-.999 3.33-3.33 1a1 1 0 0 0 0 1.915l3.33.999 1 3.33a1 1 0 0 0 1.915 0l.999-3.33 3.33-1a1 1 0 0 0 0-1.915l-3.33-.999-1-3.33Z"/>
@@ -111,9 +105,9 @@ export default function Dashboard() {
                       position: 'absolute',
                       top: '100%',
                       left: '50%',
-                      marginLeft: -136,
+                      marginLeft: -150,
                       marginTop: 8,
-                      width: 272,
+                      width: 300,
                       zIndex: 50,
                       background: '#ffffff',
                       border: '1px solid rgba(124,92,62,0.14)',
@@ -122,45 +116,51 @@ export default function Dashboard() {
                       overflow: 'hidden',
                     }}
                   >
-                    {/* Task */}
-                    <div style={{ padding: '11px 14px 9px' }}>
-                      <div style={{ fontSize: 9.5, fontWeight: 600, letterSpacing: '0.07em', color: '#7c5c3e', opacity: 0.7, textTransform: 'uppercase', marginBottom: 3 }}>המשימה של היום</div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#221b16' }}>{newCount} מועמדים ממתינים לתשובה</div>
-                      <MinimalButton
-                        className="mt-2 w-full text-[12.5px]"
-                        onClick={() => {
-                          setShowDaily(false);
-                          if (featuredJobId) router.push(`/hiring/jobs/${featuredJobId}`);
-                          else router.push('/hiring/jobs/new');
-                        }}
-                      >עבור על המועמדים</MinimalButton>
-                    </div>
-
-                    <div style={{ height: 1, background: 'rgba(124,92,62,0.1)' }} />
-
-                    {/* Shifts */}
-                    <div style={{ padding: '9px 14px 11px' }}>
-                      <div style={{ fontSize: 9.5, fontWeight: 600, letterSpacing: '0.07em', color: '#7c5c3e', opacity: 0.7, textTransform: 'uppercase', marginBottom: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                        סיכום משמרות — AI
+                    {/* כותרת הפאנל */}
+                    <div style={{ padding: '10px 14px 8px', borderBottom: '1px solid rgba(124,92,62,0.1)' }}>
+                      <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '0.07em', color: '#7c5c3e', opacity: 0.7, textTransform: 'uppercase' }}>
+                        משימות היום · {dailyFeed.filter(i => i.count > 0).length} פעילות
                       </div>
-                      <div style={{ fontSize: 11.5, color: '#7c6f63', lineHeight: 1.45 }}>{aiShiftLine}</div>
-                      {activeJobs.length > 0 && (
-                        <div style={{ display: 'flex', marginTop: 8 }}>
-                          {[
-                            { n: totalSlots - totalGaps, l: 'מכוסות', c: '#16a34a' },
-                            { n: totalGaps, l: 'חסרות', c: totalGaps > 0 ? '#b91c1c' : '#16a34a' },
-                            { n: totalConfirmed, l: 'מאושרים', c: '#221b16' },
-                          ].map((s, i) => (
-                            <div key={i} style={{ flex: 1, textAlign: 'center', borderRight: i > 0 ? '1px solid rgba(124,92,62,0.1)' : 'none' }}>
-                              <div style={{ fontSize: 16, fontWeight: 700, color: s.c, fontFamily: 'var(--font-mono)' }}>{s.n}</div>
-                              <div style={{ fontSize: 10, color: '#7c6f63' }}>{s.l}</div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      <Link href="/workforce/schedule" style={{ display: 'block', marginTop: 8, fontSize: 11, color: '#4a7a5a', textDecoration: 'none' }}>לוח משמרות מלא ←</Link>
                     </div>
+
+                    {/* 6 קטגוריות */}
+                    {dailyFeed.map((item, idx) => {
+                      const hasCount = item.count > 0;
+                      return (
+                        <Link
+                          key={item.key}
+                          href={item.href}
+                          onClick={() => setShowDaily(false)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 10,
+                            padding: '9px 14px',
+                            textDecoration: 'none',
+                            color: 'inherit',
+                            borderBottom: idx < dailyFeed.length - 1 ? '1px solid rgba(124,92,62,0.07)' : 'none',
+                            opacity: hasCount ? 1 : 0.45,
+                            borderInlineStart: `3px solid ${urgencyColor(item.urgency, hasCount)}`,
+                          }}
+                        >
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 12.5, fontWeight: 700, color: '#221b16' }}>{item.label}</div>
+                            <div style={{ fontSize: 11, color: '#7c6f63', marginTop: 2 }}>{item.sublabel}</div>
+                          </div>
+                          {hasCount && (
+                            <span style={{
+                              fontSize: 12, fontWeight: 800, color: '#fff',
+                              background: urgencyColor(item.urgency, true),
+                              borderRadius: 20, padding: '1px 8px', flexShrink: 0,
+                              fontFamily: 'var(--font-mono)',
+                            }}>
+                              {item.count}
+                            </span>
+                          )}
+                          <span style={{ fontSize: 13, color: '#7c6f63', flexShrink: 0 }}>←</span>
+                        </Link>
+                      );
+                    })}
                   </motion.div>
                 )}
               </AnimatePresence>

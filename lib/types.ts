@@ -136,3 +136,22 @@ export interface Application {
   submittedAt: string;
   source: ConsentSource;
 }
+
+export type RequestType = 'leave' | 'shift-swap' | 'schedule-change' | 'other';
+
+export const REQUEST_TYPE_HE: Record<RequestType, string> = {
+  'leave':           'בקשת חופשה',
+  'shift-swap':      'החלפת משמרת',
+  'schedule-change': 'שינוי זמינות',
+  'other':           'פנייה אחרת',
+};
+
+export interface EmployeeRequest {
+  id: string;
+  businessId: string;
+  employeeId: string;
+  type: RequestType;
+  status: 'pending' | 'approved' | 'denied';
+  submittedAt: string;
+  details?: string;
+}

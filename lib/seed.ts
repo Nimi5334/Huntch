@@ -1,4 +1,4 @@
-import type { Business, Candidate, Job } from './types';
+import type { Business, Candidate, Job, EmployeeRequest } from './types';
 
 export const DEMO_BUSINESS: Business = {
   id: 'biz-1',
@@ -356,4 +356,16 @@ export const SEED_EMPLOYEES: Candidate[] = [
     signals: { applicationCount: 1, priorHires: 4, responseSpeedHours: 0.5, lastActiveDaysAgo: 0 },
     consentSource: 'direct', addedAt: '2026-02-20',
   },
+];
+
+export const SEED_REQUESTS: EmployeeRequest[] = [
+  { id: 'req-1', businessId: 'biz-1', employeeId: 'emp-2', type: 'leave',
+    status: 'pending', submittedAt: new Date().toISOString(),
+    details: 'חופשה משפחתית 3-6 ביולי, נא לאשר' },
+  { id: 'req-2', businessId: 'biz-1', employeeId: 'emp-4', type: 'shift-swap',
+    status: 'pending', submittedAt: new Date().toISOString(),
+    details: 'רוצה להחליף משמרת ערב ב-25/6 עם לירון' },
+  { id: 'req-3', businessId: 'biz-1', employeeId: 'emp-1', type: 'schedule-change',
+    status: 'pending', submittedAt: new Date().toISOString(),
+    details: 'לא יכולה בימי שישי מהחודש הבא' },
 ];
