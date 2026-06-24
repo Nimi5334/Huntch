@@ -3,18 +3,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import { addToast } from './Toasts';
+import { venueRoles, ROLE_HE } from '@/lib/venue';
 import type { Job, Role, ShiftType } from '@/lib/types';
-
-const ROLES: { value: Role; label: string }[] = [
-  { value: 'barista', label: 'בריסטה' },
-  { value: 'server', label: 'מלצר/ית' },
-  { value: 'cook', label: 'טבח/ית' },
-  { value: 'line-cook', label: 'טבח קו' },
-  { value: 'dishwasher', label: 'שטיפת כלים' },
-  { value: 'bartender', label: 'ברמן/ית' },
-  { value: 'cashier', label: 'קופאי/ת' },
-  { value: 'shift-manager', label: 'אחמ״ש' },
-];
 
 const SHIFTS: { value: ShiftType; label: string }[] = [
   { value: 'morning', label: 'בקרים' },
@@ -34,7 +24,10 @@ export default function PostJobModal({ open, onClose }: Props) {
   const postJob = useStore(s => s.postJob);
   const business = useStore(s => s.business);
 
-  const [role, setRole] = useState<Role>('barista');
+  // Only show roles relevant to this business type
+  const ROLES = venueRoles(business.type).map(r => ({ value: r, label: ROLE_HE[r] }));
+
+  const [role, setRole] = useState<Role>(ROLES[0]?.value ?? 'barista');
   const [when, setWhen] = useState('immediate');
   const [shifts, setShifts] = useState<ShiftType[]>(['morning', 'evening']);
   const [wage, setWage] = useState('');
@@ -74,7 +67,7 @@ export default function PostJobModal({ open, onClose }: Props) {
 
     onClose();
     addToast('a', 'המשרה פורסמה — מחפשים עכשיו');
-    router.push(`/jobs/${id}`);
+    router.push(`/hiring/jobs/${id}`);
   };
 
   return (

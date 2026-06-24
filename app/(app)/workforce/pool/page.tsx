@@ -4,84 +4,75 @@ import Link from 'next/link';
 import { useStore } from '@/lib/store';
 import WorkersTable from '@/components/WorkersTable';
 import { addToast } from '@/components/Toasts';
-import { parseCSV } from '@/lib/csv';
 import { computeDna } from '@/lib/dna';
-import type { Role } from '@/lib/types';
+import { venueRoles, ROLE_HE } from '@/lib/venue';
 
-const ROLE_HE: Record<string, string> = {
-  barista: 'בריסטה', server: 'מלצרות', cook: 'טבחות', 'line-cook': 'טבח קו',
-  dishwasher: 'שטיפה', bartender: 'ברמנות', cashier: 'קופה', host: 'מארח/ת',
-  delivery: 'שליחות', 'shift-manager': 'אחמ״ש',
-};
-
-const FILTERS: { key: string; label: string }[] = [
-  { key: 'all', label: 'הכל' },
-  { key: 'barista', label: 'בריסטה' },
-  { key: 'server', label: 'מלצרות' },
-  { key: 'cook', label: 'טבחות' },
-  { key: 'dishwasher', label: 'שטיפה' },
-  { key: 'near', label: 'עד 2 ק"מ' },
-  { key: 'available', label: 'זמין כעת' },
-];
-
-export default function PoolPage() {
+export default function EmployeesPage() {
   const store = useStore();
   const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState('all');
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [roleFilter, setRoleFilter] = useState('all');
 
-  const filtered = store.pool.filter(c => {
+  // Only show roles relevant to this business type
+  const relevantRoles = venueRoles(store.business.type);
+
+  const filtered = store.employees.filter(c => {
     if (query) {
       const q = query.toLowerCase();
       if (!(c.name.includes(query) || c.neighborhood.includes(query) || c.roles.some(r => r.includes(q)))) return false;
     }
-    if (filter === 'near') return c.willingRangeKm <= 2;
-    if (filter === 'available') return c.availability.immediate === true;
-    if (filter !== 'all') return c.roles.includes(filter as Role);
+    if (roleFilter !== 'all') return c.roles.includes(roleFilter as typeof relevantRoles[number]);
     return true;
   });
-
-  const handleCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      const parsed = parseCSV(ev.target?.result as string, store.business.id);
-      store.bulkAddToPool(parsed);
-      addToast('g', `יובאו ${parsed.length} מועמדים בהצלחה`);
-    };
-    reader.readAsText(file, 'utf-8');
-    e.target.value = '';
-  };
 
   return (
     <div className="body">
       <main className="main">
         <div className="feed">
           <div className="scr-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            מאגר שכונתי
-            <button className="btn-ghost" style={{ fontSize: 12.5, padding: '8px 12px' }} onClick={() => fileRef.current?.click()}>ייבוא CSV</button>
-            <input ref={fileRef} type="file" accept=".csv" style={{ display: 'none' }} onChange={handleCSV} />
+            צוות פעיל
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted2)', background: 'var(--accent-soft)', borderRadius: 20, padding: '3px 10px' }}>
+              {store.employees.length} עובדים
+            </span>
           </div>
 
           <div className="search-bar">
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-            <input type="search" placeholder="חפש לפי שם, תפקיד או שכונה…" value={query} onChange={e => setQuery(e.target.value)} />
+            <input
+              type="search"
+              placeholder="חפש לפי שם, תפקיד או שכונה…"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+            />
           </div>
 
+          {/* Role filter chips — only shows roles relevant to this business type */}
           <div className="filter-row">
-            {FILTERS.map(f => (
-              <button key={f.key} className={`fchip ${filter === f.key ? 'on' : ''}`} onClick={() => setFilter(f.key)}>{f.label}</button>
+            <button
+              className={`fchip ${roleFilter === 'all' ? 'on' : ''}`}
+              onClick={() => setRoleFilter('all')}
+            >
+              הכל
+            </button>
+            {relevantRoles.map(r => (
+              <button
+                key={r}
+                className={`fchip ${roleFilter === r ? 'on' : ''}`}
+                onClick={() => setRoleFilter(r)}
+              >
+                {ROLE_HE[r]}
+              </button>
             ))}
           </div>
 
-          <div className="pool-count">{filtered.length} עובדים{filter === 'near' ? ' עד 2 ק"מ' : ' ברדיוס 3 ק"מ'}</div>
+          <div className="pool-count">
+            {filtered.length} עובדים פעילים
+          </div>
 
           {filtered.length === 0 ? (
             <div className="empty-state">
-              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-              <h3>{query || filter !== 'all' ? 'אין תוצאות' : 'עדיין אין מועמדים'}</h3>
-              <p>{query || filter !== 'all' ? 'נסה סינון אחר' : 'ייבא מועמדים מ-CSV או שתף את קוד ה-QR'}</p>
+              <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              <h3>{query || roleFilter !== 'all' ? 'אין תוצאות' : 'אין עובדים פעילים עדיין'}</h3>
+              <p>{query || roleFilter !== 'all' ? 'נסה סינון אחר' : 'עובדים שמתקבלים לעבודה יופיעו כאן'}</p>
             </div>
           ) : (
             <>
@@ -89,31 +80,51 @@ export default function PoolPage() {
               <div className="hidden md:block">
                 <WorkersTable rows={filtered} />
               </div>
-              {/* Mobile: candidate cards */}
+              {/* Mobile: employee cards */}
               <div className="md:hidden">
                 {filtered.map((c, i) => {
                   const dna = computeDna(c);
                   return (
-                    <Link key={c.id} href={`/candidate/${c.id}`} className="fc in" style={{ transitionDelay: `${i * 30}ms` }}>
+                    <Link
+                      key={c.id}
+                      href={`/candidate/${c.id}`}
+                      className="fc in"
+                      style={{ transitionDelay: `${i * 30}ms` }}
+                    >
                       <div className="fc-av" style={{ background: c.avatarColor }}>{c.initials}</div>
                       <div className="fc-info">
                         <div className="fc-name" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                           {c.name}
-                          <span className={`churn-pip ${dna.churnRisk}`} title={dna.churnRisk === 'high' ? 'סיכון עזיבה גבוה' : dna.churnRisk === 'medium' ? 'סיכון בינוני' : 'יציב'} />
+                          <span
+                            className={`churn-pip ${dna.churnRisk}`}
+                            title={
+                              dna.churnRisk === 'high' ? 'סיכון עזיבה גבוה'
+                              : dna.churnRisk === 'medium' ? 'סיכון בינוני'
+                              : 'יציב'
+                            }
+                          />
                         </div>
                         <div className="fc-facts">
                           <span>{ROLE_HE[c.roles[0]] ?? c.roles[0]}</span>
                           <span className="cdot" /><span>{c.neighborhood}</span>
-                          <span className="cdot" /><span>{c.willingRangeKm} ק"מ</span>
+                          <span className="cdot" />
+                          <span>{c.availability.hoursPerWeek} שעות/שבוע</span>
                         </div>
                         {dna.tags.length > 0 && (
                           <div className="fc-dna-tags">
-                            {dna.tags.slice(0, 2).map(tag => <span key={tag} className="fc-tag">{tag}</span>)}
+                            {dna.tags.slice(0, 2).map(tag => (
+                              <span key={tag} className="fc-tag">{tag}</span>
+                            ))}
                           </div>
                         )}
                       </div>
                       <div className="fc-dna">
-                        <div className="fc-dna-score" style={{ color: dna.score >= 70 ? '#16a34a' : dna.score >= 50 ? 'var(--amber-ink)' : '#b91c1c' }}>{dna.score}</div>
+                        <div
+                          className="fc-dna-score"
+                          style={{ color: dna.score >= 70 ? '#16a34a' : dna.score >= 50 ? 'var(--amber-ink)' : '#b91c1c' }}
+                        >
+                          {dna.score}
+                        </div>
                         <div className="fc-dna-lbl">DNA</div>
                       </div>
                     </Link>

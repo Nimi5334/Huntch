@@ -2,14 +2,17 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Business, Job, Candidate, Invite, RankedCandidate, QrScan } from './types';
-import { DEMO_BUSINESS, DEMO_JOB, SEED_CANDIDATES } from './seed';
+import { DEMO_BUSINESS, DEMO_JOB, SEED_CANDIDATES, SEED_EMPLOYEES } from './seed';
 import { rankPool } from './matching';
 
 interface HuntchState {
   // Core state
   business: Business;
   jobs: Job[];
+  /** QR applicants / talent reserve — people who scanned the QR and want to work here */
   pool: Candidate[];
+  /** Active employees — people currently working for the owner */
+  employees: Candidate[];
   invites: Invite[];
   savedCandidateIds: string[];
   dismissedCandidateIds: string[];
@@ -34,6 +37,12 @@ interface HuntchState {
   postJob: (params: Omit<Job, 'id' | 'businessId' | 'createdAt' | 'flow' | 'status'>) => string;
   addToPool: (candidate: Omit<Candidate, 'id' | 'businessId' | 'addedAt'>) => void;
   bulkAddToPool: (candidates: Omit<Candidate, 'id' | 'businessId' | 'addedAt'>[]) => void;
+  /** Add a new employee directly (e.g. someone who already works there) */
+  addEmployee: (candidate: Omit<Candidate, 'id' | 'businessId' | 'addedAt'>) => void;
+  /** Hire someone from the applicant pool → moves them to active employees */
+  hireFromPool: (candidateId: string) => void;
+  /** Remove an employee (they left) */
+  fireEmployee: (employeeId: string) => void;
   inviteCandidate: (jobId: string, candidateId: string) => void;
   bulkInvite: (jobId: string, minScore: number) => void;
   simulateResponses: (jobId: string) => void;
@@ -51,6 +60,7 @@ export const useStore = create<HuntchState>()(
       business: DEMO_BUSINESS,
       jobs: [DEMO_JOB],
       pool: SEED_CANDIDATES,
+      employees: SEED_EMPLOYEES,
       invites: [],
       savedCandidateIds: [],
       dismissedCandidateIds: [],
@@ -126,6 +136,8 @@ export const useStore = create<HuntchState>()(
             password: params.password,
           },
           jobs: [],
+          pool: [],
+          employees: [],
           invites: [],
           savedCandidateIds: [],
           dismissedCandidateIds: [],
@@ -179,6 +191,29 @@ export const useStore = create<HuntchState>()(
           addedAt: today,
         }));
         set(s => ({ pool: [...candidates, ...s.pool] }));
+      },
+
+      addEmployee: (raw) => {
+        const employee: Candidate = {
+          ...raw,
+          id: uid(),
+          businessId: get().business.id,
+          addedAt: new Date().toISOString().slice(0, 10),
+        };
+        set(s => ({ employees: [employee, ...s.employees] }));
+      },
+
+      hireFromPool: (candidateId) => {
+        const cand = get().pool.find(c => c.id === candidateId);
+        if (!cand) return;
+        set(s => ({
+          pool: s.pool.filter(c => c.id !== candidateId),
+          employees: [cand, ...s.employees],
+        }));
+      },
+
+      fireEmployee: (employeeId) => {
+        set(s => ({ employees: s.employees.filter(e => e.id !== employeeId) }));
       },
 
       inviteCandidate: (jobId, candidateId) => {

@@ -2,17 +2,8 @@
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import { addToast } from './Toasts';
+import { venueRoles, ROLE_HE, ROLE_ICON } from '@/lib/venue';
 import type { Role } from '@/lib/types';
-
-const GAP_ROLES: { value: Role; label: string; icon: string }[] = [
-  { value: 'barista', label: 'בריסטה', icon: '☕' },
-  { value: 'server', label: 'מלצר/ית', icon: '🍽' },
-  { value: 'cook', label: 'טבח/ית', icon: '👨‍🍳' },
-  { value: 'bartender', label: 'ברמן/ית', icon: '🍸' },
-  { value: 'dishwasher', label: 'שטיפת כלים', icon: '🫧' },
-  { value: 'cashier', label: 'קופאי/ת', icon: '💳' },
-  { value: 'shift-manager', label: 'אחמ״ש', icon: '📋' },
-];
 
 interface Props {
   open: boolean;
@@ -22,12 +13,20 @@ interface Props {
 export default function GapTriggerModal({ open, onClose }: Props) {
   const router = useRouter();
   const reportGap = useStore(s => s.reportGap);
+  const business = useStore(s => s.business);
+
+  // Only show roles relevant to this business type
+  const GAP_ROLES = venueRoles(business.type).map(r => ({
+    value: r,
+    label: ROLE_HE[r],
+    icon: ROLE_ICON[r],
+  }));
 
   const handleGap = (role: Role) => {
     const jobId = reportGap(role);
     onClose();
-    addToast('g', `מחפשים ${GAP_ROLES.find(r => r.value === role)?.label} — חזרו עכשיו לתוצאות`);
-    router.push(`/jobs/${jobId}`);
+    addToast('g', `מחפשים ${ROLE_HE[role]} — חזרו עכשיו לתוצאות`);
+    router.push(`/hiring/jobs/${jobId}`);
   };
 
   if (!open) return null;

@@ -10,7 +10,7 @@ export default function WorkforceLayout({ children }: { children: React.ReactNod
   return (
     <>
       <div className="sub-nav">
-        <Link href="/workforce/pool" className={`sub-tab ${isPool ? 'on' : ''}`}>מאגר</Link>
+        <Link href="/workforce/pool" className={`sub-tab ${isPool ? 'on' : ''}`}>עובדים</Link>
         <Link href="/workforce/schedule" className={`sub-tab ${isSchedule ? 'on' : ''}`}>לו״ז</Link>
       </div>
       {children}
