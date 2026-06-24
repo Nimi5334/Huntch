@@ -49,7 +49,10 @@ function CandidateProfileInner({ id }: { id: string }) {
   const jobId = useSearchParams().get('job') ?? 'job-1';
   const store = useStore();
 
-  const cand = store.pool.find(c => c.id === id);
+  // Look in both pool (applicants) and employees (active staff)
+  const cand = store.pool.find(c => c.id === id) ?? store.employees.find(c => c.id === id);
+  const isEmployee = store.employees.find(c => c.id === id) !== undefined;
+
   if (!cand) {
     return (
       <>
@@ -71,13 +74,14 @@ function CandidateProfileInner({ id }: { id: string }) {
 
   return (
     <>
-      <div className="back-bar"><span className="ar" style={{ cursor: 'pointer' }} onClick={() => router.back()}>→</span><b>פרופיל מועמד</b></div>
+      <div className="back-bar"><span className="ar" style={{ cursor: 'pointer' }} onClick={() => router.back()}>→</span><b>{isEmployee ? 'פרופיל עובד' : 'פרופיל מועמד'}</b></div>
 
       <div className="prof-hero">
         <div className="prof-big" style={{ background: cand.avatarColor }}>{cand.initials}</div>
         <h2>{cand.name}</h2>
         <div className="sub">{ROLE_HE[cand.roles[0]] ?? cand.roles[0]} · {cand.neighborhood}</div>
-        {score != null && <div className="prof-fit">התאמה למשרה <b>{score}%</b></div>}
+        {score != null && !isEmployee && <div className="prof-fit">התאמה למשרה <b>{score}%</b></div>}
+        {isEmployee && <div className="prof-fit" style={{ background: 'rgba(74,122,90,0.15)', color: 'var(--accent)' }}>🟢 פעיל בצוות</div>}
       </div>
 
       <div className="prof-body">
@@ -85,11 +89,32 @@ function CandidateProfileInner({ id }: { id: string }) {
         <div className="prow"><div className="lab">זמינות</div><div className="val">{availTxt}</div></div>
         <div className="prow"><div className="lab">היקף</div><div className="val">{cand.availability.hoursPerWeek} שעות שבועיות</div></div>
         <div className="prow"><div className="lab">ניסיון</div><div className="val">{expTxt}</div></div>
-        <div className="prow"><div className="lab">שכר מבוקש</div><div className="val">{cand.expectedWageNis} ₪ לשעה</div></div>
+        <div className="prow"><div className="lab">{isEmployee ? 'שכר' : 'שכר מבוקש'}</div><div className="val">{cand.expectedWageNis} ₪ לשעה</div></div>
         <div className="prow"><div className="lab">תפקידים</div><div className="chips">{cand.roles.map(r => <span key={r}>{ROLE_HE[r] ?? r}</span>)}</div></div>
         {cand.skills.length > 0 && <div className="prow"><div className="lab">כישורים</div><div className="chips">{cand.skills.map(s => <span key={s}>{s}</span>)}</div></div>}
         <div className="prow" style={{ borderBottom: 'none' }}><div className="lab">שפות</div><div className="chips">{cand.languages.map(l => <span key={l}>{LANG_HE[l] ?? l}</span>)}</div></div>
       </div>
+
+      {/* SHIFTS THIS WEEK — for employees */}
+      {isEmployee && (
+        <div style={{ padding: '16px', background: 'var(--accent-soft)', borderRadius: '12px', margin: '14px 0', fontSize: 13 }}>
+          <div style={{ fontWeight: 700, marginBottom: 8, color: 'var(--accent)' }}>🗓️ משמרות זמינות</div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {cand.availability.shifts.length > 0 ? (
+              cand.availability.shifts.map(s => (
+                <span key={s} style={{ background: 'var(--card)', padding: '4px 10px', borderRadius: '16px', fontSize: 12, fontWeight: 600, color: 'var(--accent)', border: '1px solid var(--line)' }}>
+                  {SHIFT_HE[s] ?? s}
+                </span>
+              ))
+            ) : (
+              <span style={{ color: 'var(--muted)' }}>לא צוינו משמרות</span>
+            )}
+          </div>
+          <div style={{ marginTop: 8, fontSize: 12, color: 'var(--muted)' }}>
+            {cand.availability.hoursPerWeek} שעות בשבוע
+          </div>
+        </div>
+      )}
 
       {/* AI INTERVIEW PROFILE */}
       <div className="dna-section" style={{ marginTop: 0, borderRadius: '20px 20px 0 0', borderBottom: '1px solid rgba(124,92,62,0.1)' }}>
@@ -194,12 +219,26 @@ function CandidateProfileInner({ id }: { id: string }) {
       <div aria-hidden="true" style={{ height: 104 }} />
 
       <div className="prof-cta">
-        <button className={`save ${saved ? 'on' : ''}`} aria-label="שמור" onClick={() => { store.saveCandidate(id); addToast('a', 'נשמר לרשימה'); }}>
+        <button className={`save ${saved ? 'on' : ''}`} aria-label="שמור" onClick={() => { store.saveCandidate(id); addToast('a', saved ? 'הוסר מרשימה' : 'נשמר לרשימה'); }}>
           {saved ? '♥' : '♡'}
         </button>
-        <button className="inv" disabled={invited} onClick={() => { store.inviteCandidate(jobId, id); addToast('g', `הזמנה נשלחה ל${cand.name}`); router.push('/'); }}>
-          {invited ? 'כבר הוזמן/ה ✓' : 'הזמן לראיון'}
-        </button>
+        {isEmployee ? (
+          <button
+            className="inv"
+            style={{ background: '#ef4444', color: '#fff' }}
+            onClick={() => {
+              store.fireEmployee(id);
+              addToast('a', `${cand.name} הוסר מהצוות`);
+              router.back();
+            }}
+          >
+            הסר מהצוות
+          </button>
+        ) : (
+          <button className="inv" disabled={invited} onClick={() => { store.inviteCandidate(jobId, id); addToast('g', `הזמנה נשלחה ל${cand.name}`); router.push('/'); }}>
+            {invited ? 'כבר הוזמן/ה ✓' : 'הזמן לראיון'}
+          </button>
+        )}
       </div>
     </>
   );
