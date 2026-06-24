@@ -13,6 +13,7 @@ export default function Dashboard() {
   const store = useStore();
   const router = useRouter();
   const [showDaily, setShowDaily] = useState(false);
+  const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const arrivedRef = useRef(false);
 
   useEffect(() => {
@@ -22,8 +23,10 @@ export default function Dashboard() {
   }, []);
 
   const activeJobs = store.jobs.filter(j => j.status === 'active');
-  // Pick the most recently posted active job (first in the list)
-  const featuredJob = activeJobs[0] ?? null;
+  // Unique roles that have at least one active job — drives the home filter chips
+  const uniqueActiveRoles = [...new Set(activeJobs.map(j => j.role))];
+  // Pick the job matching the selected role chip, or fall back to the first active job
+  const featuredJob = (roleFilter ? activeJobs.find(j => j.role === roleFilter) : null) ?? activeJobs[0] ?? null;
   const featuredJobId = featuredJob?.id ?? null;
   const ranked = featuredJobId ? store.rankedForJob(featuredJobId) : [];
   const invitedIds = new Set(featuredJobId ? store.invitedIdsForJob(featuredJobId) : []);
@@ -165,13 +168,25 @@ export default function Dashboard() {
 
             {/* MATCHES — applicants ranked for the most urgent open job */}
             <div id="matches" className="feed-seg">
-              <span className="t">
-                {featuredJob
-                  ? `מועמדים מובילים — ${ROLE_HE[featuredJob.role] ?? featuredJob.role}`
-                  : 'מועמדים שהגישו מועמדות'}
-              </span>
+              <span className="t">{featuredJob ? 'מועמדים מובילים' : 'מועמדים שהגישו מועמדות'}</span>
               {featuredJobId && <Link href={`/hiring/jobs/${featuredJobId}`}>ראה הכל ←</Link>}
             </div>
+
+            {/* Role filter chips — only roles with active jobs (demo: barista only) */}
+            {uniqueActiveRoles.length > 0 && (
+              <div className="filter-chips" style={{ paddingBottom: 14 }}>
+                {uniqueActiveRoles.map(role => (
+                  <button
+                    key={role}
+                    className={`chip${roleFilter === role ? ' on' : ''}`}
+                    onClick={() => setRoleFilter(prev => prev === role ? null : role)}
+                  >
+                    {ROLE_HE[role] ?? role}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {matches.map((c, i) => (
               <Link key={c.id} href={`/candidate/${c.id}?job=${featuredJobId ?? ''}`} className="fc in" style={{ transitionDelay: `${i * 40}ms` }}>
                 <div className="fc-av" style={{ background: c.avatarColor }}>{c.initials}</div>
