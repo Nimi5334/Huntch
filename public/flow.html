@@ -227,8 +227,8 @@
     <div class="strip-node"><span class="sicon">📱</span><div class="slabel">סריקה</div><div class="ssub">QR בעסק</div></div>
     <div class="strip-node"><span class="sicon">🤖</span><div class="slabel">ראיון AI</div><div class="ssub">30 שניות</div></div>
     <div class="strip-node"><span class="sicon">🎯</span><div class="slabel">דירוג</div><div class="ssub">DNA חכם</div></div>
-    <div class="strip-node"><span class="sicon">✉️</span><div class="slabel">הזמנה</div><div class="ssub">WhatsApp</div></div>
-    <div class="strip-node"><span class="sicon">🟢</span><div class="slabel">גיוס</div><div class="ssub">צוות פעיל</div></div>
+    <div class="strip-node"><span class="sicon">💬</span><div class="slabel">ראיון</div><div class="ssub">WhatsApp → IRL</div></div>
+    <div class="strip-node"><span class="sicon">🟢</span><div class="slabel">גיוס</div><div class="ssub">נכנס כקארד</div></div>
     <div class="strip-node"><span class="sicon">⚙️</span><div class="slabel">ניהול</div><div class="ssub">6 מנועי AI</div></div>
   </div>
 </header>
@@ -318,26 +318,62 @@
     <div class="phase-card">
       <div class="phase-head">
         <div class="phase-num">3</div>
-        <div class="htext"><h2>הזמנה וקבלת תגובה</h2><div class="heng">Invitation &amp; Response</div></div>
+        <div class="htext"><h2>ראיון בחיים האמיתיים</h2><div class="heng">Real-Life Interview via WhatsApp API</div></div>
       </div>
       <div class="phase-body">
-        <div class="funnel">
+
+        <!-- main funnel row -->
+        <div class="funnel" style="margin-bottom:28px">
           <div class="fnode">
-            <div class="fi">✉️</div><h4>הזמנה נשלחה</h4><small>ישירות ל-WhatsApp של המועמד</small>
+            <div class="fi">🎯</div>
+            <h4>מנהל בחר מועמד</h4>
+            <small>לחץ "הזמן לראיון" מרשימת הדירוג</small>
           </div>
           <div class="farrow">←</div>
           <div class="fnode">
-            <div class="fi">⏳</div><h4>ממתין/ה לתגובה</h4><small>3–5 שעות בממוצע</small>
+            <div class="fi">💬</div>
+            <h4>WhatsApp API</h4>
+            <small>הודעה אוטומטית: "נשמח להכיר! מתי נוח לך?"</small>
           </div>
           <div class="farrow">←</div>
-          <div class="fnode yes">
-            <div class="fi">✅</div><h4>אישור</h4><small>עובר ל"עובדים"</small>
-          </div>
-          <div class="farrow" style="color:var(--red)">←</div>
-          <div class="fnode no">
-            <div class="fi">❌</div><h4>סירוב</h4><small>חוזר למועמד הבא בדירוג</small>
+          <div class="fnode">
+            <div class="fi">🤝</div>
+            <h4>ראיון פנים-אל-פנים</h4>
+            <small>מפגש אמיתי — המנהל מחליט</small>
           </div>
         </div>
+
+        <!-- outcome split -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="fnode yes" style="max-width:100%;padding:22px 20px">
+            <div class="fi">✅</div>
+            <h4>התקבל לעבודה</h4>
+            <small style="display:block;margin-bottom:10px">המנהל מאשר בהאנץ׳</small>
+            <div style="background:#fff;border:1px solid rgba(22,163,74,.25);border-radius:12px;padding:12px;display:flex;align-items:center;gap:10px;text-align:right">
+              <div style="width:40px;height:40px;border-radius:11px;background:#4a7a5a;display:grid;place-items:center;font-weight:800;color:#fff;font-size:12px;flex:none">מל</div>
+              <div>
+                <div style="font-weight:800;font-size:13px">מיה לוי</div>
+                <div style="font-size:11px;color:#7c6f63">בריסטה · נכנסת כקארד חדש</div>
+                <div style="margin-top:4px;display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#16a34a;background:rgba(22,163,74,.1);padding:3px 8px;border-radius:20px">
+                  <span style="width:6px;height:6px;border-radius:50%;background:#16a34a;display:inline-block"></span>פעיל בצוות
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="fnode no" style="max-width:100%;padding:22px 20px">
+            <div class="fi">❌</div>
+            <h4>לא התאים</h4>
+            <small style="display:block;margin-bottom:10px">המועמד נשאר במאגר</small>
+            <div style="font-size:13px;color:var(--muted);line-height:1.6">
+              Huntch ממשיך לדרג<br/>ומציע את <b>המועמד הבא</b><br/>ברשימת ההתאמה.
+            </div>
+          </div>
+        </div>
+
+        <p style="font-size:12.5px;color:var(--muted);margin-top:20px;text-align:center;line-height:1.7">
+          💡 ה-WhatsApp API שולח הודעה ממותגת מטעם העסק — המועמד לא יורד לאף אפליקציה חדשה.
+        </p>
       </div>
     </div>
   </section>
@@ -445,7 +481,7 @@
       <tbody>
         <tr><td><span class="stage">גילוי</span></td><td>ראיון AI ללא קו״ח</td><td>פרופיל מיידי, אפס חיכוך</td></tr>
         <tr><td><span class="stage">דירוג</span></td><td>אלגוריתם DNA מדרג התאמה</td><td>המועמדים הטובים צפים למעלה</td></tr>
-        <tr><td><span class="stage">הזמנה</span></td><td>WhatsApp ילידי, ללא אפליקציה</td><td>שיעורי תגובה גבוהים</td></tr>
+        <tr><td><span class="stage">ראיון</span></td><td>הודעת WhatsApp API + ראיון IRL</td><td>מנהל בוחר בחיים האמיתיים</td></tr>
         <tr><td><span class="stage">גיוס</span></td><td>הפעלה בלחיצה אחת</td><td>קליטה מהירה לצוות</td></tr>
         <tr><td><span class="stage">ניהול</span></td><td>6 מנועי AI עובדים יחד</td><td>אוטומציה + תבונה מתמשכת</td></tr>
       </tbody>
