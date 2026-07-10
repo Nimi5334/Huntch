@@ -1,58 +1,63 @@
 'use client';
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
-import type { Patient, Lead } from '@/lib/types';
+import type { Patient, TreatmentRecord } from '@/lib/types';
+import { CATEGORY_HE, monthsSince, daysSince } from '@/lib/clinical';
 
 interface Props {
   patient: Patient;
-  lead: Lead;
-  onSendLead?: () => void;
-  sent?: boolean;
 }
 
-export default function PatientCard({ patient, lead, onSendLead, sent }: Props) {
-  const isUpToDate = lead.headline === 'הכל מעודכן';
+function latestCompleted(patient: Patient): TreatmentRecord | undefined {
+  return patient.treatments
+    .filter(t => t.status === 'completed')
+    .sort((a, b) => b.date.localeCompare(a.date))[0];
+}
+
+function relativeWhen(dateStr: string): string {
+  const now = new Date().toISOString().slice(0, 10);
+  const days = daysSince(dateStr, now);
+  if (days <= 0) return 'היום';
+  if (days < 7) return `לפני ${days} ימים`;
+  if (days < 30) {
+    const w = Math.round(days / 7);
+    return w <= 1 ? 'לפני שבוע' : `לפני ${w} שבועות`;
+  }
+  const months = monthsSince(dateStr, now);
+  if (months < 1) return 'החודש';
+  if (months === 1) return 'לפני חודש';
+  if (months < 12) return `לפני ${months} חודשים`;
+  const years = Math.floor(months / 12);
+  return years === 1 ? 'לפני שנה' : `לפני ${years} שנים`;
+}
+
+export default function PatientCard({ patient }: Props) {
   const ref = useRef<HTMLElement>(null);
+  const last = latestCompleted(patient);
 
   useEffect(() => {
     const t = setTimeout(() => ref.current?.classList.add('in'), 30);
     return () => clearTimeout(t);
   }, []);
 
+  const treatmentLabel = last
+    ? `${CATEGORY_HE[last.category] ?? last.name} · ${relativeWhen(last.date)}`
+    : 'אין טיפולים רשומים';
+
   return (
     <article className="cand" ref={ref}>
-      <Link href={`/patients/${patient.id}`} className="cand-top" style={{ textDecoration: 'none', color: 'inherit' }}>
+      <Link href={`/patients/${patient.id}`} className="cand-top" style={{ textDecoration: 'none', color: 'inherit', width: '100%' }}>
         <div className="av" style={{ background: patient.avatarColor }}>{patient.initials}</div>
         <div className="cand-info">
           <div className="cand-name">{patient.name}</div>
           <div className="cand-facts">
-            <span>{lead.headline}</span>
-            <span className="cdot" />
-            <span>{lead.reason}</span>
+            <span>{treatmentLabel}</span>
           </div>
         </div>
-        {!isUpToDate && <span className="score" style={{ background: 'var(--cedar-soft)', color: 'var(--cedar)' }}>ליד</span>}
+        <span className="ico" aria-hidden="true" style={{ pointerEvents: 'none' }}>
+          <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" /></svg>
+        </span>
       </Link>
-
-      <div className="cand-actions">
-        {isUpToDate ? (
-          <span className="inv-badge">
-            <svg viewBox="0 0 24 24" style={{ fill: 'currentColor', stroke: 'none' }}>
-              <path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
-            </svg>
-            עדכני
-          </span>
-        ) : sent ? (
-          <span className="inv-badge">נשלח ✓</span>
-        ) : (
-          <>
-            <button className="btn-invite" onClick={onSendLead}>אשר ושלח</button>
-            <Link href={`/patients/${patient.id}`} className="ico" aria-label="פרופיל">
-              <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" /></svg>
-            </Link>
-          </>
-        )}
-      </div>
     </article>
   );
 }

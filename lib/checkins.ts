@@ -26,14 +26,17 @@ const CHECKIN_WINDOWS: Partial<Record<TreatmentRecord['category'], number[]>> = 
 };
 
 const WINDOW_TOLERANCE_DAYS = 4;
-const DORMANT_MONTHS_DAYS = 240; // ~8 months with no contact → routine wellbeing check
+const DEFAULT_DORMANT_DAYS = 240; // ~8 months with no contact → routine wellbeing check
 
 function senderName(clinic: Clinic) {
   return clinic.operatorName.split(' ')[0] || 'הצוות';
 }
 
-/** Returns the personalized, treatment-specific quality-checks due for this patient today. */
-export function checkinsDue(patient: Patient, clinic: Clinic): CheckinDraft[] {
+/**
+ * Returns the personalized, treatment-specific quality-checks due for this patient today.
+ * `dormantDays` (from the clinic's automation cadence) controls the generic wellbeing window.
+ */
+export function checkinsDue(patient: Patient, clinic: Clinic, dormantDays: number = DEFAULT_DORMANT_DAYS): CheckinDraft[] {
   const now = today();
   const firstName = patient.name.split(' ')[0];
   const sender = senderName(clinic);
@@ -52,7 +55,7 @@ export function checkinsDue(patient: Patient, clinic: Clinic): CheckinDraft[] {
   }
 
   // Long-dormant patient with no treatment-specific check-in due → generic wellbeing
-  if (drafts.length === 0 && daysSince(patient.lastVisit, now) >= DORMANT_MONTHS_DAYS) {
+  if (drafts.length === 0 && daysSince(patient.lastVisit, now) >= dormantDays) {
     drafts.push({
       patientId: patient.id,
       kind: 'wellbeing',

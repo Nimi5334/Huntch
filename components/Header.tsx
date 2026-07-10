@@ -15,8 +15,8 @@ const HMARK_WHITE = (
 
 const TABS = [
   { label: 'בית', href: '/' },
-  { label: 'מה חדש', href: '/today' },
-  { label: 'מענה אוטומטי', href: '/auto-reply' },
+  { label: 'משימות', href: '/tasks' },
+  { label: 'אוטומציה', href: '/automation' },
   { label: 'פעילות', href: '/activity' },
 ];
 
@@ -65,10 +65,6 @@ export default function Header({
         </div>
 
         <div className="hdr-end">
-          <Link href="/inbox" className="hdr-icon-btn" title="פניות" aria-label="פניות">
-            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            {pendingEscalations > 0 && <span className="ping" />}
-          </Link>
           <button
             className="hdr-avatar"
             onClick={() => setProfile(p => !p)}
@@ -146,13 +142,11 @@ export default function Header({
         {TABS.map(t => (
           <Link key={t.href} href={t.href} className={`drawer-row ${isActive(path, t.href) ? 'on' : ''}`} onClick={() => setDrawer(false)}>
             <span>{t.label}</span>
+            {t.href === '/tasks' && pendingEscalations > 0 && <span className="dbadge">{pendingEscalations}</span>}
           </Link>
         ))}
-        <Link href="/inbox" className={`drawer-row ${isActive(path, '/inbox') ? 'on' : ''}`} onClick={() => setDrawer(false)}>
-          <span>פניות</span>{pendingEscalations > 0 && <span className="dbadge">{pendingEscalations}</span>}
-        </Link>
         <Link href="/settings" className={`drawer-row ${isActive(path, '/settings') ? 'on' : ''}`} onClick={() => setDrawer(false)}>
-          <span>הגדרות</span>
+          <span>פרופיל</span>
         </Link>
         <button className="drawer-row" style={{ marginTop: 'auto', color: '#b91c1c' }} onClick={handleLogout}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">

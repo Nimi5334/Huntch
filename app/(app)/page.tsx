@@ -3,13 +3,12 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/lib/store';
-import { addToast } from '@/components/Toasts';
 import PatientCard from '@/components/PatientCard';
 import AddPatientModal from '@/components/AddPatientModal';
 import { generateLead } from '@/lib/leads';
-import { canUse } from '@/lib/plan';
+import { daysSince } from '@/lib/clinical';
 
-interface DailyFeedItem {
+interface TaskItem {
   key: string;
   label: string;
   sublabel: string;
@@ -21,53 +20,55 @@ interface DailyFeedItem {
 export default function Home() {
   const store = useStore();
   const [query, setQuery] = useState('');
-  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
   const [addOpen, setAddOpen] = useState(false);
-  const [showDaily, setShowDaily] = useState(false);
+  const [showTasks, setShowTasks] = useState(false);
 
   const clinic = store.clinic;
-  const leads = useMemo(
-    () => store.patients.map(p => ({ patient: p, lead: generateLead(p, clinic.type) })),
-    [store.patients, clinic.type],
-  );
-
-  const actionable = leads.filter(l => l.lead.headline !== 'הכל מעודכן');
-  const upToDate = leads.filter(l => l.lead.headline === 'הכל מעודכן');
+  const auto = store.automationSettings();
 
   const q = query.trim().toLowerCase();
-  const filtered = q
-    ? leads.filter(l => l.patient.name.toLowerCase().includes(q) || l.patient.phone.includes(q))
-    : [...actionable, ...upToDate];
+  const patients = useMemo(() => {
+    const sorted = [...store.patients].sort((a, b) => (b.lastVisit ?? '').localeCompare(a.lastVisit ?? ''));
+    if (!q) return sorted;
+    return sorted.filter(p => p.name.toLowerCase().includes(q) || p.phone.includes(q));
+  }, [store.patients, q]);
 
-  const roi = store.roiSummary();
-  const showRoiTeaser = !canUse(clinic, 'roi_dashboard');
-
+  // Task counts for the "המשימות שלי" popover
+  const now = new Date().toISOString().slice(0, 10);
   const pendingEscalations = store.pendingEscalationCount();
-  const checkinsDue = store.checkinsDueToday();
-  const recentReplies = store.outreach.filter(o => o.status === 'replied').length;
+  const checkinsDue = auto.qualityChecks ? store.checkinsDueToday().length : 0;
+  const actionableLeads = useMemo(
+    () => auto.reactivationLeads
+      ? store.patients.filter(p => generateLead(p, clinic.type).headline !== 'הכל מעודכן').length
+      : 0,
+    [store.patients, clinic.type, auto.reactivationLeads],
+  );
+  const reviewNudges = useMemo(
+    () => auto.reviewRequests
+      ? store.patients.filter(p => {
+          const lastT = p.treatments.find(t => t.status === 'completed');
+          if (!lastT) return false;
+          const d = daysSince(lastT.date, now);
+          return d >= 2 && d <= 10;
+        }).length
+      : 0,
+    [store.patients, now, auto.reviewRequests],
+  );
 
-  const dailyFeed: DailyFeedItem[] = [
-    { key: 'escalations', label: 'דורש התערבות אנושית', sublabel: 'פניות שממתינות לטיפול', count: pendingEscalations, urgency: 'high', href: '/inbox' },
-    { key: 'checkins', label: 'בדיקות איכות תקופתיות', sublabel: 'מוכנות לאישור ושליחה', count: checkinsDue.length, urgency: 'medium', href: '/today' },
-    { key: 'leads', label: 'לידים לטיפול', sublabel: 'מטופלים שכדאי להחזיר', count: actionable.length, urgency: 'medium', href: '/today' },
-    { key: 'replies', label: 'תגובות ממטופלים', sublabel: 'הגיבו להודעות שנשלחו', count: recentReplies, urgency: 'low', href: '/today' },
+  const tasks: TaskItem[] = [
+    { key: 'escalations', label: 'דורש התערבות אנושית', sublabel: 'פניות שממתינות לטיפול', count: pendingEscalations, urgency: 'high', href: '/tasks?focus=escalations' },
+    { key: 'checkins', label: 'בדיקות איכות תקופתיות', sublabel: 'מוכנות לאישור ושליחה', count: checkinsDue, urgency: 'medium', href: '/tasks?focus=checkins' },
+    { key: 'leads', label: 'לידים להחזרת מטופלים', sublabel: 'מטופלים שכדאי להחזיר', count: actionableLeads, urgency: 'medium', href: '/tasks?focus=leads' },
+    { key: 'reviews', label: 'בקשות ביקורת', sublabel: 'מטופלים שביקרו לאחרונה', count: reviewNudges, urgency: 'low', href: '/tasks?focus=reviews' },
   ];
-  const totalActionable = dailyFeed.reduce((s, item) => s + item.count, 0);
+  const totalActionable = tasks.reduce((s, item) => s + item.count, 0);
 
-  const urgencyColor = (u: DailyFeedItem['urgency'], hasCount: boolean) => {
+  const urgencyColor = (u: TaskItem['urgency'], hasCount: boolean) => {
     if (!hasCount) return '#e0d8d0';
     if (u === 'high') return '#b91c1c';
     if (u === 'medium') return '#c08a2e';
     return '#4a7a5a';
   };
-
-  function handleSendLead(patientId: string, message: string) {
-    const id = store.createOutreach(patientId, 'reactivation', message);
-    store.approveOutreach(id);
-    store.sendOutreach(id);
-    setSentIds(prev => new Set(prev).add(patientId));
-    addToast('g', 'ההודעה אושרה ונשלחה');
-  }
 
   return (
     <div className="body">
@@ -77,14 +78,14 @@ export default function Home() {
             <span className="t">{clinic.name} · {store.patients.length} מטופלים</span>
           </div>
 
-          {/* "מה חדש היום" — gradient toggle → floating panel */}
+          {/* "המשימות שלי" — gradient toggle → floating panel */}
           <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', paddingTop: 4, marginBottom: 16 }}>
             <button
               type="button"
-              onClick={() => setShowDaily(v => !v)}
+              onClick={() => setShowTasks(v => !v)}
               className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold text-white shadow-md transition-all hover:opacity-90 border-0 cursor-pointer"
               style={{ background: 'linear-gradient(130deg, #4a7a5a 0%, #7c5c3e 100%)', position: 'relative' }}
-              aria-label="מה חדש היום"
+              aria-label="המשימות שלי"
             >
               {totalActionable > 0 && (
                 <span style={{
@@ -98,13 +99,13 @@ export default function Home() {
                   <path fill="white" d="M6.958.713a1 1 0 0 0-1.916 0l-.999 3.33-3.33 1a1 1 0 0 0 0 1.915l3.33.999 1 3.33a1 1 0 0 0 1.915 0l.999-3.33 3.33-1a1 1 0 0 0 0-1.915l-3.33-.999-1-3.33Z" />
                 </svg>
               </span>
-              {`מה חדש היום, ${clinic.operatorName.split(' ')[0] || 'מנהל'}`}
+              המשימות שלי
             </button>
 
             <AnimatePresence>
-              {showDaily && (
+              {showTasks && (
                 <motion.div
-                  key="daily-panel"
+                  key="tasks-panel"
                   dir="rtl"
                   initial={{ opacity: 0, y: -8, filter: 'blur(10px)' }}
                   animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
@@ -127,17 +128,17 @@ export default function Home() {
                 >
                   <div style={{ padding: '10px 14px 8px', borderBottom: '1px solid rgba(124,92,62,0.1)' }}>
                     <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '0.07em', color: '#7c5c3e', opacity: 0.7, textTransform: 'uppercase' }}>
-                      משימות היום · {dailyFeed.filter(i => i.count > 0).length} פעילות
+                      משימות להתייעלות · {tasks.filter(i => i.count > 0).length} פעילות
                     </div>
                   </div>
 
-                  {dailyFeed.map((item, idx) => {
+                  {tasks.map((item, idx) => {
                     const hasCount = item.count > 0;
                     return (
                       <Link
                         key={item.key}
                         href={item.href}
-                        onClick={() => setShowDaily(false)}
+                        onClick={() => setShowTasks(false)}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -145,7 +146,7 @@ export default function Home() {
                           padding: '9px 14px',
                           textDecoration: 'none',
                           color: 'inherit',
-                          borderBottom: idx < dailyFeed.length - 1 ? '1px solid rgba(124,92,62,0.07)' : 'none',
+                          borderBottom: idx < tasks.length - 1 ? '1px solid rgba(124,92,62,0.07)' : 'none',
                           opacity: hasCount ? 1 : 0.45,
                           borderInlineStart: `3px solid ${urgencyColor(item.urgency, hasCount)}`,
                         }}
@@ -177,19 +178,6 @@ export default function Home() {
             + הוסף מטופל חדש
           </button>
 
-          {showRoiTeaser && roi.potentialRevenue > 0 && (
-            <Link href="/settings/billing" className="qr-compact" style={{ marginBottom: 14 }}>
-              <div className="sq" style={{ background: 'var(--accent-soft)', display: 'grid', placeItems: 'center' }}>
-                <span style={{ fontSize: 18 }}>💡</span>
-              </div>
-              <div>
-                <div className="nm">₪{roi.potentialRevenue.toLocaleString()} ניתן להחזיר אוטומטית</div>
-                <div className="ds">שדרג/י למתקדם כדי להפעיל שליחה אוטומטית ולוח ROI</div>
-              </div>
-              <span className="go">←</span>
-            </Link>
-          )}
-
           <div className="field" style={{ marginBottom: 14 }}>
             <input
               type="text"
@@ -199,7 +187,7 @@ export default function Home() {
             />
           </div>
 
-          {filtered.length === 0 && (
+          {patients.length === 0 && (
             <div className="empty-state">
               <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
               <h3>לא נמצאו מטופלים</h3>
@@ -207,14 +195,8 @@ export default function Home() {
             </div>
           )}
 
-          {filtered.map(({ patient, lead }) => (
-            <PatientCard
-              key={patient.id}
-              patient={patient}
-              lead={lead}
-              sent={sentIds.has(patient.id)}
-              onSendLead={() => handleSendLead(patient.id, lead.draftMessage)}
-            />
+          {patients.map(patient => (
+            <PatientCard key={patient.id} patient={patient} />
           ))}
         </div>
       </main>

@@ -39,6 +39,14 @@ export const DEMO_CLINIC: Clinic = {
       { id: 'v-1', patientMsg: 'היי, אפשר לדעת מתי התור הבא שלי?', approvedReply: 'היי! בשמחה — אני בודק ומחזיר לך תשובה תוך כמה דקות 🙂' },
     ],
   },
+  automation: {
+    qualityChecks: true,
+    qualityCheckFrequencyDays: 90,
+    reactivationLeads: true,
+    reviewRequests: true,
+    autoAnswer: true,
+    approveBeforeSend: true,
+  },
 };
 
 function mk(id: string, category: TreatmentRecord['category'], date: string, name: string, cost: number, status: TreatmentRecord['status'] = 'completed', notes?: string): TreatmentRecord {

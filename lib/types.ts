@@ -24,6 +24,22 @@ export interface BusinessKnowledge {
   voiceExamples: VoiceExample[];
 }
 
+/** What the system does on its own — editable from the אוטומציה page. */
+export interface AutomationSettings {
+  /** periodic personalized quality-checks after treatments */
+  qualityChecks: boolean;
+  /** cadence for the recurring wellbeing/quality follow-up (days) */
+  qualityCheckFrequencyDays: number;
+  /** surface reactivation leads for dormant patients */
+  reactivationLeads: boolean;
+  /** nudge recently-seen patients for a review */
+  reviewRequests: boolean;
+  /** AI answers routine patient questions from the knowledge base */
+  autoAnswer: boolean;
+  /** require a clinic tap before anything goes out (safe default) */
+  approveBeforeSend: boolean;
+}
+
 export interface Clinic {
   id: string;
   name: string;
@@ -36,6 +52,7 @@ export interface Clinic {
   plan: Plan;
   trialEndsAt?: string;
   knowledge: BusinessKnowledge;
+  automation?: AutomationSettings;
 }
 
 export type TreatmentCategory =

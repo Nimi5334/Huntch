@@ -8,7 +8,7 @@ export default function SettingsPage() {
     <div className="body">
       <main className="main">
         <div className="feed">
-          <div className="scr-title">הגדרות</div>
+          <div className="scr-title">פרופיל</div>
 
           <Link href="/settings/billing" className="qr-compact">
             <div className="sq" style={{ background: 'var(--accent-soft)', display: 'grid', placeItems: 'center' }}>

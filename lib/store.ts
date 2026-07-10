@@ -3,11 +3,21 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type {
   Clinic, ClinicType, Patient, Outreach, OutreachKind, Escalation, EscalationReason,
-  TreatmentRecord, Payment, FaqEntry, VoiceExample, Plan,
+  TreatmentRecord, Payment, FaqEntry, VoiceExample, Plan, AutomationSettings,
 } from './types';
 import { DEMO_CLINIC, SEED_PATIENTS, SEED_OUTREACH, SEED_ESCALATIONS } from './seed';
 import { checkinsDue, type CheckinDraft } from './checkins';
 import { computeRoi, type RoiSummary } from './roi';
+
+/** Defaults for what runs automatically — used for new signups and legacy persisted state. */
+export const DEFAULT_AUTOMATION: AutomationSettings = {
+  qualityChecks: true,
+  qualityCheckFrequencyDays: 90,
+  reactivationLeads: true,
+  reviewRequests: true,
+  autoAnswer: true,
+  approveBeforeSend: true,
+};
 
 interface HuntchState {
   clinic: Clinic;
@@ -50,6 +60,10 @@ interface HuntchState {
   removeFaq: (id: string) => void;
   addVoiceExample: (example: Omit<VoiceExample, 'id'>) => void;
 
+  // Automation
+  automationSettings: () => AutomationSettings;
+  updateAutomation: (patch: Partial<AutomationSettings>) => void;
+
   // Billing
   setPlan: (plan: Plan) => void;
 }
@@ -81,7 +95,9 @@ export const useStore = create<HuntchState>()(
 
       checkinsDueToday: () => {
         const clinic = get().clinic;
-        return get().patients.filter(p => !p.optedOut).flatMap(p => checkinsDue(p, clinic));
+        const auto = clinic.automation ?? DEFAULT_AUTOMATION;
+        if (!auto.qualityChecks) return [];
+        return get().patients.filter(p => !p.optedOut).flatMap(p => checkinsDue(p, clinic, auto.qualityCheckFrequencyDays));
       },
 
       roiSummary: () => computeRoi(get().patients, get().outreach, get().clinic.type),
@@ -100,6 +116,7 @@ export const useStore = create<HuntchState>()(
             plan: 'basic',
             trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
             knowledge: { faqs: [], voiceExamples: [] },
+            automation: { ...DEFAULT_AUTOMATION },
           },
           patients: [],
           outreach: [],
@@ -216,6 +233,12 @@ export const useStore = create<HuntchState>()(
 
       addVoiceExample: (example) => {
         set(s => ({ clinic: { ...s.clinic, knowledge: { ...s.clinic.knowledge, voiceExamples: [...s.clinic.knowledge.voiceExamples, { ...example, id: uid() }] } } }));
+      },
+
+      automationSettings: () => get().clinic.automation ?? DEFAULT_AUTOMATION,
+
+      updateAutomation: (patch) => {
+        set(s => ({ clinic: { ...s.clinic, automation: { ...(s.clinic.automation ?? DEFAULT_AUTOMATION), ...patch } } }));
       },
 
       setPlan: (plan) => {

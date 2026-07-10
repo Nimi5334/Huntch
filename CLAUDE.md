@@ -73,20 +73,20 @@ Password: 533433
 
 ## The Product — 3 pillars
 
-### 1. Patient database + personalized leads (works in Basic and Advanced)
-- **Home (`/`)** lists every patient with a system-generated **lead** (`lib/leads.ts` → `generateLead()`): incomplete treatment plan → recall-interval elapsed → long-overdue routine visit → "up to date". Each lead has a ready Hebrew WhatsApp draft message.
+### 1. Patient database (works in Basic and Advanced)
+- **Home (`/`)** is a clean patient database. Each `PatientCard` shows avatar · name · **most-recent completed treatment + relative time** (e.g. "ניקוי אבנית · לפני 3 חודשים"); the whole card links to the full profile. No "ליד" badge and no per-card send action — reactivation actions live in משימות. A gradient **"המשימות שלי"** pill opens a floating glass-card popover summarizing open tasks (escalations / quality-checks / leads / review requests), each row deep-links to `/tasks?focus=<domain>`.
 - **Patient profile (`/patients/[id]`)** shows the lead card (copy or approve-and-send), full treatment history, payments/billing summary, consent state, and any **insights** distilled from past replies (builds understanding of the patient over time).
-- Add patients manually via `components/AddPatientModal.tsx`.
+- Add patients manually via `components/AddPatientModal.tsx`. Leads (`lib/leads.ts` → `generateLead()`) still power the משימות hub and the profile lead card.
 
-### 2. Daily briefing + automation cockpit (Advanced only)
-- **`/today`** ("מה חדש היום") — today's treatments, replies from patients, pending human-intervention escalations, leads to action, **periodic quality-checks due**, and review-request nudges. Every row is one-tap approve-and-send.
-- **`/inbox`** — escalation queue (complaint / medical concern / reschedule / complex question), mark "טופל" to resolve.
-- **`/activity`** — ROI dashboard: recovered revenue vs. dormant potential, outreach funnel, full outreach timeline.
+### 2. משימות — tasks hub (Advanced only, `/tasks`)
+- **`/tasks`** ("משימות") is the central cockpit merging the daily briefing with the escalation queue, organized into anchored sections (`#escalations`, `#checkins`, `#leads`, `#reviews`) so the "המשימות שלי" popover can jump straight to the relevant domain via `?focus=`. Every row is one-tap approve-and-send or "טופל" resolve. Sections whose automation is switched off are hidden.
+- **`/activity`** ("יומן פעילות") — chronological history of actions the system performed (outreach sent/replied, escalations handled). **No revenue/ROI figures** — money is out of the system's scope.
 
-### 3. AI brain — "מענה אוטומטי" (Advanced only, `/auto-reply`)
-- Business-knowledge form (hours, doctors, services, pricing, insurance, policies) + FAQ manager — grounds every AI answer (`lib/ai.ts` → `answerPatient()`).
+### 3. אוטומציה — automation cockpit + AI brain (Advanced only, `/automation`)
+- **Automation controls** (`clinic.automation` → `AutomationSettings`): toggles for periodic quality-checks (+ frequency 30/60/90/120 days), reactivation leads, review requests, AI auto-answer, and "אישור לפני שליחה". Store action `updateAutomation()`; toggling a flag off hides its section in משימות (`checkinsDueToday()` returns `[]` when quality-checks are off).
+- **Business-knowledge form** (hours, doctors, services, pricing, insurance, policies) + FAQ manager — grounds every AI answer (`lib/ai.ts` → `answerPatient()`).
 - **Simulation trainer** — the clinic role-plays a patient message, the AI (via `/api/ai/simulate`) drafts a reply, the clinic edits it, and the edited version is saved as a `VoiceExample` (few-shot style example) that gets fed back into future prompts. This is how the AI learns the clinic's voice.
-- Guardrail: the AI **never gives medical advice**. Keyword-detected medical/complaint/reschedule messages are force-escalated to `/inbox` instead of auto-answered.
+- Guardrail: the AI **never gives medical advice**. Keyword-detected medical/complaint/reschedule messages are force-escalated to `/tasks` instead of auto-answered.
 - Default autonomy model: **approve-before-send** everywhere — nothing goes out to a real patient without a clinic tap.
 
 ---
@@ -97,14 +97,15 @@ Automatic, personalized, treatment-specific check-ins — **not** part of the re
 
 Example: *"היי מיה, זה ירון מהמרפאה — הסד לילה נוח לך?"* — sent ~21 days after a night-guard fitting, then periodically. Other windows: implant healing (7/30 days), whitening satisfaction (7 days), orthodontics progress (30/120 days), botox/filler/laser/peeling follow-ups, and a generic "how are you" wellbeing check for patients dormant 8+ months with no treatment-specific window due.
 
-`checkinsDue(patient, clinic)` returns drafts; the clinic approves-and-sends from `/today`.
+`checkinsDue(patient, clinic, dormantDays?)` returns drafts; the clinic approves-and-sends from `/tasks`. Cadence for the generic wellbeing window is driven by `clinic.automation.qualityCheckFrequencyDays` (editable on the אוטומציה page); the whole feature switches off when `automation.qualityChecks` is false.
 
 ---
 
 ## Data Model — `lib/types.ts`
 
 ```typescript
-Clinic { id, name, type: 'dental'|'aesthetic', address, operatorName, phone, plan: 'basic'|'advanced', trialEndsAt, knowledge: BusinessKnowledge }
+Clinic { id, name, type: 'dental'|'aesthetic', address, operatorName, phone, plan: 'basic'|'advanced', trialEndsAt, knowledge: BusinessKnowledge, automation: AutomationSettings }
+AutomationSettings { qualityChecks, qualityCheckFrequencyDays, reactivationLeads, reviewRequests, autoAnswer, approveBeforeSend }  // DEFAULT_AUTOMATION in lib/store.ts
 Patient { id, clinicId, name, phone, treatments: TreatmentRecord[], payments: Payment[], medicalNotes, consent, optedOut, insights: string[] }
 TreatmentRecord { id, date, category, name, status: 'completed'|'planned'|'in-progress', cost, notes }
 Payment { id, date, amount, method, treatmentId }
@@ -124,9 +125,9 @@ Billing summaries (`lib/billing.ts`) and ROI figures (`lib/roi.ts`) are **derive
 |---|---|
 | `lib/clinical.ts` | Treatment categories, Hebrew labels, recall-interval months per category (replaces old `venue.ts`) |
 | `lib/leads.ts` | `generateLead(patient, clinicType)` — pure, deterministic, LLM-swappable later |
-| `lib/checkins.ts` | `checkinsDue(patient, clinic)` — periodic personalized quality-check drafts |
+| `lib/checkins.ts` | `checkinsDue(patient, clinic, dormantDays?)` — periodic personalized quality-check drafts |
 | `lib/billing.ts` | `billingSummary(patient)` — billed / paid / outstanding |
-| `lib/roi.ts` | `computeRoi(patients, outreach, clinicType)` — recovered vs. potential revenue |
+| `lib/roi.ts` | `computeRoi(...)` — revenue helper; **no longer surfaced in the UI** (money is out of scope) |
 | `lib/plan.ts` | `canUse(clinic, feature)` — single source of truth for Basic/Advanced gating |
 | `lib/ai.ts` | Server-only. `answerPatient()` / `simulateReply()` via Claude API (`ANTHROPIC_API_KEY`), canned fallback otherwise. Escalation guardrail for medical/complaint content. |
 | `lib/outreach-flow.ts` | Server-only production bridge: `deliverOutreach()` (WA send), `processIncomingReply()` (webhook → AI answer → escalate/insight). No-ops gracefully without WhatsApp/Supabase creds — demo path never touches this file. |
@@ -139,7 +140,7 @@ Billing summaries (`lib/billing.ts`) and ROI figures (`lib/roi.ts`) are **derive
 | Tier | Price (placeholder) | Includes |
 |---|---|---|
 | **בסיסי (Basic)** | ₪149/mo | Patient database + medical profiles, personalized leads, copy/manual-send, manual add, patient cap 500 |
-| **מתקדם (Advanced)** | ₪499/mo | Everything in Basic **+** daily briefing, approve-before-send auto-outreach, AI brain (FAQ + simulation trainer + escalation), periodic quality-checks, ROI dashboard, unlimited patients, priority support |
+| **מתקדם (Advanced)** | ₪499/mo | Everything in Basic **+** מרכז המשימות (tasks hub), approve-before-send auto-outreach, אוטומציה (automation controls + AI brain: FAQ + simulation trainer + escalation), periodic quality-checks, יומן פעילות (activity log), unlimited patients, priority support |
 
 - 14-day Advanced trial granted on signup (`clinic.trialEndsAt`).
 - `effectivePlan(clinic)` returns `'advanced'` while trial is active even if `clinic.plan === 'basic'`.
@@ -148,16 +149,17 @@ Billing summaries (`lib/billing.ts`) and ROI figures (`lib/roi.ts`) are **derive
 
 ---
 
-## Navigation (4 hubs + inbox/settings)
+## Navigation (4 tabs + profile/billing)
 
 | Tab | Hebrew | Route | Plan |
 |---|---|---|---|
 | Home | בית | `/` | Basic |
-| Today | מה חדש | `/today` | Advanced (gated) |
-| AI brain | מענה אוטומטי | `/auto-reply` | Advanced (gated) |
+| Tasks | משימות | `/tasks` | Advanced (gated) |
+| Automation | אוטומציה | `/automation` | Advanced (gated) |
 | Activity | פעילות | `/activity` | Advanced (gated) |
-| Inbox | (header icon) | `/inbox` | Advanced (gated) |
-| Settings/Billing | — | `/settings`, `/settings/billing` | all |
+| Profile/Billing | פרופיל | `/settings`, `/settings/billing` | all |
+
+The header top-right avatar opens the profile panel (clinic stats + חיוב ומנוי + logout). There is no longer a standalone "מה חדש"/"מענה אוטומטי"/"פניות" route — those became משימות/אוטומציה; the drawer lists the four tabs + פרופיל.
 
 ---
 
