@@ -1,204 +1,122 @@
-export type ShiftType = 'morning' | 'afternoon' | 'evening' | 'night' | 'weekend';
-export type DayOfWeek = 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat';
-export type Role =
-  | 'barista' | 'server' | 'cook' | 'line-cook' | 'dishwasher'
-  | 'host' | 'bartender' | 'cashier' | 'delivery' | 'shift-manager';
-export type VenueType = 'cafe' | 'restaurant' | 'bar' | 'fast-food' | 'catering' | 'hotel';
-export type Language = 'he' | 'ar' | 'en' | 'ru';
-export type ConsentSource = 'apply-form' | 'csv-import' | 'direct' | 'lead-ad' | 'qr-scan';
+export type ClinicType = 'dental' | 'aesthetic';
+export type Plan = 'basic' | 'advanced';
 
-export interface QrScan {
+export interface FaqEntry {
   id: string;
-  businessId: string;
-  candidateId: string;
-  scannedAt: string;
+  question: string;
+  answer: string;
 }
-export type BadgeTier = 'ex' | 'gd' | 'md';
-export type InviteStatus = 'sent' | 'delivered' | 'responded' | 'declined';
 
-export interface LatLng { lat: number; lng: number; }
+export interface VoiceExample {
+  id: string;
+  patientMsg: string;
+  approvedReply: string;
+}
 
-export interface Business {
+export interface BusinessKnowledge {
+  hours?: string;
+  doctors?: string;
+  services?: string;
+  pricingNotes?: string;
+  insurance?: string;
+  policies?: string;
+  faqs: FaqEntry[];
+  voiceExamples: VoiceExample[];
+}
+
+export interface Clinic {
   id: string;
   name: string;
-  type: VenueType;
+  type: ClinicType;
   address: string;
-  location: LatLng;
   operatorName: string;
-  staffingState: 'fully-staffed' | 'has-gaps';
   phone?: string;
+  email?: string;
   password?: string;
+  plan: Plan;
+  trialEndsAt?: string;
+  knowledge: BusinessKnowledge;
 }
 
-export interface JobWeights {
-  availability: number;
-  distance: number;
-  roleExperience: number;
-  skills: number;
-  compensation: number;
-  recency: number;
-}
+export type TreatmentCategory =
+  // dental
+  | 'cleaning' | 'whitening' | 'orthodontics' | 'implant' | 'root-canal' | 'crown' | 'night-guard' | 'checkup'
+  // aesthetic
+  | 'botox' | 'filler' | 'laser' | 'peeling' | 'lifting' | 'consultation';
 
-export interface JobFilters {
-  roles?: Role[];
-  maxDistanceKm?: number;
-  shifts?: ShiftType[];
-  minExperienceYears?: number;
-  languages?: Language[];
-  maxWageNis?: number;
-  mustHaveImmediate?: boolean;
-  mustHaveWorkPermit?: boolean;
-}
-
-export interface Job {
+export interface TreatmentRecord {
   id: string;
-  businessId: string;
-  role: Role;
-  locationAddress: string;
-  location: LatLng;
-  shifts: ShiftType[];
-  startDate: string;
-  requirements: string;
-  wageNis?: number;
-  filters: JobFilters;
-  weights: JobWeights;
-  mustHaves: string[];
-  flow: 'flow2';
-  status: 'active' | 'filled' | 'paused';
-  createdAt: string;
-}
-
-export interface CandidateAvailability {
-  days: DayOfWeek[];
-  shifts: ShiftType[];
-  hoursPerWeek: number;
-  earliestStart: string;
-  immediate: boolean;
-}
-
-export interface CandidateExperience {
-  totalYears: number;
-  roles: Role[];
-  venueTypes: VenueType[];
-  notableWorkplaces: string[];
-}
-
-export interface PlatformSignals {
-  applicationCount: number;
-  priorHires: number;
-  responseSpeedHours: number;
-  lastActiveDaysAgo: number;
-  /** Passive signal — confidence nudge only, never displayed as quality */
-  formCompletionSec?: number;
-  firstReplyLatencySec?: number;
-}
-
-export interface Candidate {
-  id: string;
-  businessId: string;
+  date: string;
+  category: TreatmentCategory;
   name: string;
-  phone?: string;
+  provider?: string;
+  status: 'completed' | 'planned' | 'in-progress';
+  cost: number;
+  notes?: string;
+}
+
+export interface Payment {
+  id: string;
+  date: string;
+  amount: number;
+  method?: 'cash' | 'card' | 'insurance' | 'transfer';
+  treatmentId?: string;
+}
+
+export interface Lead {
+  headline: string;
+  reason: string;
+  suggestedCategory: string;
+  draftMessage: string;
+}
+
+export interface Patient {
+  id: string;
+  clinicId: string;
+  name: string;
+  phone: string;
   initials: string;
   avatarColor: string;
-  neighborhood: string;
-  location: LatLng;
-  hasCar: boolean;
-  willingRangeKm: number;
-  availability: CandidateAvailability;
-  roles: Role[];
-  experience: CandidateExperience;
-  skills: string[];
-  languages: Language[];
-  hasWorkPermit: boolean;
-  age: number;
-  expectedWageNis: number;
-  signals: PlatformSignals;
-  consentSource: ConsentSource;
+  age?: number;
+  gender?: 'm' | 'f';
+  firstVisit: string;
+  lastVisit: string;
+  treatments: TreatmentRecord[];
+  payments: Payment[];
+  medicalNotes?: string;
+  consent: boolean;
+  optedOut?: boolean;
   addedAt: string;
-  // ── DNA Feeder enrichment (populated via WhatsApp mini-interview) ──────────
-  needsSuppliesFit?: string[];
-  scheduleTolerance?: 'very' | 'nice' | 'flexible';
-  interviewScores?: { serviceHandling?: number; ownership?: number };
-  dnaSource?: 'cold_start' | 'platform_history' | 'hybrid';
-  dnaConfidence?: number;
+  /** replies distilled from outreach — builds understanding of the patient over time */
+  insights?: string[];
 }
 
-export interface RankedCandidate extends Candidate {
-  score: number;
-  badge: BadgeTier;
-  reasonFacts: string[];
-}
+export type OutreachStatus = 'draft' | 'approved' | 'sent' | 'replied' | 'declined' | 'no_reply';
+export type OutreachKind = 'reactivation' | 'quality_check' | 'wellbeing' | 'review';
 
-export interface Invite {
+export interface Outreach {
   id: string;
-  jobId: string;
-  candidateId: string;
-  status: InviteStatus;
-  sentAt: string;
+  clinicId: string;
+  patientId: string;
+  kind: OutreachKind;
+  channel: 'whatsapp' | 'sms';
+  status: OutreachStatus;
+  message: string;
+  relatedTreatmentId?: string;
+  createdAt: string;
+  sentAt?: string;
   respondedAt?: string;
-  waMessage: string;
+  insight?: string;
 }
 
-export interface Application {
+export type EscalationReason = 'complex_question' | 'complaint' | 'medical_concern' | 'reschedule' | 'other';
+
+export interface Escalation {
   id: string;
-  jobId: string;
-  candidateId: string;
-  submittedAt: string;
-  source: ConsentSource;
-}
-
-// ─── Employee requests (from master) ─────────────────────────────────────────
-
-export type RequestType = 'leave' | 'shift-swap' | 'schedule-change' | 'other';
-
-export const REQUEST_TYPE_HE: Record<RequestType, string> = {
-  'leave':           'בקשת חופשה',
-  'shift-swap':      'החלפת משמרת',
-  'schedule-change': 'שינוי זמינות',
-  'other':           'פנייה אחרת',
-};
-
-export interface EmployeeRequest {
-  id: string;
-  businessId: string;
-  employeeId: string;
-  type: RequestType;
-  status: 'pending' | 'approved' | 'denied';
-  submittedAt: string;
-  details?: string;
-}
-
-// ─── DNA Feeder — WhatsApp mini-interview answers ─────────────────────────────
-
-export interface DnaFeederAnswers {
-  roles?: string[];
-  hoursPerWeek?: string;
-  shifts?: string[];
-  start?: 'immediate' | 'two_weeks' | 'one_month';
-  transport?: 'car' | 'public' | 'walk';
-  distanceKm?: number;
-  wageNis?: number;
-  needsSuppliesFit?: string[];
-  scheduleTolerance?: 'very' | 'nice' | 'flexible';
-  needsNotes?: string;
-  experienceYears?: number;
-  notableWorkplaces?: string;
-  serviceHandling?: string;
-  ownership?: string;
-  serviceHandlingScore?: number;   // 0–2, rubric-scored
-  ownershipScore?: number;         // 0–2, rubric-scored
-}
-
-export interface WaInterviewResult {
-  candidateId: string;
-  completedAt: string;
-  phasesCompleted: 1 | 2 | 3;
-  answers: DnaFeederAnswers;
-  dna: {
-    score: number;
-    confidence: number;            // 0–1: 0.30 / 0.60 / 0.90 by phases
-    retentionFit: number;          // 0–100
-    performance: number;           // 0–100
-    churnRisk: 'low' | 'medium' | 'high';
-  };
+  clinicId: string;
+  patientId: string;
+  reason: EscalationReason;
+  status: 'pending' | 'handled';
+  createdAt: string;
+  snippet?: string;
 }

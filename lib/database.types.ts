@@ -8,187 +8,122 @@
 export interface Database {
   public: {
     Tables: {
-      businesses: {
+      clinics: {
         Row: {
           id: string;
           name: string;
           type: string;
           address: string;
-          location: { lat: number; lng: number };
           operator_name: string;
-          staffing_state: string;
           phone: string | null;
-          password: string | null;
+          email: string | null;
+          plan: string;
+          trial_ends_at: string | null;
+          knowledge: any;
+          wa_phone_number_id: string | null;
+          wa_access_token_encrypted: string | null;
           created_at: string;
           updated_at: string;
         };
-        Insert: Omit<Database['public']['Tables']['businesses']['Row'], 'created_at' | 'updated_at'>;
-        Update: Partial<Database['public']['Tables']['businesses']['Insert']>;
+        Insert: Omit<Database['public']['Tables']['clinics']['Row'], 'created_at' | 'updated_at'>;
+        Update: Partial<Database['public']['Tables']['clinics']['Insert']>;
       };
-      candidates: {
+      memberships: {
         Row: {
           id: string;
-          business_id: string;
+          user_id: string;
+          clinic_id: string;
+          role: string;
+          created_at: string;
+        };
+        Insert: Omit<Database['public']['Tables']['memberships']['Row'], 'created_at'>;
+        Update: Partial<Database['public']['Tables']['memberships']['Insert']>;
+      };
+      patients: {
+        Row: {
+          id: string;
+          clinic_id: string;
           name: string;
-          phone: string | null;
-          initials: string;
-          avatar_color: string;
-          neighborhood: string;
-          location: { lat: number; lng: number };
-          has_car: boolean;
-          willing_range_km: number | null;
-          availability: any;
-          roles: string[];
-          experience: any;
-          skills: string[];
-          languages: string[];
-          has_work_permit: boolean;
+          phone: string;
+          initials: string | null;
+          avatar_color: string | null;
           age: number | null;
-          expected_wage_nis: number | null;
-          signals: any;
-          consent_source: string;
-          needs_supplies_fit: string[] | null;
-          schedule_tolerance: string | null;
-          interview_scores: any | null;
-          dna_source: string | null;
-          dna_confidence: number | null;
+          gender: string | null;
+          first_visit: string;
+          last_visit: string;
+          medical_notes: string | null;
+          consent: boolean;
+          opted_out: boolean;
+          insights: string[];
           added_at: string;
           created_at: string;
           updated_at: string;
         };
-        Insert: Omit<Database['public']['Tables']['candidates']['Row'], 'created_at' | 'updated_at' | 'added_at'>;
-        Update: Partial<Database['public']['Tables']['candidates']['Insert']>;
+        Insert: Omit<Database['public']['Tables']['patients']['Row'], 'created_at' | 'updated_at' | 'added_at'>;
+        Update: Partial<Database['public']['Tables']['patients']['Insert']>;
       };
-      employees: {
+      treatments: {
         Row: {
           id: string;
-          business_id: string;
-          candidate_id: string;
-          hired_at: string;
+          clinic_id: string;
+          patient_id: string;
+          date: string;
+          category: string;
+          name: string;
+          provider: string | null;
           status: string;
+          cost: number;
+          notes: string | null;
           created_at: string;
-          updated_at: string;
         };
-        Insert: Omit<Database['public']['Tables']['employees']['Row'], 'created_at' | 'updated_at' | 'hired_at'>;
-        Update: Partial<Database['public']['Tables']['employees']['Insert']>;
+        Insert: Omit<Database['public']['Tables']['treatments']['Row'], 'created_at'>;
+        Update: Partial<Database['public']['Tables']['treatments']['Insert']>;
       };
-      jobs: {
+      payments: {
         Row: {
           id: string;
-          business_id: string;
-          role: string;
-          location_address: string | null;
-          location: { lat: number; lng: number };
-          shifts: string[];
-          start_date: string | null;
-          requirements: string | null;
-          wage_nis: number | null;
-          filters: any;
-          weights: any;
-          must_haves: string[];
-          flow: string;
-          status: string;
+          clinic_id: string;
+          patient_id: string;
+          date: string;
+          amount: number;
+          method: string | null;
+          treatment_id: string | null;
           created_at: string;
-          updated_at: string;
         };
-        Insert: Omit<Database['public']['Tables']['jobs']['Row'], 'created_at' | 'updated_at'>;
-        Update: Partial<Database['public']['Tables']['jobs']['Insert']>;
+        Insert: Omit<Database['public']['Tables']['payments']['Row'], 'created_at'>;
+        Update: Partial<Database['public']['Tables']['payments']['Insert']>;
       };
-      invites: {
+      outreach: {
         Row: {
           id: string;
-          job_id: string;
-          candidate_id: string;
+          clinic_id: string;
+          patient_id: string;
+          kind: string;
+          channel: string;
           status: string;
-          sent_at: string;
+          message: string;
+          related_treatment_id: string | null;
+          insight: string | null;
+          created_at: string;
+          sent_at: string | null;
           responded_at: string | null;
-          wa_message: string | null;
-          created_at: string;
-          updated_at: string;
         };
-        Insert: Omit<Database['public']['Tables']['invites']['Row'], 'created_at' | 'updated_at' | 'sent_at'>;
-        Update: Partial<Database['public']['Tables']['invites']['Insert']>;
+        Insert: Omit<Database['public']['Tables']['outreach']['Row'], 'created_at'>;
+        Update: Partial<Database['public']['Tables']['outreach']['Insert']>;
       };
-      qr_scans: {
+      escalations: {
         Row: {
           id: string;
-          business_id: string;
-          candidate_id: string;
-          scanned_at: string;
-          created_at: string;
-        };
-        Insert: Omit<Database['public']['Tables']['qr_scans']['Row'], 'created_at' | 'scanned_at'>;
-        Update: Partial<Database['public']['Tables']['qr_scans']['Insert']>;
-      };
-      wa_interview_results: {
-        Row: {
-          id: string;
-          candidate_id: string;
-          business_id: string;
-          phases_completed: number;
-          answers: any;
-          dna_score: number | null;
-          dna_confidence: number | null;
-          retention_fit: number | null;
-          performance: number | null;
-          churn_risk: string | null;
-          completed_at: string;
-          created_at: string;
-        };
-        Insert: Omit<Database['public']['Tables']['wa_interview_results']['Row'], 'created_at' | 'completed_at'>;
-        Update: Partial<Database['public']['Tables']['wa_interview_results']['Insert']>;
-      };
-      wa_sessions: {
-        Row: {
-          phone: string;
-          candidate_id: string | null;
-          business_id: string;
-          business_name: string | null;
-          candidate_name: string | null;
-          step: string;
-          answers: any;
-          phases_completed: number;
-          started_at: string;
-          last_activity_at: string;
-          form_completion_sec: number | null;
-          first_reply_latency_sec: number | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: Omit<Database['public']['Tables']['wa_sessions']['Row'], 'created_at' | 'updated_at' | 'started_at' | 'last_activity_at'>;
-        Update: Partial<Database['public']['Tables']['wa_sessions']['Insert']>;
-      };
-      employee_requests: {
-        Row: {
-          id: string;
-          business_id: string;
-          employee_id: string;
-          type: string;
+          clinic_id: string;
+          patient_id: string;
+          reason: string;
           status: string;
-          details: string | null;
-          submitted_at: string;
+          snippet: string | null;
           created_at: string;
-          updated_at: string;
         };
-        Insert: Omit<Database['public']['Tables']['employee_requests']['Row'], 'created_at' | 'updated_at' | 'submitted_at'>;
-        Update: Partial<Database['public']['Tables']['employee_requests']['Insert']>;
-      };
-      candidate_preferences: {
-        Row: {
-          id: string;
-          business_id: string;
-          candidate_id: string;
-          saved: boolean;
-          dismissed: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: Omit<Database['public']['Tables']['candidate_preferences']['Row'], 'created_at' | 'updated_at'>;
-        Update: Partial<Database['public']['Tables']['candidate_preferences']['Insert']>;
+        Insert: Omit<Database['public']['Tables']['escalations']['Row'], 'created_at'>;
+        Update: Partial<Database['public']['Tables']['escalations']['Insert']>;
       };
     };
-    Views: {};
-    Functions: {};
-    Enums: {};
   };
 }

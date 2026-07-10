@@ -1,14 +1,29 @@
+'use client';
+import Link from 'next/link';
+import { useStore } from '@/lib/store';
+
 export default function SettingsPage() {
+  const store = useStore();
   return (
     <div className="body">
       <main className="main">
         <div className="feed">
           <div className="scr-title">הגדרות</div>
-          <div className="empty-state" style={{ paddingTop: 60 }}>
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            <h3>הגדרות — בקרוב</h3>
-            <p>פרופיל עסק · חיוב · מנוי</p>
-          </div>
+
+          <Link href="/settings/billing" className="qr-compact">
+            <div className="sq" style={{ background: 'var(--accent-soft)', display: 'grid', placeItems: 'center' }}>
+              <span style={{ fontSize: 18 }}>💳</span>
+            </div>
+            <div>
+              <div className="nm">חיוב ומנוי</div>
+              <div className="ds">תוכנית נוכחית: {store.clinic.plan === 'advanced' ? 'מתקדם' : 'בסיסי'}</div>
+            </div>
+            <span className="go">←</span>
+          </Link>
+
+          <div className="prow" style={{ marginTop: 16 }}><div className="lab">שם מרפאה</div><div className="val">{store.clinic.name}</div></div>
+          <div className="prow"><div className="lab">כתובת</div><div className="val">{store.clinic.address}</div></div>
+          <div className="prow"><div className="lab">איש קשר</div><div className="val">{store.clinic.operatorName}</div></div>
         </div>
       </main>
     </div>

@@ -10,11 +10,13 @@
 
 ## What is Huntch
 
-Israeli F&B staffing platform. Connects café/restaurant/bar owners with workers who scan a QR code at the venue. No job boards. No CVs. QR → form → WhatsApp DNA interview → ranked pool → WhatsApp invite → real interview → hired.
+Huntch is an **AI front-desk teammate for dental and aesthetic clinics in Israel**. It holds every patient's full profile (treatment history + payments), generates a customized "lead" to bring dormant patients back, runs approve-before-send outreach in the clinic's own voice, checks in on patients after procedures, escalates tricky cases to a human, and proves the revenue it recovered.
 
-**Stage:** MVP in progress. Supabase integrated. QR + join form fully working. WhatsApp DNA feeder coded, awaiting credentials.
+There is **no scoring/matching system** and **no job-board concept** — this is not the staffing platform Huntch used to be. The whole product was pivoted in one continuous build (2026-07-10) from an F&B staffing app into this clinic patient-reactivation platform. Some CSS class names (`.cand`, `.prof-*`, `.dna-*`) and file layout patterns are inherited from that prior version — they're reused for the shared design system, not because this is still a staffing app.
+
+**Stage:** MVP — full demo product built and working end-to-end on the local/demo path (Zustand + localStorage, auto-login). Multi-tenant Supabase schema + RLS are written and ready to run; WhatsApp live-send and real billing need external setup (see "What's left" below).
 **Language:** Hebrew (RTL, `dir="rtl"`, `lang="he"`).
-**Operator:** Single business owner per account (e.g. "בית קפה לינה").
+**Operator:** Single clinic per account (e.g. `מרפאת שיניים ד"ר ירון כהן`).
 **Deployed:** https://formdna.vercel.app
 **GitHub:** https://github.com/Nimi5334/Huntch (branch: master)
 
@@ -26,13 +28,13 @@ Israeli F&B staffing platform. Connects café/restaurant/bar owners with workers
 |---|---|
 | Framework | **Next.js 16.2.9 App Router** — read `node_modules/next/dist/docs/` before any routing work |
 | React | **React 19** — use `React.JSX.Element`, not `JSX.Element` |
-| State | **Zustand + localStorage** — store key `huntch-store-v2`, `skipHydration: true` |
-| Database | **Supabase** (PostgreSQL) — project `ijbbhtljxqnjboyhrjqw.supabase.co` |
+| State | **Zustand + localStorage** — store key `huntch-clinic-v1`, `skipHydration: true` |
+| Database | **Supabase** (PostgreSQL + Auth + RLS) — project `ijbbhtljxqnjboyhrjqw.supabase.co` |
 | Styling | **Tailwind v3** (`corePlugins: { preflight: false }`) + plain CSS design system in `app/globals.css` |
 | Components | **shadcn/ui** in `components/ui/` |
 | Animation | **framer-motion** `AnimatePresence` |
 | Fonts | Heebo (Hebrew body) + Frank Ruhl Libre (Hebrew serif headings) + JetBrains Mono (numbers) |
-| QR Code | **qrcode** npm package (self-hosted, no external API) |
+| AI | **Claude API** via raw `fetch` in `lib/ai.ts` (no SDK dependency), canned fallback when no key |
 
 ---
 
@@ -52,556 +54,184 @@ Israeli F&B staffing platform. Connects café/restaurant/bar owners with workers
 --radius:      22px
 ```
 
-No emoji as icons (use SVG). No purple/blue AI gradients. Hebrew RTL at all times.
-
----
-
-## Current State (as of 2026-06-24)
-
-### ✅ Done & Working
-- QR code page (`/hiring/qr`) — self-hosted, generates per-business URL, downloadable print stickers
-- Join form (`/join/[businessId]`) — public, saves to Supabase (localStorage fallback if no creds)
-- Supabase schema — all tables created and committed (`supabase-schema.sql`)
-- Supabase client — `lib/supabase.ts` with full query helpers
-- WhatsApp DNA feeder — state machine coded in `lib/whatsapp-flow.ts`, API routes ready
-- DNA cold-start scoring — `computeDnaColdStart()` in `lib/dna.ts`
-- Auto-login for demo — `isLoggedIn: true` by default (no login required for MVP demo)
-
-### ⏳ Pending (Next Session)
-1. **Run Supabase schema** — go to https://app.supabase.com → SQL Editor → paste `supabase-schema.sql` → Run
-2. **Set Vercel env vars** — `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-3. **WhatsApp API credentials** — `WHATSAPP_ACCESS_TOKEN` + `WHATSAPP_PHONE_NUMBER_ID`
-4. **Register WhatsApp webhook** in Meta Developer Console → points to `https://formdna.vercel.app/api/whatsapp`
-5. **Connect join form → business dashboard** — so QR submissions appear live in owner's pool
-
----
-
-## Environment Variables
-
-### `.env.local` (local development)
-
-```bash
-NEXT_PUBLIC_APP_URL=https://formdna.vercel.app
-NEXT_PUBLIC_SUPABASE_URL=https://ijbbhtljxqnjboyhrjqw.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqYmJodGxqeHFuamJveWhyanF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyODYzNTYsImV4cCI6MjA5Nzg2MjM1Nn0.jx5ooGe8ntVAmJMx9ccqKxWDdFiseGjPbkpAs8Ttltc
-WHATSAPP_ACCESS_TOKEN=           # from Meta Developer Console
-WHATSAPP_PHONE_NUMBER_ID=        # from Meta Developer Console
-WHATSAPP_VERIFY_TOKEN=huntch_webhook_secret
-```
-
-### Vercel (production)
-Set these in: https://vercel.com → formdna project → Settings → Environment Variables
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `NEXT_PUBLIC_APP_URL` = `https://formdna.vercel.app`
-- `WHATSAPP_ACCESS_TOKEN`
-- `WHATSAPP_PHONE_NUMBER_ID`
-- `WHATSAPP_VERIFY_TOKEN` = `huntch_webhook_secret`
+No emoji as icons (use SVG, except where explicitly used inline for warmth in copy like the ROI teaser). No purple/blue AI gradients. Hebrew RTL at all times.
 
 ---
 
 ## Demo Credentials
 
 ```
-Business: בית קפה לינה
-Business ID: biz-1
+Clinic: מרפאת שיניים ד"ר ירון כהן
+Clinic ID: clinic-1
 Phone: 0500000000
 Password: 533433
 ```
 
-**Note:** `isLoggedIn: true` by default in `lib/store.ts` — login screen is bypassed for demo. To re-enable auth, change to `isLoggedIn: false`.
+`isLoggedIn: true` by default in `lib/store.ts` — login screen is bypassed for demo. Sign out via the header profile panel to see the real login/signup flow.
 
 ---
 
-## The 5-Phase Worker Journey
+## The Product — 3 pillars
 
-### Phase 1 — Discovery & Onboarding (with DNA Seeding)
-```
-Worker scans QR at venue
-  → /join/[businessId] — public page, no login needed
-  → Quick form (30 seconds):
-    • Name, phone, neighborhood
-    • Which roles? (multi-select chips)
-    • Which shifts? (multi-select chips)
-    • Years of experience?
-    • Expected wage (₪/hr)
-    • Consent checkbox
-  → Profile created → saved to Supabase candidates table
-  → WhatsApp DNA feeder triggered automatically
-  → 14-step WhatsApp interview begins (see DNA Feeder section)
-```
+### 1. Patient database + personalized leads (works in Basic and Advanced)
+- **Home (`/`)** lists every patient with a system-generated **lead** (`lib/leads.ts` → `generateLead()`): incomplete treatment plan → recall-interval elapsed → long-overdue routine visit → "up to date". Each lead has a ready Hebrew WhatsApp draft message.
+- **Patient profile (`/patients/[id]`)** shows the lead card (copy or approve-and-send), full treatment history, payments/billing summary, consent state, and any **insights** distilled from past replies (builds understanding of the patient over time).
+- Add patients manually via `components/AddPatientModal.tsx`.
 
-### Phase 2 — Manager Search & Ranking
-```
-Manager opens "בית" (Home) dashboard
-  → Sees role filter chips — ONLY roles with active jobs
-    (demo: 1 barista job → only "בריסטה" chip shows)
-  → Candidates ranked by DNA algorithm:
-      distance · availability · experience · response speed · recency · reliability
-  → Top 5 shown as ranked cards
-```
+### 2. Daily briefing + automation cockpit (Advanced only)
+- **`/today`** ("מה חדש היום") — today's treatments, replies from patients, pending human-intervention escalations, leads to action, **periodic quality-checks due**, and review-request nudges. Every row is one-tap approve-and-send.
+- **`/inbox`** — escalation queue (complaint / medical concern / reschedule / complex question), mark "טופל" to resolve.
+- **`/activity`** — ROI dashboard: recovered revenue vs. dormant potential, outreach funnel, full outreach timeline.
 
-### Phase 3 — Real-Life Interview ← IMPORTANT, often misunderstood
-```
-Manager selects a wanted candidate → clicks "הזמן לראיון"
-  → WhatsApp API sends branded message from the business
-     ("שלום מיה! נשמח להכיר — מתי נוח לך לבוא?")
-  → NO new app for the worker — pure WhatsApp
-  → Real face-to-face interview happens
-  → Manager decides:
-      ✅ Hired → worker enters Huntch as an active card (moves to store.employees)
-      ❌ Not hired → stays in pool, Huntch surfaces next ranked candidate
-```
-
-### Phase 4 — Workforce Activation
-```
-Hired worker visible in כוח אדם → עובדים
-  → Full employee card: wage, shifts, hours/week, distance, DNA score
-  → Badge: 🟢 "פעיל בצוות"
-  → Profile page: "פרופיל עובד" (not "פרופיל מועמד")
-  → Action button: "הסר מהצוות" (not "הזמן לראיון")
-```
-
-### Phase 5 — Ongoing Management (6 AI Engines)
-```
-1. 🧬 DNA Engine       — reliability · response speed · recency (3 sub-bars)
-2. 🎤 Voice Logging    — manager speaks → auto-tagged to worker behavioral data
-3. 📅 Smart Scheduling — detects shift gaps, suggests best-fit worker, 1-tap invite
-4. ⚠️ Churn Prediction — low / medium / high risk alerts
-5. 💡 Retention System — suggests: raise wage, adjust hours, personal check-in
-6. 📊 Activity Feed    — real-time events: responses, completions, churn alerts
-```
+### 3. AI brain — "מענה אוטומטי" (Advanced only, `/auto-reply`)
+- Business-knowledge form (hours, doctors, services, pricing, insurance, policies) + FAQ manager — grounds every AI answer (`lib/ai.ts` → `answerPatient()`).
+- **Simulation trainer** — the clinic role-plays a patient message, the AI (via `/api/ai/simulate`) drafts a reply, the clinic edits it, and the edited version is saved as a `VoiceExample` (few-shot style example) that gets fed back into future prompts. This is how the AI learns the clinic's voice.
+- Guardrail: the AI **never gives medical advice**. Keyword-detected medical/complaint/reschedule messages are force-escalated to `/inbox` instead of auto-answered.
+- Default autonomy model: **approve-before-send** everywhere — nothing goes out to a real patient without a clinic tap.
 
 ---
 
-## DNA Engine — How It Actually Works
+## Periodic Quality-Checks (`lib/checkins.ts`)
 
-### Two Phases of DNA Signal Collection
+Automatic, personalized, treatment-specific check-ins — **not** part of the reactivation lead flow. Purpose is fourfold: bring patients back, capture reviews, give personal attention, and build understanding (replies become `Patient.insights`).
 
-#### Phase 1A: QR Scan → Join Form (Initial seeding)
-When a worker scans the QR code, they fill out the join form (`app/join/[businessId]/page.tsx`):
-- Name, phone, neighborhood → basic profile
-- Roles, shifts, experience, wage → availability + experience signals
-- Signals seeded: `{ applicationCount: 1, priorHires: 0, responseSpeedHours: 1, lastActiveDaysAgo: 0 }`
+Example: *"היי מיה, זה ירון מהמרפאה — הסד לילה נוח לך?"* — sent ~21 days after a night-guard fitting, then periodically. Other windows: implant healing (7/30 days), whitening satisfaction (7 days), orthodontics progress (30/120 days), botox/filler/laser/peeling follow-ups, and a generic "how are you" wellbeing check for patients dormant 8+ months with no treatment-specific window due.
 
-#### Phase 1B: WhatsApp DNA Feeder (Deep seeding)
-After join form submission, a 14-step WhatsApp interview starts automatically via `lib/whatsapp-flow.ts`. This is the primary data collection mechanism.
+`checkinsDue(patient, clinic)` returns drafts; the clinic approves-and-sends from `/today`.
 
-#### Phase 1C: After hired — WhatsApp API (Live updates)
-DNA is NOT static. Every WhatsApp interaction updates `PlatformSignals`.
+---
 
-```
-QR form → initial PlatformSignals (basic)
-         ↓
-WhatsApp DNA interview → enriched PlatformSignals + cold-start score
-         ↓
-WhatsApp API events (post-hire) → live PlatformSignals updates → computeDna()
-         ↓
-Voice logging (manager input) → PlatformSignals override
-```
-
-### PlatformSignals (lib/types.ts)
+## Data Model — `lib/types.ts`
 
 ```typescript
-interface PlatformSignals {
-  applicationCount:    number   // how many times invited/contacted total
-  priorHires:          number   // how many times actually hired
-  responseSpeedHours:  number   // avg hours to respond to a WhatsApp message
-  lastActiveDaysAgo:   number   // days since last WhatsApp interaction
-  formCompletionSec?:  number   // passive: seconds to complete join form
-  firstReplyLatencySec?: number // passive: seconds from first WA message to first reply
-}
+Clinic { id, name, type: 'dental'|'aesthetic', address, operatorName, phone, plan: 'basic'|'advanced', trialEndsAt, knowledge: BusinessKnowledge }
+Patient { id, clinicId, name, phone, treatments: TreatmentRecord[], payments: Payment[], medicalNotes, consent, optedOut, insights: string[] }
+TreatmentRecord { id, date, category, name, status: 'completed'|'planned'|'in-progress', cost, notes }
+Payment { id, date, amount, method, treatmentId }
+Lead { headline, reason, suggestedCategory, draftMessage }   // derived, not stored
+Outreach { id, clinicId, patientId, kind: 'reactivation'|'quality_check'|'wellbeing'|'review', status: 'draft'|'approved'|'sent'|'replied'|'declined'|'no_reply', message, insight }
+Escalation { id, clinicId, patientId, reason: 'complex_question'|'complaint'|'medical_concern'|'reschedule'|'other', status: 'pending'|'handled', snippet }
+BusinessKnowledge { hours, doctors, services, pricingNotes, insurance, policies, faqs: FaqEntry[], voiceExamples: VoiceExample[] }
 ```
 
-### DNA Feeder — 3-Phase WhatsApp Mini-Interview
-
-**Full spec:** `DNA-FEEDER-SPEC.md` in project root.
-**Implementation:** `lib/whatsapp-flow.ts` (server-only, 14-step state machine)
-
-#### Phase 1: Core Match (~2 min, all taps)
-```
-Q1: Which roles? (list)            → roles
-Q2: Hours per week? (buttons)      → availability.hoursPerWeek
-Q3: Which shifts? (buttons)        → availability.shifts
-Q4: When can you start? (buttons)  → availability.immediate, earliestStart
-Q5: How do you commute? (buttons)  → hasCar
-Q6: Max travel distance? (buttons) → willingRangeKm
-Q7: Expected hourly wage? (text)   → expectedWageNis
-```
-
-#### Phase 2: Needs-Supplies Fit (~2 min — highest-value retention signals)
-```
-Q8:  What matters most? (list, pick 3) → needsSuppliesFit[]
-Q9:  Fixed schedule importance? (buttons) → scheduleTolerance
-Q10: Anything else? (optional text)    → needsNotes
-```
-**Why Phase 2 before Phase 3?** Needs-supplies fit is the single strongest predictor of turnover (β=−.58). Captured even if candidate drops off.
-
-#### Phase 3: Experience & Behavioral (optional, ~2–4 min)
-```
-Q11: Years of experience? (buttons)     → experience.totalYears
-Q12: Where have you worked? (text)      → experience.notableWorkplaces
-Q13: Busy shift, angry customer — what do you do? (text prose)
-     → interviewScores.serviceHandling (0–2, rubric-scored)
-Q14: Tell us about a shift you're proud of (text prose)
-     → interviewScores.ownership (0–2, rubric-scored)
-```
-
-#### Cold-Start DNA Score
-```typescript
-// computeDnaColdStart() in lib/dna.ts
-Phase 1 confidence: 0.30  →  score = logistics*0.65 + experience*0.35
-Phase 2 confidence: 0.60  →  score = retentionFit*0.45 + logistics*0.35 + exp*0.20
-Phase 3 confidence: 0.90  →  score = retentionFit*0.40 + performance*0.30 + logistics*0.15 + exp*0.15
-
-// NEVER collapse to 0 — use Empirical-Bayes shrinkage
-reliability = 65  // population mean, not (priorHires / applicationCount)
-display: "68 ± 12"  // Wilson confidence interval, not point estimate
-```
-
-### computeDna() Formula (lib/dna.ts)
-
-```typescript
-reliability    = (priorHires / applicationCount) × 150  // capped at 100
-responseSpeed  = 100 - (responseSpeedHours × 9)         // fast reply = high score
-recency        = 100 - (lastActiveDaysAgo × 7)          // active recently = high score
-
-DNA score      = reliability×0.40 + responseSpeed×0.30 + recency×0.30
-
-churnRisk = 'high'   if lastActiveDaysAgo > 11 OR responseSpeedHours > 9
-churnRisk = 'medium' if lastActiveDaysAgo > 5  OR responseSpeedHours > 4
-churnRisk = 'low'    otherwise
-```
+Billing summaries (`lib/billing.ts`) and ROI figures (`lib/roi.ts`) are **derived via helpers, never stored**.
 
 ---
 
-## Supabase — Database Layer
+## Foundation Libs
 
-### Project Details
-- **URL:** `https://ijbbhtljxqnjboyhrjqw.supabase.co`
-- **Anon key:** See `.env.local.example` (pre-filled)
-- **Schema:** `supabase-schema.sql` in project root
-
-### Tables
-| Table | Purpose |
-|---|---|
-| `businesses` | One record per café/restaurant/bar owner |
-| `candidates` | All applicants from QR scans + manual adds |
-| `employees` | Hired candidates (references candidates) |
-| `jobs` | Active job listings |
-| `invites` | WhatsApp invitations sent to candidates |
-| `qr_scans` | Audit trail of QR code scans |
-| `wa_interview_results` | Completed DNA feeder interviews |
-| `wa_sessions` | Active WhatsApp conversations (replaces in-memory Map) |
-| `employee_requests` | Leave/shift-swap/schedule-change requests |
-| `candidate_preferences` | Saved/dismissed candidates per business |
-
-### Setup (one-time)
-1. https://app.supabase.com → your project → SQL Editor → New Query
-2. Paste entire `supabase-schema.sql` → Run
-3. Copy `.env.local.example` → `.env.local` (credentials pre-filled)
-
-### How Data Flows
-```
-QR scan → /join/[businessId] → submit
-  → createCandidate() → Supabase candidates table  ✅ wired
-  → createQrScan()   → Supabase qr_scans table     ✅ wired
-  → fallback to Zustand localStorage if no creds    ✅ fallback
-  → /api/whatsapp/trigger → WhatsApp DNA feeder     ✅ triggered
-```
-
----
-
-## WhatsApp API Integration
-
-### Files
 | File | Purpose |
 |---|---|
-| `lib/whatsapp-client.ts` | Meta Cloud API wrapper (sendText, sendButtons, sendList) |
-| `lib/whatsapp-session.ts` | Session types + in-memory Maps (replace with Supabase wa_sessions) |
-| `lib/whatsapp-flow.ts` | 14-step conversation state machine — full Hebrew copy |
-| `app/api/whatsapp/route.ts` | GET = hub verification, POST = incoming webhook handler |
-| `app/api/whatsapp/trigger/route.ts` | POST to start a conversation |
-| `app/api/whatsapp/results/[candidateId]/route.ts` | GET interview result for a candidate |
-
-### Flow
-```
-1. Candidate submits join form
-2. POST /api/whatsapp/trigger { candidateId, candidateName, phone, businessId, businessName }
-3. lib/whatsapp-flow.ts::startSession() → sends welcome + Q1
-4. Candidate replies → WhatsApp webhook → POST /api/whatsapp
-5. lib/whatsapp-flow.ts::handleIncoming() → advances state machine → sends next question
-6. After Q10 (or Q14) → finalizeSession() → computeDnaColdStart() → store in Supabase
-```
-
-### What's Needed to Activate
-1. `WHATSAPP_ACCESS_TOKEN` from Meta Developer Console
-2. `WHATSAPP_PHONE_NUMBER_ID` from Meta → WhatsApp → API Setup
-3. Register webhook: Meta → Your App → WhatsApp → Configuration → Webhook URL = `https://formdna.vercel.app/api/whatsapp`
-4. Set `WHATSAPP_VERIFY_TOKEN=huntch_webhook_secret` in both Vercel and Meta console
+| `lib/clinical.ts` | Treatment categories, Hebrew labels, recall-interval months per category (replaces old `venue.ts`) |
+| `lib/leads.ts` | `generateLead(patient, clinicType)` — pure, deterministic, LLM-swappable later |
+| `lib/checkins.ts` | `checkinsDue(patient, clinic)` — periodic personalized quality-check drafts |
+| `lib/billing.ts` | `billingSummary(patient)` — billed / paid / outstanding |
+| `lib/roi.ts` | `computeRoi(patients, outreach, clinicType)` — recovered vs. potential revenue |
+| `lib/plan.ts` | `canUse(clinic, feature)` — single source of truth for Basic/Advanced gating |
+| `lib/ai.ts` | Server-only. `answerPatient()` / `simulateReply()` via Claude API (`ANTHROPIC_API_KEY`), canned fallback otherwise. Escalation guardrail for medical/complaint content. |
+| `lib/outreach-flow.ts` | Server-only production bridge: `deliverOutreach()` (WA send), `processIncomingReply()` (webhook → AI answer → escalate/insight). No-ops gracefully without WhatsApp/Supabase creds — demo path never touches this file. |
+| `lib/supabase.ts` | `supabase` (anon, RLS-scoped) + `supabaseAdmin` (service-role, cross-tenant, server-only) clients + helpers |
 
 ---
 
-## Data Model — THE MOST IMPORTANT THING
+## Membership & Pricing (`lib/plan.ts`)
 
-Three separate concepts. Do NOT confuse them.
+| Tier | Price (placeholder) | Includes |
+|---|---|---|
+| **בסיסי (Basic)** | ₪149/mo | Patient database + medical profiles, personalized leads, copy/manual-send, manual add, patient cap 500 |
+| **מתקדם (Advanced)** | ₪499/mo | Everything in Basic **+** daily briefing, approve-before-send auto-outreach, AI brain (FAQ + simulation trainer + escalation), periodic quality-checks, ROI dashboard, unlimited patients, priority support |
 
-### `store.pool` / `supabase.candidates` — QR Applicants
-- People who scanned the QR code and filled in their details
-- **Shown on: Home page ("בית")** as ranked candidates
-- NOT active employees
-
-### `store.employees` / `supabase.employees` — Active Staff
-- People currently working for the owner
-- **Shown on: Workforce page ("כוח אדם → עובדים")**
-- Hired via `store.hireFromPool(candidateId)` — moves from pool → employees
-
-### Pool (backend concept)
-- Just the internal name for `store.pool`
-- **Never appears as a label in the UI**
-- The sub-tab was renamed "עובדים" (not "מאגר")
-
-### Actions
-```typescript
-store.hireFromPool(candidateId)  // moves pool → employees
-store.fireEmployee(employeeId)   // removes from employees
-store.addEmployee(raw)           // adds directly to employees
-```
+- 14-day Advanced trial granted on signup (`clinic.trialEndsAt`).
+- `effectivePlan(clinic)` returns `'advanced'` while trial is active even if `clinic.plan === 'basic'`.
+- Gated pages render `<UpgradeLock />` (`components/UpgradeLock.tsx`) instead of a dead end.
+- Billing page: `app/(app)/settings/billing/page.tsx` — plan comparison + switch (real Stripe Checkout wiring is a flagged future step; switching plans in-app is instant/free in the demo).
 
 ---
 
-## QR Code System
+## Navigation (4 hubs + inbox/settings)
 
-### How It Works
-- **Page:** `app/(app)/hiring/qr/page.tsx`
-- **Library:** `qrcode` npm package (self-hosted, no external API)
-- **URL pattern:** `https://formdna.vercel.app/join/[businessId]`
-- **Demo URL:** `https://formdna.vercel.app/join/biz-1`
-- **Business ID source:** `store.business.id` (unique per business)
-- **Test:** `node test-qr.mjs` — verifies generation works
-
-### Printable Sticker Cards
-Two designs downloadable as high-res PNG (900×1100px):
-- **Dark** (`#1a1410` bg) — "אנחנו מגייסים!" — for venue window
-- **Amber** (`#f59e0b` bg) — "מחפש/ת עבודה?" — for public spaces
-
-### Join Form (`app/join/[businessId]/page.tsx`)
-- Public route — no auth required
-- Looks up business: `store.business.id === businessId ? store.business : null`
-- Saves to Supabase `candidates` + `qr_scans` tables
-- Falls back to Zustand localStorage if Supabase not configured
-- Triggers WhatsApp DNA feeder automatically on submit
-- Shows "תודה, [name]!" success screen
-
----
-
-## Venue → Role Mapping (`lib/venue.ts`)
-
-Every place roles are listed must import from here. Never hardcode role lists.
-
-```typescript
-import { venueRoles, ROLE_HE, ROLE_ICON } from '@/lib/venue'
-venueRoles(store.business.type)  // e.g. ['barista','server','cashier','host','shift-manager']
-```
-
-| Venue type | Roles |
-|---|---|
-| `cafe` | barista, server, cashier, host, shift-manager |
-| `restaurant` | server, cook, line-cook, dishwasher, host, cashier, shift-manager |
-| `bar` | bartender, server, host, cashier, shift-manager |
-| `fast-food` | cashier, cook, line-cook, dishwasher, delivery, shift-manager |
-| `catering` | cook, line-cook, dishwasher, server, shift-manager |
-| `hotel` | server, host, cashier, bartender, delivery, shift-manager |
-
----
-
-## File Structure
-
-```
-app/
-  layout.tsx                        # Root: html dir=rtl, fonts
-  globals.css                       # Full design system (Chalk & Cedar)
-  (app)/
-    layout.tsx                      # Shell: Header + BottomNav + Toasts + auth guard
-    page.tsx                        # 🏠 Home — QR applicants ranked for active job
-    hiring/
-      layout.tsx                    # Sub-nav: משרות | QR
-      page.tsx                      # Funnel summary hub
-      jobs/page.tsx                 # Job list
-      jobs/[id]/page.tsx            # Job detail + candidate filters + ranked list
-      jobs/[id]/responders/page.tsx # Responders to a job
-      qr/page.tsx                   # QR code display + stats + sticker card download
-    workforce/
-      layout.tsx                    # Sub-nav: עובדים | לו"ז
-      pool/page.tsx                 # 👥 Active employees (store.employees) — named "עובדים"
-      schedule/page.tsx             # Shift schedule
-    candidate/[id]/page.tsx         # Profile — works for both pool candidates AND employees
-    activity/
-      page.tsx                      # Automation feed ("מה קורה")
-      analytics/page.tsx            # Workforce analytics dashboard
-  login/page.tsx                    # Outside shell — public
-  apply/[jobId]/page.tsx            # Outside shell — public (worker applies)
-  join/[businessId]/page.tsx        # Outside shell — public (QR landing form) ← WIRED TO SUPABASE
-
-  api/
-    whatsapp/
-      route.ts                      # GET=webhook verify, POST=incoming messages
-      trigger/route.ts              # POST: start DNA feeder conversation
-      results/[candidateId]/route.ts # GET: fetch completed interview result
-
-lib/
-  store.ts                          # Zustand store — pool, employees, jobs, invites
-                                    #   isLoggedIn: true (auto-login for demo)
-                                    #   store key: huntch-store-v2
-  seed.ts                           # Demo data: DEMO_BUSINESS, DEMO_JOB, SEED_CANDIDATES, SEED_EMPLOYEES
-  types.ts                          # All TypeScript types (Candidate, Job, Invite, etc.)
-  venue.ts                          # Venue → role mapping (SINGLE SOURCE OF TRUTH)
-  matching.ts                       # DNA ranking algorithm (Haversine distance, 6-factor scoring)
-  dna.ts                            # computeDna() + computeDnaColdStart()
-  supabase.ts                       # Supabase client + all query helpers ← NEW
-  database.types.ts                 # TypeScript types for Supabase tables ← NEW
-  whatsapp-client.ts                # Meta Cloud API wrapper (server-only) ← NEW
-  whatsapp-session.ts               # WaSession type + in-memory Maps ← NEW
-  whatsapp-flow.ts                  # 14-step WhatsApp state machine (server-only) ← NEW
-
-components/
-  Header.tsx                        # Top nav — desktop tabs + mobile drawer
-  BottomNav.tsx                     # Mobile bottom bar (4 tabs)
-  CandidateCard.tsx                 # Two-row card layout (top: avatar+info+score, bottom: actions)
-  PostJobModal.tsx                  # Post new job — uses venueRoles()
-  GapTriggerModal.tsx               # Quick gap report — uses venueRoles()
-  Toasts.tsx                        # Toast notifications
-  WorkersTable.tsx                  # Desktop table for employees
-  ui/minimal-button.tsx             # Sage pill button with diagonal hatch overlay
-
-public/
-  flow.html                         # Visual flow diagram (auto-deploys with every push)
-
-# Root files
-supabase-schema.sql                 # Full DB schema — paste into Supabase SQL Editor ← NEW
-.env.local.example                  # Env var template with Supabase creds pre-filled ← UPDATED
-DNA-FEEDER-SPEC.md                  # WhatsApp interview spec with research citations ← NEW
-SUPABASE-SETUP.md                   # Step-by-step Supabase setup guide ← NEW
-QR-STATUS.md                        # QR code implementation status + testing guide ← NEW
-test-qr.mjs                         # Quick test: node test-qr.mjs ← NEW
-```
-
----
-
-## Key Component Decisions
-
-### CandidateCard — Two-Row Layout
-Root cause of past horizontal scroll bug: single row pushed ~310px of content into a 375px mobile screen.
-Fixed as two rows:
-- **Top:** avatar + name/facts + score
-- **Bottom:** badge + invite button + save/dismiss icons
-
-### candidate/[id]/page.tsx — Dual-mode Profile
-Looks up candidate in BOTH `store.pool` and `store.employees`.
-```typescript
-const cand = store.pool.find(c => c.id === id) ?? store.employees.find(c => c.id === id)
-const isEmployee = store.employees.some(c => c.id === id)
-```
-- `isEmployee = true` → shows "פרופיל עובד", 🟢 badge, shifts card, "הסר מהצוות" button
-- `isEmployee = false` → shows "פרופיל מועמד", match %, "הזמן לראיון" button
-
-### Home page (`app/(app)/page.tsx`)
-- Reads `store.pool` for candidates (NOT employees)
-- Role filter chips derived from active jobs only
-- `featuredJob` = job matching selected role chip, or first active job
-- `newCount` = pool candidates not yet invited
-
-### Workforce page (`app/(app)/workforce/pool/page.tsx`)
-- Reads `store.employees` (NOT pool)
-- Title: "צוות פעיל"
-- Role filter chips from `venueRoles(store.business.type)`
-
----
-
-## Demo Data (seed.ts)
-
-**Business:** בית קפה לינה — `id: 'biz-1'` — `type: 'cafe'` — Tel Aviv area
-**Demo QR URL:** `http://localhost:3000/join/biz-1` (local) or `https://formdna.vercel.app/join/biz-1` (prod)
-
-**Active job:** 1 barista position (`job-1`)
-
-**SEED_CANDIDATES (store.pool):** ~10 barista applicants who scanned QR
-**SEED_EMPLOYEES (store.employees):** 5 active café staff
-- מיה לוי, דניאל כהן, סופיה מולר, אורי שפירו, לירון ביטון
-
-Valid `Language` values: `'he' | 'ar' | 'en' | 'ru'` — never `'fr'`
-
----
-
-## Navigation (4 Hubs)
-
-| Tab | Hebrew | Route | What's there |
+| Tab | Hebrew | Route | Plan |
 |---|---|---|---|
-| Home | בית | `/` | Ranked QR applicants + daily AI summary |
-| Hiring | גיוס | `/hiring` | Jobs, candidates, QR code |
-| Workforce | כוח אדם | `/workforce` | Active employees, schedule |
-| Activity | פעילות | `/activity` | Automation feed, analytics |
-
-Global: **"דווח על עזיבה" FAB** — floating action button on all authed screens.
+| Home | בית | `/` | Basic |
+| Today | מה חדש | `/today` | Advanced (gated) |
+| AI brain | מענה אוטומטי | `/auto-reply` | Advanced (gated) |
+| Activity | פעילות | `/activity` | Advanced (gated) |
+| Inbox | (header icon) | `/inbox` | Advanced (gated) |
+| Settings/Billing | — | `/settings`, `/settings/billing` | all |
 
 ---
 
-## CSS Architecture
+## Supabase — Multi-Tenant Security
 
-`app/globals.css` is the design system. Tailwind utilities layer on top (`preflight: false`).
+- **Schema:** `supabase-schema.sql` — `clinics`, `memberships` (maps `auth.uid()` → `clinic_id`), `patients`, `treatments`, `payments`, `outreach`, `escalations`. **RLS is enabled on every clinic-owned table** with policies scoped through `memberships` — one clinic can never read another's data.
+- **Client-side (`supabase` export):** anon key, respects RLS. **Server-only (`supabaseAdmin` export):** service-role key, bypasses RLS — used only by the WhatsApp webhook and AI routes to do cross-tenant lookups keyed by `wa_phone_number_id` (each clinic's own registered WhatsApp number identifies which tenant a message belongs to).
+- **Demo/local path does not touch Supabase at all** — the whole product runs on Zustand + localStorage with seeded data. Supabase is exclusively the *production* multi-tenant path (real signup/login, real cross-clinic isolation). Wiring the demo's `AddPatientModal`/store actions to also write to Supabase was intentionally deferred — see "What's left" below.
+- **Setup:** paste `supabase-schema.sql` into the Supabase SQL Editor, enable Email auth, set env vars (below).
 
-Key classes:
-- `.cand` — candidate card (flex-direction: column)
-- `.cand-top` / `.cand-actions` — two-row card layout
-- `.fc` / `.fc-av` / `.fc-info` / `.fc-fit` — focus candidate card (home page)
-- `.feed-seg` — section separator with label + link
-- `.filter-chips` / `.chip` / `.chip.on` — pill filter chips
-- `.job-head` / `.job-back` / `.job-title-big` / `.job-head-sub` — job detail header
-- `.cand-count-card` — dark info card showing filtered candidate count
-- `.dna-section` / `.dna-bar` / `.dna-sub-row` — DNA engine display
-- `.prof-hero` / `.prof-body` / `.prow` / `.prof-cta` — candidate/employee profile
-- `.inv-row` / `.inv-badge2` — invite status rows
-- `.qr-page` / `.qr-url` / `.qr-note` / `.qr-stats` / `.qr-stat` / `.qr-actions` — QR page
-- `.apply-shell` / `.apply-card` / `.apply-success` — join form
+---
 
-Mobile-first. `html, body { max-width: 100%; overflow-x: hidden; }` — no horizontal scroll ever.
+## Environment Variables
+
+```bash
+NEXT_PUBLIC_APP_URL=https://formdna.vercel.app
+NEXT_PUBLIC_SUPABASE_URL=https://ijbbhtljxqnjboyhrjqw.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key>
+SUPABASE_SERVICE_ROLE_KEY=            # server-only, never expose to client
+ANTHROPIC_API_KEY=                    # for live AI brain — canned fallback works without it
+WHATSAPP_ACCESS_TOKEN=                # Meta Developer Console
+WHATSAPP_PHONE_NUMBER_ID=             # Meta Developer Console
+WHATSAPP_VERIFY_TOKEN=huntch_webhook_secret
+STRIPE_SECRET_KEY=                    # future real billing
+STRIPE_WEBHOOK_SECRET=
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+```
+
+Set the same keys in Vercel → formdna project → Settings → Environment Variables, then redeploy.
+
+---
+
+## WhatsApp Integration
+
+| File | Purpose |
+|---|---|
+| `lib/whatsapp-client.ts` | Meta Cloud API wrapper (`sendText`, `sendButtons`, `sendList`, `normalizePhone`) — domain-agnostic, unchanged from before the pivot |
+| `lib/outreach-flow.ts` | `deliverOutreach(phone, message)` (best-effort live send) + `processIncomingReply(waPhoneNumberId, fromPhone, text)` (webhook handler: identifies clinic by WA number → AI answer → escalate or insight) |
+| `app/api/whatsapp/route.ts` | GET = hub verification, POST = incoming webhook |
+| `app/api/whatsapp/trigger/route.ts` | POST `{ phone, message }` — delivers an already-approved outreach message |
+| `app/api/ai/simulate/route.ts` | POST `{ patientMsg, knowledge, clinicName }` — used by the simulation trainer |
+
+The demo/local path never calls these routes — Home/Today pages simulate delivery entirely client-side via `store.sendOutreach()`. These routes activate once WhatsApp Business + Supabase are configured.
+
+---
+
+## What's Left (external setup, not blocked on code)
+
+1. **Anthropic API key** → live AI brain (canned fallback works without it).
+2. **Run `supabase-schema.sql` + enable Email Auth** → live multi-tenant security.
+3. **WhatsApp Business (Meta) setup** — access token, phone number ID, webhook registration, template approval → live patient messaging.
+4. **Payment provider** (Stripe recommended for speed; Cardcom/Tranzila for Israeli-local billing) → real charging (in-app plan switching already works without it).
+5. **Paste all resulting keys into Vercel** env vars, redeploy.
+6. **Wire demo-path CRUD to Supabase** (optional next step) — today `AddPatientModal`/store actions are Zustand-only; mirroring writes to Supabase when configured would let a real signed-up clinic use the app beyond the seeded demo data.
 
 ---
 
 ## Git Rules
 
-- **Always push directly to master** — never leave changes on feature branches only
-- Worktree: `cool-pike-dfcbd7`
-- If push rejected (non-fast-forward): `git fetch origin && git rebase origin/master && git push origin HEAD:master`
-
----
-
-## Research Basis for DNA Feeder
-
-| Signal | Finding | Source | Confidence |
-|---|---|---|---|
-| Needs-supplies fit | β=−.58 for turnover intent | PMC12480616 | High |
-| Schedule instability | +50% turnover | Choper/Schneider/Harknett ILR Review 2022 | High |
-| Structured interview Q's | ~.42 performance validity | Sackett et al. 2022 (meta-analysis) | High |
-| Experience ceilings at ~5yr | Diminishing returns | Schmidt & Oh 2016 | High |
-| Reply speed as signal | Does NOT prove quality | Hart et al. 2024 | High |
-
-**Critical caveat:** Huntch must validate these coefficients against real retention outcomes once data accumulates.
+- **Always push directly to master** — never leave changes on feature branches only.
+- Worktree: `cool-pike-dfcbd7`.
+- If push rejected (non-fast-forward): `git fetch origin && git rebase origin/master && git push origin HEAD:master`.
 
 ---
 
 ## What NOT to do
 
-- ❌ Never show "pool" or "מאגר" as a UI label for the workforce tab
-- ❌ Never hardcode role lists — always use `venueRoles(business.type)`
-- ❌ Never use `JSX.Element` — use `React.JSX.Element` (React 19)
-- ❌ Never add `'fr'` as a Language — valid values are `he | ar | en | ru`
-- ❌ Never put all candidate card content in a single horizontal row on mobile
-- ❌ Never use purple/blue gradients — Chalk & Cedar palette only
-- ❌ Never use emoji as navigation/UI icons — SVG only
-- ❌ Never mix employees into pool or vice versa
-- ❌ Never display reply latency as a quality score (passive signals affect confidence band only)
-- ❌ Never collapse zero-history DNA to 0 — use Empirical-Bayes shrinkage toward population mean
-- ❌ Never use `roundRect()` Canvas API — use manual path construction for browser compatibility
-- ❌ Never hardcode `huntch.co.il` or `dna-form.vercel.app` — the live URL is `formdna.vercel.app`
-- ❌ Never store WhatsApp credentials in `.env.local` if committing to git — server-only in Vercel
+- ❌ Never reintroduce a "recovery score" or candidate-matching score — this product surfaces leads and quality-checks, not rankings.
+- ❌ Never use `JSX.Element` — use `React.JSX.Element` (React 19).
+- ❌ Never let the AI brain give medical advice — force escalation on medical/complaint/reschedule content.
+- ❌ Never auto-send outreach without an explicit approve step (approve-before-send is the default autonomy model).
+- ❌ Never use purple/blue gradients — Chalk & Cedar palette only.
+- ❌ Never use emoji as navigation/UI icons — SVG only (inline emoji in copy, e.g. the ROI teaser 💡, is fine).
+- ❌ Never expose `SUPABASE_SERVICE_ROLE_KEY`, `WHATSAPP_ACCESS_TOKEN`, or `ANTHROPIC_API_KEY` to client components — server-only.
+- ❌ Never remove RLS policies or add a table without `clinic_id` scoping.
+- ❌ Never hardcode `huntch.co.il` or any domain other than `formdna.vercel.app`.
+- ❌ Never use `roundRect()` Canvas API — use manual path construction for browser compatibility.

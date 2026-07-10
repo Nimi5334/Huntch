@@ -1,184 +1,116 @@
 'use client';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Business, Job, Candidate, Invite, RankedCandidate, QrScan, EmployeeRequest } from './types';
-import { DEMO_BUSINESS, DEMO_JOB, SEED_CANDIDATES, SEED_EMPLOYEES, SEED_REQUESTS } from './seed';
-import { rankPool } from './matching';
+import type {
+  Clinic, ClinicType, Patient, Outreach, OutreachKind, Escalation, EscalationReason,
+  TreatmentRecord, Payment, FaqEntry, VoiceExample, Plan,
+} from './types';
+import { DEMO_CLINIC, SEED_PATIENTS, SEED_OUTREACH, SEED_ESCALATIONS } from './seed';
+import { checkinsDue, type CheckinDraft } from './checkins';
+import { computeRoi, type RoiSummary } from './roi';
 
 interface HuntchState {
-  // Core state
-  business: Business;
-  jobs: Job[];
-  /** QR applicants / talent reserve — people who scanned the QR and want to work here */
-  pool: Candidate[];
-  /** Active employees — people currently working for the owner */
-  employees: Candidate[];
-  invites: Invite[];
-  savedCandidateIds: string[];
-  dismissedCandidateIds: string[];
+  clinic: Clinic;
+  patients: Patient[];
+  outreach: Outreach[];
+  escalations: Escalation[];
   isLoggedIn: boolean;
-  qrScans: QrScan[];
-  employeeRequests: EmployeeRequest[];
 
-  // Derived / computed
-  rankedForJob: (jobId: string) => RankedCandidate[];
-  respondersForJob: (jobId: string) => (Candidate & { invite: Invite })[];
-  invitedIdsForJob: (jobId: string) => string[];
-  newCandidateCount: () => number;
-  invitedCount: () => number;
-  pendingRequestCount: () => number;
+  // Computed
+  patientById: (id: string) => Patient | undefined;
+  pendingEscalationCount: () => number;
+  checkinsDueToday: () => CheckinDraft[];
+  roiSummary: () => RoiSummary;
 
-  // QR actions
-  addViaQr: (candidateData: Omit<Candidate, 'id' | 'businessId' | 'addedAt'>, businessId: string) => string;
-  qrScansForBusiness: (businessId: string) => QrScan[];
-
-  // Employee request actions
-  addEmployeeRequest: (req: Omit<EmployeeRequest, 'id' | 'businessId' | 'submittedAt'>) => void;
-  respondToRequest: (requestId: string, decision: 'approved' | 'denied') => void;
-
-  // Actions
-  signup: (params: { name: string; type: Business['type']; address: string; operatorName: string; phone: string; password: string }) => void;
+  // Auth
+  signup: (params: { name: string; operatorName: string; address: string; phone: string; password: string }) => void;
   login: (phone: string, password: string) => boolean;
   logout: () => void;
-  postJob: (params: Omit<Job, 'id' | 'businessId' | 'createdAt' | 'flow' | 'status'>) => string;
-  addToPool: (candidate: Omit<Candidate, 'id' | 'businessId' | 'addedAt'>) => void;
-  bulkAddToPool: (candidates: Omit<Candidate, 'id' | 'businessId' | 'addedAt'>[]) => void;
-  /** Add a new employee directly (e.g. someone who already works there) */
-  addEmployee: (candidate: Omit<Candidate, 'id' | 'businessId' | 'addedAt'>) => void;
-  /** Hire someone from the applicant pool → moves them to active employees */
-  hireFromPool: (candidateId: string) => void;
-  /** Remove an employee (they left) */
-  fireEmployee: (employeeId: string) => void;
-  inviteCandidate: (jobId: string, candidateId: string) => void;
-  bulkInvite: (jobId: string, minScore: number) => void;
-  simulateResponses: (jobId: string) => void;
-  saveCandidate: (candidateId: string) => void;
-  dismissCandidate: (candidateId: string) => void;
-  reportGap: (role: Job['role']) => string;
+
+  // Patients
+  addPatient: (patient: Omit<Patient, 'id' | 'clinicId' | 'addedAt'>) => string;
+  updatePatient: (id: string, patch: Partial<Patient>) => void;
+  addTreatment: (patientId: string, treatment: Omit<TreatmentRecord, 'id'>) => void;
+  addPayment: (patientId: string, payment: Omit<Payment, 'id'>) => void;
+
+  // Outreach (approve-before-send)
+  createOutreach: (patientId: string, kind: OutreachKind, message: string, relatedTreatmentId?: string) => string;
+  approveOutreach: (id: string) => void;
+  sendOutreach: (id: string) => void;
+  markReplied: (id: string, insight?: string) => void;
+  declineOutreach: (id: string) => void;
+
+  // Escalations
+  escalate: (patientId: string, reason: EscalationReason, snippet?: string) => void;
+  resolveEscalation: (id: string) => void;
+
+  // AI brain
+  updateKnowledge: (patch: Partial<Clinic['knowledge']>) => void;
+  addFaq: (faq: Omit<FaqEntry, 'id'>) => void;
+  removeFaq: (id: string) => void;
+  addVoiceExample: (example: Omit<VoiceExample, 'id'>) => void;
+
+  // Billing
+  setPlan: (plan: Plan) => void;
 }
 
-let _nextId = 100;
+let _nextId = 1000;
 const uid = () => `id-${_nextId++}`;
+const today = () => new Date().toISOString().slice(0, 10);
+
+function initialsAndColor(name: string): { initials: string; avatarColor: string } {
+  const parts = name.trim().split(/\s+/);
+  const initials = parts.length > 1 ? parts[0][0] + parts[1][0] : name.slice(0, 2);
+  const palette = ['oklch(0.63 0.18 38)', 'oklch(0.55 0.14 160)', 'oklch(0.52 0.17 295)', 'oklch(0.60 0.15 52)', 'oklch(0.54 0.14 22)'];
+  const avatarColor = palette[name.length % palette.length];
+  return { initials, avatarColor };
+}
 
 export const useStore = create<HuntchState>()(
   persist(
     (set, get) => ({
-      business: DEMO_BUSINESS,
-      jobs: [DEMO_JOB],
-      pool: SEED_CANDIDATES,
-      employees: SEED_EMPLOYEES,
-      invites: [],
-      savedCandidateIds: [],
-      dismissedCandidateIds: [],
+      clinic: DEMO_CLINIC,
+      patients: SEED_PATIENTS,
+      outreach: SEED_OUTREACH,
+      escalations: SEED_ESCALATIONS,
       isLoggedIn: true, // auto-login to demo for MVP
-      qrScans: [],
-      employeeRequests: SEED_REQUESTS,
 
-      rankedForJob: (jobId) => {
-        const job = get().jobs.find(j => j.id === jobId);
-        if (!job) return [];
-        const dismissed = new Set(get().dismissedCandidateIds);
-        const pool = get().pool.filter(c => !dismissed.has(c.id));
-        return rankPool(pool, job);
+      patientById: (id) => get().patients.find(p => p.id === id),
+
+      pendingEscalationCount: () => get().escalations.filter(e => e.status === 'pending').length,
+
+      checkinsDueToday: () => {
+        const clinic = get().clinic;
+        return get().patients.filter(p => !p.optedOut).flatMap(p => checkinsDue(p, clinic));
       },
 
-      respondersForJob: (jobId) => {
-        const invites = get().invites.filter(i => i.jobId === jobId && i.status === 'responded');
-        const pool = get().pool;
-        return invites
-          .map(invite => {
-            const cand = pool.find(c => c.id === invite.candidateId);
-            return cand ? { ...cand, invite } : null;
-          })
-          .filter(Boolean) as (Candidate & { invite: Invite })[];
-      },
-
-      invitedIdsForJob: (jobId) =>
-        get().invites
-          .filter(i => i.jobId === jobId && ['sent','delivered','responded'].includes(i.status))
-          .map(i => i.candidateId),
-
-      newCandidateCount: () => {
-        const dismissed = new Set(get().dismissedCandidateIds);
-        const invited = new Set(get().invites.map(i => i.candidateId));
-        return get().pool.filter(c => !dismissed.has(c.id) && !invited.has(c.id)).length;
-      },
-
-      invitedCount: () => get().invites.filter(i => i.status !== 'declined').length,
-
-      addViaQr: (raw, businessId) => {
-        const candidateId = uid();
-        const today = new Date().toISOString().slice(0, 10);
-        const candidate: Candidate = {
-          ...raw,
-          id: candidateId,
-          businessId,
-          addedAt: today,
-          consentSource: 'qr-scan',
-        };
-        const scan: QrScan = {
-          id: uid(),
-          businessId,
-          candidateId,
-          scannedAt: new Date().toISOString(),
-        };
-        set(s => ({ pool: [candidate, ...s.pool], qrScans: [scan, ...s.qrScans] }));
-        return candidateId;
-      },
-
-      qrScansForBusiness: (businessId) =>
-        get().qrScans.filter(s => s.businessId === businessId),
-
-      pendingRequestCount: () =>
-        get().employeeRequests.filter(r => r.status === 'pending').length,
-
-      addEmployeeRequest: (raw) => {
-        const req: EmployeeRequest = {
-          ...raw,
-          id: uid(),
-          businessId: get().business.id,
-          submittedAt: new Date().toISOString(),
-        };
-        set(s => ({ employeeRequests: [req, ...s.employeeRequests] }));
-      },
-
-      respondToRequest: (requestId, decision) => {
-        set(s => ({
-          employeeRequests: s.employeeRequests.map(r =>
-            r.id === requestId ? { ...r, status: decision } : r,
-          ),
-        }));
-      },
+      roiSummary: () => computeRoi(get().patients, get().outreach, get().clinic.type),
 
       signup: (params) => {
-        const bizId = uid();
+        const clinicId = uid();
         set({
-          business: {
-            id: bizId,
+          clinic: {
+            id: clinicId,
             name: params.name,
-            type: params.type,
+            type: 'dental' as ClinicType,
             address: params.address,
-            location: { lat: 32.0628, lng: 34.7730 }, // default centre; geocoding is phase-2
             operatorName: params.operatorName,
-            staffingState: 'has-gaps',
             phone: params.phone,
             password: params.password,
+            plan: 'basic',
+            trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+            knowledge: { faqs: [], voiceExamples: [] },
           },
-          jobs: [],
-          pool: [],
-          employees: [],
-          invites: [],
-          savedCandidateIds: [],
-          dismissedCandidateIds: [],
-          qrScans: [],
-          employeeRequests: [],
+          patients: [],
+          outreach: [],
+          escalations: [],
           isLoggedIn: true,
         });
       },
 
       login: (phone, password) => {
-        const biz = get().business;
-        if (biz.phone === phone && biz.password === password) {
+        const clinic = get().clinic;
+        if (clinic.phone === phone && clinic.password === password) {
           set({ isLoggedIn: true });
           return true;
         }
@@ -187,143 +119,111 @@ export const useStore = create<HuntchState>()(
 
       logout: () => set({ isLoggedIn: false }),
 
-      postJob: (params) => {
+      addPatient: (raw) => {
         const id = uid();
-        const job: Job = {
-          ...params,
+        const gen = initialsAndColor(raw.name);
+        const patient: Patient = {
+          ...raw,
           id,
-          businessId: get().business.id,
-          flow: 'flow2',
-          status: 'active',
-          createdAt: new Date().toISOString().slice(0, 10),
+          clinicId: get().clinic.id,
+          addedAt: today(),
+          initials: raw.initials || gen.initials,
+          avatarColor: raw.avatarColor || gen.avatarColor,
         };
-        set(s => ({ jobs: [job, ...s.jobs] }));
+        set(s => ({ patients: [patient, ...s.patients] }));
         return id;
       },
 
-      addToPool: (raw) => {
-        const candidate: Candidate = {
-          ...raw,
-          id: uid(),
-          businessId: get().business.id,
-          addedAt: new Date().toISOString().slice(0, 10),
-        };
-        set(s => ({ pool: [candidate, ...s.pool] }));
+      updatePatient: (id, patch) => {
+        set(s => ({ patients: s.patients.map(p => p.id === id ? { ...p, ...patch } : p) }));
       },
 
-      bulkAddToPool: (raws) => {
-        const bizId = get().business.id;
-        const today = new Date().toISOString().slice(0, 10);
-        const candidates: Candidate[] = raws.map(raw => ({
-          ...raw,
-          id: uid(),
-          businessId: bizId,
-          addedAt: today,
-        }));
-        set(s => ({ pool: [...candidates, ...s.pool] }));
-      },
-
-      addEmployee: (raw) => {
-        const employee: Candidate = {
-          ...raw,
-          id: uid(),
-          businessId: get().business.id,
-          addedAt: new Date().toISOString().slice(0, 10),
-        };
-        set(s => ({ employees: [employee, ...s.employees] }));
-      },
-
-      hireFromPool: (candidateId) => {
-        const cand = get().pool.find(c => c.id === candidateId);
-        if (!cand) return;
+      addTreatment: (patientId, treatment) => {
+        const t: TreatmentRecord = { ...treatment, id: uid() };
         set(s => ({
-          pool: s.pool.filter(c => c.id !== candidateId),
-          employees: [cand, ...s.employees],
+          patients: s.patients.map(p => p.id === patientId
+            ? { ...p, treatments: [t, ...p.treatments], lastVisit: t.date > p.lastVisit ? t.date : p.lastVisit }
+            : p),
         }));
       },
 
-      fireEmployee: (employeeId) => {
-        set(s => ({ employees: s.employees.filter(e => e.id !== employeeId) }));
-      },
-
-      inviteCandidate: (jobId, candidateId) => {
-        const job = get().jobs.find(j => j.id === jobId);
-        const cand = get().pool.find(c => c.id === candidateId);
-        if (!job || !cand) return;
-        const alreadyInvited = get().invites.some(
-          i => i.jobId === jobId && i.candidateId === candidateId
-        );
-        if (alreadyInvited) return;
-        const invite: Invite = {
-          id: uid(),
-          jobId,
-          candidateId,
-          status: 'sent',
-          sentAt: new Date().toISOString(),
-          waMessage: `שלום ${cand.name}, ${get().business.name} (${get().business.address}) מחפשים ${job.role} — האם תהיי/תהיה זמין/ה? | Huntch`,
-        };
-        set(s => ({ invites: [invite, ...s.invites] }));
-      },
-
-      bulkInvite: (jobId, minScore) => {
-        const ranked = get().rankedForJob(jobId);
-        const toInvite = ranked.filter(c => c.score >= minScore);
-        toInvite.forEach(c => get().inviteCandidate(jobId, c.id));
-      },
-
-      simulateResponses: (jobId) => {
+      addPayment: (patientId, payment) => {
+        const pay: Payment = { ...payment, id: uid() };
         set(s => ({
-          invites: s.invites.map(inv => {
-            if (inv.jobId !== jobId || inv.status !== 'sent') return inv;
-            const responded = Math.random() > 0.35;
-            return {
-              ...inv,
-              status: responded ? 'responded' : 'declined',
-              respondedAt: new Date().toISOString(),
-            };
-          }),
+          patients: s.patients.map(p => p.id === patientId ? { ...p, payments: [pay, ...p.payments] } : p),
         }));
       },
 
-      saveCandidate: (id) =>
-        set(s => ({
-          savedCandidateIds: s.savedCandidateIds.includes(id)
-            ? s.savedCandidateIds
-            : [...s.savedCandidateIds, id],
-        })),
-
-      dismissCandidate: (id) =>
-        set(s => ({
-          dismissedCandidateIds: s.dismissedCandidateIds.includes(id)
-            ? s.dismissedCandidateIds
-            : [...s.dismissedCandidateIds, id],
-        })),
-
-      reportGap: (role) => {
+      createOutreach: (patientId, kind, message, relatedTreatmentId) => {
         const id = uid();
-        const biz = get().business;
-        const job: Job = {
-          id,
-          businessId: biz.id,
-          role,
-          locationAddress: biz.address,
-          location: biz.location,
-          shifts: ['morning', 'afternoon', 'evening'],
-          startDate: new Date().toISOString().slice(0, 10),
-          requirements: 'זמינות מיידית',
-          filters: { roles: [role], maxDistanceKm: 8 },
-          weights: { availability: 0.35, distance: 0.30, roleExperience: 0.15, skills: 0.08, compensation: 0.07, recency: 0.05 },
-          mustHaves: [],
-          flow: 'flow2',
-          status: 'active',
-          createdAt: new Date().toISOString().slice(0, 10),
+        const out: Outreach = {
+          id, clinicId: get().clinic.id, patientId, kind, channel: 'whatsapp',
+          status: 'draft', message, relatedTreatmentId, createdAt: new Date().toISOString(),
         };
-        set(s => ({ jobs: [job, ...s.jobs] }));
+        set(s => ({ outreach: [out, ...s.outreach] }));
         return id;
+      },
+
+      approveOutreach: (id) => {
+        set(s => ({ outreach: s.outreach.map(o => o.id === id ? { ...o, status: 'approved' } : o) }));
+      },
+
+      sendOutreach: (id) => {
+        // Live send requires WhatsApp Business credentials; falls back to a simulated send in demo.
+        set(s => ({
+          outreach: s.outreach.map(o => o.id === id ? { ...o, status: 'sent', sentAt: new Date().toISOString() } : o),
+        }));
+      },
+
+      markReplied: (id, insight) => {
+        set(s => ({
+          outreach: s.outreach.map(o => o.id === id ? { ...o, status: 'replied', respondedAt: new Date().toISOString(), insight } : o),
+        }));
+        if (insight) {
+          const out = get().outreach.find(o => o.id === id);
+          if (out) {
+            set(s => ({
+              patients: s.patients.map(p => p.id === out.patientId ? { ...p, insights: [insight, ...(p.insights ?? [])] } : p),
+            }));
+          }
+        }
+      },
+
+      declineOutreach: (id) => {
+        set(s => ({ outreach: s.outreach.map(o => o.id === id ? { ...o, status: 'declined' } : o) }));
+      },
+
+      escalate: (patientId, reason, snippet) => {
+        const esc: Escalation = { id: uid(), clinicId: get().clinic.id, patientId, reason, status: 'pending', createdAt: new Date().toISOString(), snippet };
+        set(s => ({ escalations: [esc, ...s.escalations] }));
+      },
+
+      resolveEscalation: (id) => {
+        set(s => ({ escalations: s.escalations.map(e => e.id === id ? { ...e, status: 'handled' } : e) }));
+      },
+
+      updateKnowledge: (patch) => {
+        set(s => ({ clinic: { ...s.clinic, knowledge: { ...s.clinic.knowledge, ...patch } } }));
+      },
+
+      addFaq: (faq) => {
+        set(s => ({ clinic: { ...s.clinic, knowledge: { ...s.clinic.knowledge, faqs: [...s.clinic.knowledge.faqs, { ...faq, id: uid() }] } } }));
+      },
+
+      removeFaq: (id) => {
+        set(s => ({ clinic: { ...s.clinic, knowledge: { ...s.clinic.knowledge, faqs: s.clinic.knowledge.faqs.filter(f => f.id !== id) } } }));
+      },
+
+      addVoiceExample: (example) => {
+        set(s => ({ clinic: { ...s.clinic, knowledge: { ...s.clinic.knowledge, voiceExamples: [...s.clinic.knowledge.voiceExamples, { ...example, id: uid() }] } } }));
+      },
+
+      setPlan: (plan) => {
+        set(s => ({ clinic: { ...s.clinic, plan } }));
       },
     }),
     {
-      name: 'huntch-store-v2',
+      name: 'huntch-clinic-v1',
       skipHydration: true,
     }
   )

@@ -1,7 +1,7 @@
 {
-  "name": "Huntch — גיוס חכם",
+  "name": "Huntch — החזרת מטופלים חכמה",
   "short_name": "Huntch",
-  "description": "גיוס חכם לעסקי מזון ואירוח",
+  "description": "פלטפורמת AI להחזרת מטופלים למרפאות שיניים ואסתטיקה",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f4f6f4",

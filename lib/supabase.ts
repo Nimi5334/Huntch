@@ -1,522 +1,105 @@
 /**
- * Supabase Client Wrapper for Huntch
- * Handles all database operations with type safety.
+ * Supabase client wrapper for Huntch.
  *
- * Usage:
- *   - Client-side: `import { supabase } from '@/lib/supabase'`
- *   - Server-side: `import { createServerClient } from '@/lib/supabase'`
+ * Client-side: `import { supabase } from '@/lib/supabase'` (anon key, RLS-scoped to the signed-in clinic).
+ * Server-only, cross-tenant (webhooks, AI routes): `import { supabaseAdmin } from '@/lib/supabase'`
+ *   — uses the service-role key, which bypasses RLS by design. NEVER import supabaseAdmin from a
+ *   client component; NEVER send SUPABASE_SERVICE_ROLE_KEY to the browser.
  */
 
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
+import type { Clinic, Patient, Outreach, EscalationReason } from './types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase env vars not set — falling back to localStorage only');
-}
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
-/**
- * Client-side Supabase instance
- * Auto-refreshes auth token, handles realtime subscriptions
- */
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+/** Client-side instance — respects RLS, only sees the signed-in user's clinic. */
+export const supabase = createClient<Database>(supabaseUrl || 'https://placeholder.supabase.co', supabaseAnonKey || 'placeholder', {
   auth: { persistSession: true },
 });
 
-/**
- * Server-side Supabase instance (for API routes)
- * Use when you need server auth context
- */
-export function createServerClient(
-  accessToken?: string
-) {
-  return createClient<Database>(supabaseUrl, supabaseAnonKey, {
-    global: {
-      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
-    },
-  });
+/** Server-only instance for cross-tenant lookups (webhooks, AI routes). Bypasses RLS. */
+export const supabaseAdmin = createClient<Database>(supabaseUrl || 'https://placeholder.supabase.co', serviceRoleKey || supabaseAnonKey || 'placeholder', {
+  auth: { persistSession: false },
+});
+
+function rowToClinic(row: Database['public']['Tables']['clinics']['Row']): Clinic {
+  return {
+    id: row.id, name: row.name, type: row.type as Clinic['type'], address: row.address,
+    operatorName: row.operator_name, phone: row.phone ?? undefined, email: row.email ?? undefined,
+    plan: row.plan as Clinic['plan'], trialEndsAt: row.trial_ends_at ?? undefined,
+    knowledge: row.knowledge,
+  };
+}
+
+function rowToPatient(row: Database['public']['Tables']['patients']['Row']): Patient {
+  return {
+    id: row.id, clinicId: row.clinic_id, name: row.name, phone: row.phone,
+    initials: row.initials ?? '', avatarColor: row.avatar_color ?? '',
+    age: row.age ?? undefined, gender: (row.gender as 'm' | 'f') ?? undefined,
+    firstVisit: row.first_visit, lastVisit: row.last_visit,
+    treatments: [], payments: [],
+    medicalNotes: row.medical_notes ?? undefined, consent: row.consent, optedOut: row.opted_out,
+    addedAt: row.added_at, insights: row.insights ?? [],
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Business queries
+// Cross-tenant lookups used by the WhatsApp webhook (service role only)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export async function fetchBusiness(businessId: string) {
-  const { data, error } = await supabase
-    .from('businesses')
-    .select('*')
-    .eq('id', businessId)
-    .single();
-
-  if (error) {
-    console.error('fetchBusiness error:', error);
-    return null;
-  }
-  return data;
+export async function fetchClinicByWaPhoneNumberId(waPhoneNumberId: string): Promise<Clinic | null> {
+  if (!isSupabaseConfigured) return null;
+  const { data, error } = await supabaseAdmin.from('clinics').select('*').eq('wa_phone_number_id', waPhoneNumberId).single();
+  if (error || !data) return null;
+  return rowToClinic(data);
 }
 
-export async function createBusiness(business: {
-  id: string;
-  name: string;
-  type: string;
-  address: string;
-  location: { lat: number; lng: number };
-  operator_name: string;
-  phone?: string;
-  password?: string;
-}) {
-  const { data, error } = await supabase
-    .from('businesses')
-    .insert([business])
-    .select()
-    .single();
-
-  if (error) {
-    console.error('createBusiness error:', error);
-    throw error;
-  }
-  return data;
+export async function fetchPatientByPhone(clinicId: string, phone: string): Promise<Patient | null> {
+  if (!isSupabaseConfigured) return null;
+  const { data, error } = await supabaseAdmin.from('patients').select('*').eq('clinic_id', clinicId).eq('phone', phone).single();
+  if (error || !data) return null;
+  return rowToPatient(data);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Candidate queries
-// ─────────────────────────────────────────────────────────────────────────────
-
-export async function fetchCandidatesForBusiness(businessId: string) {
-  const { data, error } = await supabase
-    .from('candidates')
-    .select('*')
-    .eq('business_id', businessId)
-    .order('added_at', { ascending: false });
-
-  if (error) {
-    console.error('fetchCandidatesForBusiness error:', error);
-    return [];
-  }
-  return data || [];
+function rowToOutreach(row: Database['public']['Tables']['outreach']['Row']): Outreach {
+  return {
+    id: row.id, clinicId: row.clinic_id, patientId: row.patient_id, kind: row.kind as Outreach['kind'],
+    channel: row.channel as Outreach['channel'], status: row.status as Outreach['status'], message: row.message,
+    relatedTreatmentId: row.related_treatment_id ?? undefined, createdAt: row.created_at,
+    sentAt: row.sent_at ?? undefined, respondedAt: row.responded_at ?? undefined, insight: row.insight ?? undefined,
+  };
 }
 
-export async function fetchCandidate(candidateId: string) {
-  const { data, error } = await supabase
-    .from('candidates')
-    .select('*')
-    .eq('id', candidateId)
-    .single();
-
-  if (error) {
-    console.error('fetchCandidate error:', error);
-    return null;
-  }
-  return data;
+export async function fetchLatestSentOutreach(clinicId: string, patientId: string): Promise<Outreach | null> {
+  if (!isSupabaseConfigured) return null;
+  const { data, error } = await supabaseAdmin
+    .from('outreach').select('*')
+    .eq('clinic_id', clinicId).eq('patient_id', patientId).eq('status', 'sent')
+    .order('sent_at', { ascending: false }).limit(1).single();
+  if (error || !data) return null;
+  return rowToOutreach(data);
 }
 
-export async function createCandidate(candidate: {
-  id: string;
-  business_id: string;
-  name: string;
-  phone?: string;
-  initials: string;
-  avatar_color: string;
-  neighborhood: string;
-  location: { lat: number; lng: number };
-  has_car: boolean;
-  willing_range_km: number;
-  availability: any;
-  roles: string[];
-  experience: any;
-  skills: string[];
-  languages: string[];
-  has_work_permit: boolean;
-  age: number;
-  expected_wage_nis: number;
-  signals: any;
-  consent_source: string;
-}) {
-  const { data, error } = await supabase
-    .from('candidates')
-    .insert([candidate])
-    .select()
-    .single();
-
-  if (error) {
-    console.error('createCandidate error:', error);
-    throw error;
-  }
-  return data;
+export async function updateOutreachRow(id: string, patch: { status: string; respondedAt: string; insight: string }): Promise<void> {
+  if (!isSupabaseConfigured) return;
+  await (supabaseAdmin.from('outreach') as any).update({ status: patch.status, responded_at: patch.respondedAt, insight: patch.insight }).eq('id', id);
 }
 
-export async function updateCandidate(
-  candidateId: string,
-  updates: Partial<any>
-) {
-  const { data, error } = await supabase
-    .from('candidates')
-    .update(updates)
-    .eq('id', candidateId)
-    .select()
-    .single();
-
-  if (error) {
-    console.error('updateCandidate error:', error);
-    throw error;
-  }
-  return data;
+export async function createEscalationRow(clinicId: string, patientId: string, reason: EscalationReason, snippet: string): Promise<void> {
+  if (!isSupabaseConfigured) return;
+  await (supabaseAdmin.from('escalations') as any).insert([{
+    id: `esc-${Date.now()}`, clinic_id: clinicId, patient_id: patientId, reason, status: 'pending', snippet,
+  }]);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Employee queries
-// ─────────────────────────────────────────────────────────────────────────────
-
-export async function fetchEmployeesForBusiness(businessId: string) {
-  const { data, error } = await supabase
-    .from('employees')
-    .select('*, candidate:candidates(*)')
-    .eq('business_id', businessId)
-    .eq('status', 'active')
-    .order('hired_at', { ascending: false });
-
-  if (error) {
-    console.error('fetchEmployeesForBusiness error:', error);
-    return [];
-  }
-  return data || [];
-}
-
-export async function hireCandidate(
-  businessId: string,
-  candidateId: string
-) {
-  const { data, error } = await supabase
-    .from('employees')
-    .insert([
-      {
-        id: `emp-${Date.now()}`,
-        business_id: businessId,
-        candidate_id: candidateId,
-      },
-    ])
-    .select()
-    .single();
-
-  if (error) {
-    console.error('hireCandidate error:', error);
-    throw error;
-  }
-  return data;
-}
-
-export async function fireEmployee(employeeId: string) {
-  const { error } = await supabase
-    .from('employees')
-    .update({ status: 'archived' })
-    .eq('id', employeeId);
-
-  if (error) {
-    console.error('fireEmployee error:', error);
-    throw error;
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Job queries
-// ─────────────────────────────────────────────────────────────────────────────
-
-export async function fetchJobsForBusiness(businessId: string) {
-  const { data, error } = await supabase
-    .from('jobs')
-    .select('*')
-    .eq('business_id', businessId)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('fetchJobsForBusiness error:', error);
-    return [];
-  }
-  return data || [];
-}
-
-export async function createJob(job: {
-  id: string;
-  business_id: string;
-  role: string;
-  location_address: string;
-  location: { lat: number; lng: number };
-  shifts: string[];
-  start_date: string;
-  requirements: string;
-  wage_nis?: number;
-  filters: any;
-  weights: any;
-  must_haves: string[];
-}) {
-  const { data, error } = await supabase
-    .from('jobs')
-    .insert([job])
-    .select()
-    .single();
-
-  if (error) {
-    console.error('createJob error:', error);
-    throw error;
-  }
-  return data;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Invite queries
-// ─────────────────────────────────────────────────────────────────────────────
-
-export async function fetchInvitesForJob(jobId: string) {
-  const { data, error } = await supabase
-    .from('invites')
-    .select('*')
-    .eq('job_id', jobId);
-
-  if (error) {
-    console.error('fetchInvitesForJob error:', error);
-    return [];
-  }
-  return data || [];
-}
-
-export async function createInvite(invite: {
-  id: string;
-  job_id: string;
-  candidate_id: string;
-  status: string;
-  wa_message: string;
-}) {
-  const { data, error } = await supabase
-    .from('invites')
-    .insert([invite])
-    .select()
-    .single();
-
-  if (error) {
-    console.error('createInvite error:', error);
-    throw error;
-  }
-  return data;
-}
-
-export async function updateInvite(
-  inviteId: string,
-  updates: { status?: string; responded_at?: string }
-) {
-  const { data, error } = await supabase
-    .from('invites')
-    .update(updates)
-    .eq('id', inviteId)
-    .select()
-    .single();
-
-  if (error) {
-    console.error('updateInvite error:', error);
-    throw error;
-  }
-  return data;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// QR Scan queries
-// ─────────────────────────────────────────────────────────────────────────────
-
-export async function createQrScan(scan: {
-  id: string;
-  business_id: string;
-  candidate_id: string;
-}) {
-  const { error } = await supabase
-    .from('qr_scans')
-    .insert([scan]);
-
-  if (error) {
-    console.error('createQrScan error:', error);
-    throw error;
-  }
-}
-
-export async function fetchQrScansForBusiness(businessId: string) {
-  const { data, error } = await supabase
-    .from('qr_scans')
-    .select('*')
-    .eq('business_id', businessId)
-    .order('scanned_at', { ascending: false });
-
-  if (error) {
-    console.error('fetchQrScansForBusiness error:', error);
-    return [];
-  }
-  return data || [];
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// WhatsApp Interview Results
-// ─────────────────────────────────────────────────────────────────────────────
-
-export async function fetchInterviewResult(candidateId: string) {
-  const { data, error } = await supabase
-    .from('wa_interview_results')
-    .select('*')
-    .eq('candidate_id', candidateId)
-    .order('completed_at', { ascending: false })
-    .limit(1)
-    .single();
-
-  if (error && error.code !== 'PGRST116') { // PGRST116 = no rows
-    console.error('fetchInterviewResult error:', error);
-  }
-  return data || null;
-}
-
-export async function createInterviewResult(result: {
-  id?: string;
-  candidate_id: string;
-  business_id: string;
-  phases_completed: number;
-  answers: any;
-  dna_score: number;
-  dna_confidence: number;
-  retention_fit: number;
-  performance: number;
-  churn_risk: string;
-}) {
-  const { data, error } = await supabase
-    .from('wa_interview_results')
-    .insert([result])
-    .select()
-    .single();
-
-  if (error) {
-    console.error('createInterviewResult error:', error);
-    throw error;
-  }
-  return data;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// WhatsApp Sessions
-// ─────────────────────────────────────────────────────────────────────────────
-
-export async function fetchWaSession(phone: string) {
-  const { data, error } = await supabase
-    .from('wa_sessions')
-    .select('*')
-    .eq('phone', phone)
-    .single();
-
-  if (error && error.code !== 'PGRST116') {
-    console.error('fetchWaSession error:', error);
-  }
-  return data || null;
-}
-
-export async function createWaSession(session: {
-  phone: string;
-  candidate_id: string;
-  business_id: string;
-  business_name: string;
-  candidate_name: string;
-  step: string;
-  answers?: any;
-}) {
-  const { data, error } = await supabase
-    .from('wa_sessions')
-    .insert([session])
-    .select()
-    .single();
-
-  if (error) {
-    console.error('createWaSession error:', error);
-    throw error;
-  }
-  return data;
-}
-
-export async function updateWaSession(
-  phone: string,
-  updates: Partial<any>
-) {
-  const { data, error } = await supabase
-    .from('wa_sessions')
-    .update(updates)
-    .eq('phone', phone)
-    .select()
-    .single();
-
-  if (error) {
-    console.error('updateWaSession error:', error);
-    throw error;
-  }
-  return data;
-}
-
-export async function deleteWaSession(phone: string) {
-  const { error } = await supabase
-    .from('wa_sessions')
-    .delete()
-    .eq('phone', phone);
-
-  if (error) {
-    console.error('deleteWaSession error:', error);
-    throw error;
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Employee Requests
-// ─────────────────────────────────────────────────────────────────────────────
-
-export async function fetchEmployeeRequests(businessId: string) {
-  const { data, error } = await supabase
-    .from('employee_requests')
-    .select('*')
-    .eq('business_id', businessId)
-    .order('submitted_at', { ascending: false });
-
-  if (error) {
-    console.error('fetchEmployeeRequests error:', error);
-    return [];
-  }
-  return data || [];
-}
-
-export async function createEmployeeRequest(request: {
-  id: string;
-  business_id: string;
-  employee_id: string;
-  type: string;
-  details?: string;
-}) {
-  const { data, error } = await supabase
-    .from('employee_requests')
-    .insert([request])
-    .select()
-    .single();
-
-  if (error) {
-    console.error('createEmployeeRequest error:', error);
-    throw error;
-  }
-  return data;
-}
-
-export async function updateEmployeeRequest(
-  requestId: string,
-  updates: { status: string }
-) {
-  const { data, error } = await supabase
-    .from('employee_requests')
-    .update(updates)
-    .eq('id', requestId)
-    .select()
-    .single();
-
-  if (error) {
-    console.error('updateEmployeeRequest error:', error);
-    throw error;
-  }
-  return data;
+export async function appendPatientInsight(patientId: string, insight: string): Promise<void> {
+  if (!isSupabaseConfigured) return;
+  const { data } = await supabaseAdmin.from('patients').select('insights').eq('id', patientId).single();
+  const existing: string[] = (data as { insights: string[] } | null)?.insights ?? [];
+  await (supabaseAdmin.from('patients') as any).update({ insights: [insight, ...existing] }).eq('id', patientId);
 }

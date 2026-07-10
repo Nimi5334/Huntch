@@ -48,7 +48,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: 'Huntch',
-  description: 'גיוס חכם לעסקי מזון ואירוח',
+  description: 'החזרת מטופלים חכמה למרפאות שיניים ואסתטיקה',
   manifest: '/manifest.json',
 };
 

@@ -1,72 +1,82 @@
 'use client';
 import { useStore } from '@/lib/store';
+import { canUse } from '@/lib/plan';
+import UpgradeLock from '@/components/UpgradeLock';
 
-export default function ActivityFeed() {
+const KIND_HE: Record<string, string> = {
+  reactivation: 'לחזרה',
+  quality_check: 'בדיקת איכות',
+  wellbeing: 'בדיקת שלום',
+  review: 'בקשת ביקורת',
+};
+const STATUS_HE: Record<string, string> = {
+  draft: 'טיוטה', approved: 'אושר', sent: 'נשלח', replied: 'התקבלה תגובה', declined: 'נדחה', no_reply: 'ללא מענה',
+};
+
+function fmtTime(iso?: string) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleString('he-IL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+export default function ActivityPage() {
   const store = useStore();
-  const invites = store.invites.slice(0, 8);
-  const scans = store.qrScansForBusiness(store.business.id).slice(0, 4);
-  const highChurnCandidates = store.pool.filter(c => {
-    const { signals } = c;
-    return signals.lastActiveDaysAgo > 11 || signals.responseSpeedHours > 9;
-  }).slice(0, 3);
+  const gated = !canUse(store.clinic, 'roi_dashboard');
 
-  type FeedEvent = { id: string; icon: string; text: string; sub: string; color?: string };
-  const events: FeedEvent[] = [];
-
-  invites.forEach(inv => {
-    const cand = store.pool.find(c => c.id === inv.candidateId);
-    const job = store.jobs.find(j => j.id === inv.jobId);
-    if (!cand || !job) return;
-    if (inv.status === 'responded') {
-      events.push({ id: `inv-${inv.id}`, icon: '✓', text: `${cand.name} אישר/ה הזמנה`, sub: job.role, color: '#16a34a' });
-    } else if (inv.status === 'declined') {
-      events.push({ id: `inv-${inv.id}`, icon: '✕', text: `${cand.name} סירב/ה`, sub: job.role, color: '#b91c1c' });
-    } else {
-      events.push({ id: `inv-${inv.id}`, icon: '→', text: `הזמנה נשלחה ל${cand.name}`, sub: job.role });
-    }
-  });
-
-  scans.forEach((scan, i) => {
-    events.push({ id: `scan-${i}`, icon: 'QR', text: 'סריקת QR חדשה', sub: `נכנס/ה למאגר` });
-  });
-
-  highChurnCandidates.forEach(c => {
-    events.push({ id: `churn-${c.id}`, icon: '⚠', text: `סיכון עזיבה: ${c.name}`, sub: 'ציון DNA ירד — כדאי לבדוק', color: '#b45309' });
-  });
-
-  if (events.length === 0) {
-    events.push({ id: 'empty', icon: '✦', text: 'Huntch עובד ברקע', sub: 'אירועים יופיעו כאן כשיהיו פעילויות' });
+  if (gated) {
+    return <UpgradeLock title="לוח ROI זמין בתוכנית המתקדמת" description="עקבו אחרי הכנסה שהוחזרה מול פוטנציאל נטוש — שדרג/י כדי לפתוח את הפיצ'ר." />;
   }
+
+  const roi = store.roiSummary();
+  const timeline = [...store.outreach].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+  const funnel = {
+    draft: store.outreach.filter(o => o.status === 'draft').length,
+    sent: store.outreach.filter(o => o.status === 'sent').length,
+    replied: store.outreach.filter(o => o.status === 'replied').length,
+    noReply: store.outreach.filter(o => o.status === 'no_reply' || o.status === 'declined').length,
+  };
 
   return (
     <div className="body">
       <main className="main">
         <div className="feed">
-          <div className="scr-title">מה קורה</div>
-          <p style={{ fontSize: 13, color: 'var(--muted-text, #7c6f63)', marginBottom: 16 }}>
-            הפעולות האוטומטיות של Huntch — בזמן אמת
-          </p>
+          <div className="feed-seg"><span className="t">החזר השקעה</span></div>
 
-          {events.map(ev => (
-            <div key={ev.id} className="inv-row" style={{ alignItems: 'flex-start' }}>
-              <div className="sci" style={{ background: 'var(--accent)', color: '#fff', fontSize: 10, fontWeight: 700 }}>
-                {ev.icon}
+          <div className="dna-section" style={{ marginTop: 0 }}>
+            <div className="dna-top">
+              <div className="dna-big">
+                <div className="dna-big-num" style={{ color: '#16a34a' }}>₪{roi.recoveredRevenue.toLocaleString()}</div>
+                <div className="dna-big-lbl">הוחזר בפועל</div>
               </div>
-              <div style={{ flex: 1 }}>
-                <div className="nm" style={{ color: ev.color }}>{ev.text}</div>
-                <div className="stt">{ev.sub}</div>
+              <div className="dna-big">
+                <div className="dna-big-num" style={{ color: 'var(--cedar)' }}>₪{roi.potentialRevenue.toLocaleString()}</div>
+                <div className="dna-big-lbl">פוטנציאל נטוש</div>
               </div>
             </div>
-          ))}
-
-          <div style={{ marginTop: 24, padding: '14px', background: 'var(--paper)', borderRadius: 14, border: '1px solid rgba(124,92,62,0.1)', textAlign: 'center' }}>
-            <div style={{ fontSize: 11, color: 'var(--cedar)', fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Employee App / WhatsApp Copilot
-            </div>
-            <div style={{ fontSize: 13, color: 'var(--muted-text, #7c6f63)' }}>
-              ממשק עובד מלא דרך WhatsApp — בקרוב
-            </div>
+            <div className="dna-sub-row"><span className="dna-sub-lbl">מטופלים שהופעלו מחדש</span><span className="dna-sub-val">{roi.reactivatedCount}</span></div>
+            <div className="dna-sub-row"><span className="dna-sub-lbl">מטופלים רדומים</span><span className="dna-sub-val">{roi.dormantCount}</span></div>
           </div>
+
+          <div className="feed-seg"><span className="t">משפך פניות</span></div>
+          <div className="dna-section">
+            <div className="dna-sub-row"><span className="dna-sub-lbl">טיוטות ממתינות לאישור</span><span className="dna-sub-val">{funnel.draft}</span></div>
+            <div className="dna-sub-row"><span className="dna-sub-lbl">נשלחו</span><span className="dna-sub-val">{funnel.sent}</span></div>
+            <div className="dna-sub-row"><span className="dna-sub-lbl">התקבלה תגובה</span><span className="dna-sub-val">{funnel.replied}</span></div>
+            <div className="dna-sub-row"><span className="dna-sub-lbl">ללא מענה / נדחה</span><span className="dna-sub-val">{funnel.noReply}</span></div>
+          </div>
+
+          <div className="feed-seg"><span className="t">ציר זמן פניות</span></div>
+          {timeline.length === 0 && <div style={{ fontSize: 13, color: 'var(--muted)' }}>אין פעילות עדיין</div>}
+          {timeline.map(o => {
+            const patient = store.patientById(o.patientId);
+            return (
+              <div key={o.id} className="inv-row">
+                <div className="sci" style={{ background: patient?.avatarColor }}>{patient?.initials}</div>
+                <div><div className="nm">{patient?.name}</div><div className="stt">{KIND_HE[o.kind]} · {fmtTime(o.sentAt ?? o.createdAt)}</div></div>
+                <span className={`inv-badge2 ${o.status === 'replied' ? 'b-yes' : o.status === 'sent' ? 'b-wait' : ''}`}>{STATUS_HE[o.status]}</span>
+              </div>
+            );
+          })}
         </div>
       </main>
     </div>

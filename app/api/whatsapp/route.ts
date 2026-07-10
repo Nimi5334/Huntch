@@ -2,7 +2,7 @@
  * WhatsApp Cloud API webhook.
  *
  * GET  /api/whatsapp  — Meta's one-time webhook verification challenge
- * POST /api/whatsapp  — Incoming messages from candidates
+ * POST /api/whatsapp  — Incoming messages from patients
  *
  * Configure in Meta Developer Console → WhatsApp → Configuration:
  *   Callback URL: https://your-domain/api/whatsapp
@@ -11,10 +11,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { handleIncoming } from '@/lib/whatsapp-flow';
-import { normalizePhone } from '@/lib/whatsapp-client';
-
-// ─── GET — webhook verification ───────────────────────────────────────────────
+import { processIncomingReply } from '@/lib/outreach-flow';
 
 export async function GET(request: NextRequest) {
   const sp        = request.nextUrl.searchParams;
@@ -28,8 +25,6 @@ export async function GET(request: NextRequest) {
   return new Response('Forbidden', { status: 403 });
 }
 
-// ─── POST — incoming messages ─────────────────────────────────────────────────
-
 export async function POST(request: NextRequest) {
   // Always 200 immediately — WA retries on non-2xx or timeouts
   let body: any;
@@ -39,29 +34,29 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ status: 'ok' }); // malformed, ignore
   }
 
-  // Process async so we don't block the 200 response
   void processWebhook(body).catch(err => console.error('[WA webhook]', err));
 
   return NextResponse.json({ status: 'ok' });
 }
 
 async function processWebhook(body: any): Promise<void> {
-  const messages: any[] = body?.entry?.[0]?.changes?.[0]?.value?.messages ?? [];
-  if (messages.length === 0) return; // status update or other event
+  const value = body?.entry?.[0]?.changes?.[0]?.value;
+  const waPhoneNumberId: string | undefined = value?.metadata?.phone_number_id;
+  const messages: any[] = value?.messages ?? [];
+  if (!waPhoneNumberId || messages.length === 0) return; // status update or other event
 
-  const msg  = messages[0];
-  const from = normalizePhone(msg.from ?? '');
+  const msg = messages[0];
+  const from = msg.from ?? '';
   if (!from) return;
 
-  // Unify button reply, list reply, and plain text into a single input string
-  let input = '';
+  let text = '';
   if (msg.type === 'text') {
-    input = msg.text?.body ?? '';
+    text = msg.text?.body ?? '';
   } else if (msg.type === 'interactive') {
     const t = msg.interactive?.type;
-    if (t === 'button_reply') input = msg.interactive.button_reply?.id ?? '';
-    else if (t === 'list_reply') input = msg.interactive.list_reply?.id ?? '';
+    if (t === 'button_reply') text = msg.interactive.button_reply?.title ?? '';
+    else if (t === 'list_reply') text = msg.interactive.list_reply?.title ?? '';
   }
 
-  if (input) await handleIncoming(from, input);
+  if (text) await processIncomingReply(waPhoneNumberId, from, text);
 }

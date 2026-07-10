@@ -1,21 +1,15 @@
 /**
  * POST /api/whatsapp/trigger
  *
- * Starts the DNA Feeder WhatsApp conversation for a candidate who just
- * completed the QR join form. Called client-side immediately after addViaQr().
+ * Delivers an already-approved outreach message to a patient over WhatsApp.
+ * No-ops when WHATSAPP_ACCESS_TOKEN / WHATSAPP_PHONE_NUMBER_ID are not configured —
+ * the demo/local path already simulates delivery client-side via the Zustand store.
  *
- * Body:
- *   candidateId   string  — Zustand-generated candidate ID
- *   candidateName string  — candidate's full name
- *   phone         string  — raw phone from the form (05X-XXXXXXX or international)
- *   businessId    string  — business ID
- *   businessName  string  — business display name
- *   formCompletionSec? number — seconds from form mount to submission (passive signal)
+ * Body: { phone: string, message: string }
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { startSession } from '@/lib/whatsapp-flow';
-import { normalizePhone } from '@/lib/whatsapp-client';
+import { deliverOutreach } from '@/lib/outreach-flow';
 
 export async function POST(request: NextRequest) {
   let body: any;
@@ -25,31 +19,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const { candidateId, candidateName, phone, businessId, businessName, formCompletionSec } = body ?? {};
-
-  if (!candidateId || !candidateName || !phone) {
-    return NextResponse.json(
-      { error: 'Required: candidateId, candidateName, phone' },
-      { status: 400 }
-    );
-  }
-
-  const normalizedPhone = normalizePhone(String(phone));
-  if (normalizedPhone.length < 10) {
-    return NextResponse.json({ error: 'Invalid phone number format' }, { status: 400 });
+  const { phone, message } = body ?? {};
+  if (!phone || !message) {
+    return NextResponse.json({ error: 'Required: phone, message' }, { status: 400 });
   }
 
   try {
-    await startSession({
-      candidateId:      String(candidateId),
-      businessId:       String(businessId ?? 'unknown'),
-      businessName:     String(businessName ?? 'Huntch'),
-      candidateName:    String(candidateName),
-      phone:            normalizedPhone,
-      formCompletionSec: typeof formCompletionSec === 'number' ? formCompletionSec : undefined,
-    });
-
-    return NextResponse.json({ status: 'started', phone: normalizedPhone });
+    await deliverOutreach(String(phone), String(message));
+    return NextResponse.json({ status: 'ok' });
   } catch (err: any) {
     console.error('[WA trigger]', err);
     return NextResponse.json({ error: err?.message ?? 'Internal error' }, { status: 500 });

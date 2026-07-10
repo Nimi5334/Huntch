@@ -2,16 +2,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
-import type { VenueType } from '@/lib/types';
-
-const VENUE_TYPES: { value: VenueType; label: string }[] = [
-  { value: 'cafe',        label: 'בית קפה' },
-  { value: 'restaurant',  label: 'מסעדה' },
-  { value: 'bar',         label: 'בר' },
-  { value: 'fast-food',   label: 'מזון מהיר' },
-  { value: 'catering',    label: 'קייטרינג' },
-  { value: 'hotel',       label: 'מלון' },
-];
 
 const HMARK = (
   <svg width="22" height="22" viewBox="0 0 80 80" fill="none">
@@ -35,7 +25,6 @@ export default function LoginPage() {
 
   // Signup state
   const [sName,     setSName]     = useState('');
-  const [sType,     setSType]     = useState<VenueType>('cafe');
   const [sAddress,  setSAddress]  = useState('');
   const [sOperator, setSOperator] = useState('');
   const [sPhone,    setSPhone]    = useState('');
@@ -49,26 +38,23 @@ export default function LoginPage() {
     setHydrated(true);
   }, []);
 
-  // Already logged in → go home
   useEffect(() => {
     if (hydrated && store.isLoggedIn) router.replace('/');
   }, [hydrated, store.isLoggedIn, router]);
 
   if (!hydrated) return null;
 
-  /* ── LOGIN ── */
   function handleLogin() {
     setLErr('');
     if (!lPhone || !lPass) { setLErr('אנא מלאו את כל השדות'); return; }
     setLBusy(true);
-    setTimeout(() => {                       // brief UX delay
+    setTimeout(() => {
       const ok = store.login(lPhone.replace(/\D/g, ''), lPass);
       if (ok) { router.replace('/'); }
       else    { setLErr('מספר טלפון או סיסמה שגויים'); setLBusy(false); }
     }, 400);
   }
 
-  /* ── SIGNUP ── */
   function handleSignup() {
     setSErr('');
     if (!sName || !sAddress || !sOperator || !sPhone || !sPass) {
@@ -80,7 +66,6 @@ export default function LoginPage() {
     setTimeout(() => {
       store.signup({
         name: sName,
-        type: sType,
         address: sAddress,
         operatorName: sOperator,
         phone: sPhone.replace(/\D/g, ''),
@@ -94,7 +79,6 @@ export default function LoginPage() {
     <div className="login-shell">
       <div style={{ width: '100%', maxWidth: 440 }}>
 
-        {/* Logo */}
         <div className="login-logo" style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 32, justifyContent: 'center' }}>
           <div className="h-mark" style={{ width: 38, height: 38, borderRadius: 11, background: 'var(--ink)', display: 'grid', placeItems: 'center' }}>
             {HMARK}
@@ -104,19 +88,16 @@ export default function LoginPage() {
 
         <div className="login-card" style={{ borderRadius: 22, boxShadow: '0 12px 40px -20px rgba(22,36,26,0.25)' }}>
 
-          {/* Tabs */}
           <div className="auth-tabs">
             <button className={`auth-tab ${tab === 'login' ? 'on' : ''}`} onClick={() => { setTab('login'); setLErr(''); }}>כניסה</button>
             <button className={`auth-tab ${tab === 'signup' ? 'on' : ''}`} onClick={() => { setTab('signup'); setSErr(''); }}>הרשמה</button>
           </div>
 
-          {/* ─── LOGIN FORM ─── */}
           {tab === 'login' && (
             <div>
               <div className="login-title">ברוכים הבאים</div>
-              <div className="login-sub">הכנסו לחשבון העסק שלכם</div>
+              <div className="login-sub">הכנסו לחשבון המרפאה שלכם</div>
 
-              {/* Demo hint */}
               <div className="demo-hint">
                 <span className="demo-dot" />
                 הדגמה: <b>0500000000</b> / <b>533433</b>
@@ -144,31 +125,24 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* ─── SIGNUP FORM ─── */}
           {tab === 'signup' && (
             <div>
               <div className="login-title">הצטרפו להאנץ׳</div>
-              <div className="login-sub">פרטי העסק שלכם — ישמשו לחיפוש מועמדים בקרבת מקום</div>
+              <div className="login-sub">פרטי המרפאה שלכם — נעזור לכם להחזיר מטופלים</div>
 
               <div className="field">
-                <label>שם העסק</label>
-                <input type="text" placeholder='בית קפה לינה'
+                <label>שם המרפאה</label>
+                <input type="text" placeholder='מרפאת שיניים ד"ר כהן'
                   value={sName} onChange={e => setSName(e.target.value)} />
               </div>
               <div className="field">
-                <label>סוג העסק</label>
-                <select value={sType} onChange={e => setSType(e.target.value as VenueType)}>
-                  {VENUE_TYPES.map(v => <option key={v.value} value={v.value}>{v.label}</option>)}
-                </select>
-              </div>
-              <div className="field">
-                <label>כתובת העסק</label>
+                <label>כתובת המרפאה</label>
                 <input type="text" placeholder='רחוב הנמל 12, חיפה'
                   value={sAddress} onChange={e => setSAddress(e.target.value)} />
               </div>
               <div className="field">
                 <label>שמך (איש/ת הקשר)</label>
-                <input type="text" placeholder='לוסיה'
+                <input type="text" placeholder='ירון כהן'
                   value={sOperator} onChange={e => setSOperator(e.target.value)} />
               </div>
               <div className="field">
@@ -192,7 +166,7 @@ export default function LoginPage() {
 
               <button className="btn-full" onClick={handleSignup} disabled={sBusy}
                 style={{ marginTop: 8, opacity: sBusy ? 0.6 : 1 }}>
-                {sBusy ? 'יוצר חשבון…' : 'צור חשבון והתחל לגייס'}
+                {sBusy ? 'יוצר חשבון…' : 'צור חשבון'}
               </button>
             </div>
           )}

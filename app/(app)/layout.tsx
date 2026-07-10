@@ -18,18 +18,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (!hydrated || !store.isLoggedIn) return null;
 
-  const newCount = store.newCandidateCount();
-  const activeJobCount = store.jobs.filter(j => j.status === 'active').length;
+  const pendingEscalations = store.pendingEscalationCount();
 
   return (
     <div className="app">
       <Header
-        operatorInitial={store.business.operatorName[0] ?? 'ל'}
-        newCount={newCount}
-        activeJobCount={activeJobCount}
+        operatorInitial={store.clinic.operatorName[0] ?? 'ר'}
+        pendingEscalations={pendingEscalations}
       />
       {children}
-      <BottomNav newCount={newCount} activeJobCount={activeJobCount} />
+      <BottomNav />
       <Toasts />
     </div>
   );
