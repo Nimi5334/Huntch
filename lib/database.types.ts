@@ -19,7 +19,6 @@ export interface Database {
           email: string | null;
           plan: string;
           trial_ends_at: string | null;
-          knowledge: any;
           wa_phone_number_id: string | null;
           wa_access_token_encrypted: string | null;
           created_at: string;
@@ -54,7 +53,6 @@ export interface Database {
           medical_notes: string | null;
           consent: boolean;
           opted_out: boolean;
-          insights: string[];
           added_at: string;
           created_at: string;
           updated_at: string;
@@ -103,26 +101,12 @@ export interface Database {
           status: string;
           message: string;
           related_treatment_id: string | null;
-          insight: string | null;
           created_at: string;
           sent_at: string | null;
           responded_at: string | null;
         };
         Insert: Omit<Database['public']['Tables']['outreach']['Row'], 'created_at'>;
         Update: Partial<Database['public']['Tables']['outreach']['Insert']>;
-      };
-      escalations: {
-        Row: {
-          id: string;
-          clinic_id: string;
-          patient_id: string;
-          reason: string;
-          status: string;
-          snippet: string | null;
-          created_at: string;
-        };
-        Insert: Omit<Database['public']['Tables']['escalations']['Row'], 'created_at'>;
-        Update: Partial<Database['public']['Tables']['escalations']['Insert']>;
       };
     };
   };

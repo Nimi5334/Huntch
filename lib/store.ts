@@ -2,35 +2,18 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type {
-  Clinic, ClinicType, Patient, Outreach, OutreachKind, Escalation, EscalationReason,
-  TreatmentRecord, Payment, FaqEntry, VoiceExample, Plan, AutomationSettings,
+  Clinic, ClinicType, Patient, Outreach, TreatmentRecord, Payment, Plan,
 } from './types';
-import { DEMO_CLINIC, SEED_PATIENTS, SEED_OUTREACH, SEED_ESCALATIONS } from './seed';
-import { checkinsDue, type CheckinDraft } from './checkins';
-import { computeRoi, type RoiSummary } from './roi';
-
-/** Defaults for what runs automatically — used for new signups and legacy persisted state. */
-export const DEFAULT_AUTOMATION: AutomationSettings = {
-  qualityChecks: true,
-  qualityCheckFrequencyDays: 90,
-  reactivationLeads: true,
-  reviewRequests: true,
-  autoAnswer: true,
-  approveBeforeSend: true,
-};
+import { DEMO_CLINIC, SEED_PATIENTS, SEED_OUTREACH } from './seed';
 
 interface HuntchState {
   clinic: Clinic;
   patients: Patient[];
   outreach: Outreach[];
-  escalations: Escalation[];
   isLoggedIn: boolean;
 
   // Computed
   patientById: (id: string) => Patient | undefined;
-  pendingEscalationCount: () => number;
-  checkinsDueToday: () => CheckinDraft[];
-  roiSummary: () => RoiSummary;
 
   // Auth
   signup: (params: { name: string; operatorName: string; address: string; phone: string; password: string }) => void;
@@ -43,26 +26,12 @@ interface HuntchState {
   addTreatment: (patientId: string, treatment: Omit<TreatmentRecord, 'id'>) => void;
   addPayment: (patientId: string, payment: Omit<Payment, 'id'>) => void;
 
-  // Outreach (approve-before-send)
-  createOutreach: (patientId: string, kind: OutreachKind, message: string, relatedTreatmentId?: string) => string;
+  // Outreach (approve-before-send periodic reactivation)
+  createOutreach: (patientId: string, message: string, relatedTreatmentId?: string) => string;
   approveOutreach: (id: string) => void;
   sendOutreach: (id: string) => void;
-  markReplied: (id: string, insight?: string) => void;
+  markReplied: (id: string) => void;
   declineOutreach: (id: string) => void;
-
-  // Escalations
-  escalate: (patientId: string, reason: EscalationReason, snippet?: string) => void;
-  resolveEscalation: (id: string) => void;
-
-  // AI brain
-  updateKnowledge: (patch: Partial<Clinic['knowledge']>) => void;
-  addFaq: (faq: Omit<FaqEntry, 'id'>) => void;
-  removeFaq: (id: string) => void;
-  addVoiceExample: (example: Omit<VoiceExample, 'id'>) => void;
-
-  // Automation
-  automationSettings: () => AutomationSettings;
-  updateAutomation: (patch: Partial<AutomationSettings>) => void;
 
   // Billing
   setPlan: (plan: Plan) => void;
@@ -86,21 +55,9 @@ export const useStore = create<HuntchState>()(
       clinic: DEMO_CLINIC,
       patients: SEED_PATIENTS,
       outreach: SEED_OUTREACH,
-      escalations: SEED_ESCALATIONS,
       isLoggedIn: true, // auto-login to demo for MVP
 
       patientById: (id) => get().patients.find(p => p.id === id),
-
-      pendingEscalationCount: () => get().escalations.filter(e => e.status === 'pending').length,
-
-      checkinsDueToday: () => {
-        const clinic = get().clinic;
-        const auto = clinic.automation ?? DEFAULT_AUTOMATION;
-        if (!auto.qualityChecks) return [];
-        return get().patients.filter(p => !p.optedOut).flatMap(p => checkinsDue(p, clinic, auto.qualityCheckFrequencyDays));
-      },
-
-      roiSummary: () => computeRoi(get().patients, get().outreach, get().clinic.type),
 
       signup: (params) => {
         const clinicId = uid();
@@ -115,12 +72,9 @@ export const useStore = create<HuntchState>()(
             password: params.password,
             plan: 'basic',
             trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-            knowledge: { faqs: [], voiceExamples: [] },
-            automation: { ...DEFAULT_AUTOMATION },
           },
           patients: [],
           outreach: [],
-          escalations: [],
           isLoggedIn: true,
         });
       },
@@ -171,10 +125,10 @@ export const useStore = create<HuntchState>()(
         }));
       },
 
-      createOutreach: (patientId, kind, message, relatedTreatmentId) => {
+      createOutreach: (patientId, message, relatedTreatmentId) => {
         const id = uid();
         const out: Outreach = {
-          id, clinicId: get().clinic.id, patientId, kind, channel: 'whatsapp',
+          id, clinicId: get().clinic.id, patientId, kind: 'reactivation', channel: 'whatsapp',
           status: 'draft', message, relatedTreatmentId, createdAt: new Date().toISOString(),
         };
         set(s => ({ outreach: [out, ...s.outreach] }));
@@ -192,53 +146,14 @@ export const useStore = create<HuntchState>()(
         }));
       },
 
-      markReplied: (id, insight) => {
+      markReplied: (id) => {
         set(s => ({
-          outreach: s.outreach.map(o => o.id === id ? { ...o, status: 'replied', respondedAt: new Date().toISOString(), insight } : o),
+          outreach: s.outreach.map(o => o.id === id ? { ...o, status: 'replied', respondedAt: new Date().toISOString() } : o),
         }));
-        if (insight) {
-          const out = get().outreach.find(o => o.id === id);
-          if (out) {
-            set(s => ({
-              patients: s.patients.map(p => p.id === out.patientId ? { ...p, insights: [insight, ...(p.insights ?? [])] } : p),
-            }));
-          }
-        }
       },
 
       declineOutreach: (id) => {
         set(s => ({ outreach: s.outreach.map(o => o.id === id ? { ...o, status: 'declined' } : o) }));
-      },
-
-      escalate: (patientId, reason, snippet) => {
-        const esc: Escalation = { id: uid(), clinicId: get().clinic.id, patientId, reason, status: 'pending', createdAt: new Date().toISOString(), snippet };
-        set(s => ({ escalations: [esc, ...s.escalations] }));
-      },
-
-      resolveEscalation: (id) => {
-        set(s => ({ escalations: s.escalations.map(e => e.id === id ? { ...e, status: 'handled' } : e) }));
-      },
-
-      updateKnowledge: (patch) => {
-        set(s => ({ clinic: { ...s.clinic, knowledge: { ...s.clinic.knowledge, ...patch } } }));
-      },
-
-      addFaq: (faq) => {
-        set(s => ({ clinic: { ...s.clinic, knowledge: { ...s.clinic.knowledge, faqs: [...s.clinic.knowledge.faqs, { ...faq, id: uid() }] } } }));
-      },
-
-      removeFaq: (id) => {
-        set(s => ({ clinic: { ...s.clinic, knowledge: { ...s.clinic.knowledge, faqs: s.clinic.knowledge.faqs.filter(f => f.id !== id) } } }));
-      },
-
-      addVoiceExample: (example) => {
-        set(s => ({ clinic: { ...s.clinic, knowledge: { ...s.clinic.knowledge, voiceExamples: [...s.clinic.knowledge.voiceExamples, { ...example, id: uid() }] } } }));
-      },
-
-      automationSettings: () => get().clinic.automation ?? DEFAULT_AUTOMATION,
-
-      updateAutomation: (patch) => {
-        set(s => ({ clinic: { ...s.clinic, automation: { ...(s.clinic.automation ?? DEFAULT_AUTOMATION), ...patch } } }));
       },
 
       setPlan: (plan) => {

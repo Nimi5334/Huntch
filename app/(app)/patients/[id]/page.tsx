@@ -6,6 +6,7 @@ import { addToast } from '@/components/Toasts';
 import { generateLead } from '@/lib/leads';
 import { billingSummary } from '@/lib/billing';
 import { CATEGORY_HE } from '@/lib/clinical';
+import { canUse } from '@/lib/plan';
 
 const STATUS_HE: Record<string, string> = { completed: 'הושלם', planned: 'מתוכנן', 'in-progress': 'בתהליך' };
 
@@ -33,8 +34,9 @@ function PatientProfileInner({ id }: { id: string }) {
   const lead = generateLead(patient, store.clinic.type);
   const bill = billingSummary(patient);
   const isUpToDate = lead.headline === 'הכל מעודכן';
+  const canAutoSend = canUse(store.clinic, 'auto_outreach');
 
-  const existingDraft = store.outreach.find(o => o.patientId === id && o.status !== 'declined' && o.kind === 'reactivation');
+  const existingDraft = store.outreach.find(o => o.patientId === id && o.status !== 'declined');
 
   function handleCopy() {
     navigator.clipboard?.writeText(lead.draftMessage).catch(() => {});
@@ -44,7 +46,7 @@ function PatientProfileInner({ id }: { id: string }) {
   }
 
   function handleApproveSend() {
-    const outId = store.createOutreach(id, 'reactivation', lead.draftMessage);
+    const outId = store.createOutreach(id, lead.draftMessage);
     store.approveOutreach(outId);
     store.sendOutreach(outId);
     addToast('g', `הודעה נשלחה ל${patient!.name}`);
@@ -77,9 +79,11 @@ function PatientProfileInner({ id }: { id: string }) {
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button className="btn-ghost" style={{ flex: 1 }} onClick={handleCopy}>{copied ? 'הועתק ✓' : 'העתק הודעה'}</button>
-              <button className="btn-invite" style={{ flex: 1 }} onClick={handleApproveSend} disabled={!!existingDraft && existingDraft.status === 'sent'}>
-                {existingDraft?.status === 'sent' ? 'נשלח ✓' : 'אשר ושלח'}
-              </button>
+              {canAutoSend && (
+                <button className="btn-invite" style={{ flex: 1 }} onClick={handleApproveSend} disabled={!!existingDraft && existingDraft.status === 'sent'}>
+                  {existingDraft?.status === 'sent' ? 'נשלח ✓' : 'אשר ושלח'}
+                </button>
+              )}
             </div>
           </>
         )}
@@ -126,21 +130,6 @@ function PatientProfileInner({ id }: { id: string }) {
         <div className="dna-sub-row"><span className="dna-sub-lbl">שולם</span><span className="dna-sub-val">₪{bill.totalPaid.toLocaleString()}</span></div>
         <div className="dna-sub-row"><span className="dna-sub-lbl" style={{ color: bill.outstanding > 0 ? '#b91c1c' : undefined }}>יתרה לתשלום</span><span className="dna-sub-val" style={{ color: bill.outstanding > 0 ? '#b91c1c' : undefined }}>₪{bill.outstanding.toLocaleString()}</span></div>
       </div>
-
-      {/* INSIGHTS — understanding built from past replies */}
-      {patient.insights && patient.insights.length > 0 && (
-        <div className="dna-section">
-          <div className="dna-header">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" /></svg>
-            הבנת המטופל
-          </div>
-          {patient.insights.map((ins, i) => (
-            <div key={i} style={{ fontSize: 13, color: '#221b16', padding: '5px 0', borderBottom: i < patient.insights!.length - 1 ? '1px solid rgba(124,92,62,0.08)' : 'none' }}>
-              {ins}
-            </div>
-          ))}
-        </div>
-      )}
 
       <div aria-hidden="true" style={{ height: 40 }} />
     </>

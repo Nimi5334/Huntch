@@ -20,7 +20,6 @@ CREATE TABLE clinics (
   email TEXT,
   plan TEXT NOT NULL DEFAULT 'basic', -- 'basic' | 'advanced'
   trial_ends_at TIMESTAMP,
-  knowledge JSONB NOT NULL DEFAULT '{"faqs":[],"voiceExamples":[]}',
   -- WhatsApp Business routing — which registered number belongs to this clinic
   wa_phone_number_id TEXT UNIQUE,
   wa_access_token_encrypted TEXT, -- encrypted at rest; never selected by the anon key
@@ -62,7 +61,6 @@ CREATE TABLE patients (
   medical_notes TEXT,
   consent BOOLEAN NOT NULL DEFAULT TRUE,
   opted_out BOOLEAN NOT NULL DEFAULT FALSE,
-  insights JSONB NOT NULL DEFAULT '[]', -- string[] distilled from outreach replies
   added_at DATE DEFAULT NOW(),
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
@@ -111,19 +109,18 @@ CREATE INDEX idx_payments_clinic_id ON payments(clinic_id);
 CREATE INDEX idx_payments_patient_id ON payments(patient_id);
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- Outreach — approve-before-send WhatsApp/SMS messages
+-- Outreach — approve-before-send periodic reactivation messages (WhatsApp/SMS)
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE TABLE outreach (
   id TEXT PRIMARY KEY,
   clinic_id TEXT NOT NULL REFERENCES clinics(id) ON DELETE CASCADE,
   patient_id TEXT NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
-  kind TEXT NOT NULL, -- 'reactivation' | 'quality_check' | 'wellbeing' | 'review'
+  kind TEXT NOT NULL DEFAULT 'reactivation', -- always 'reactivation' — the app's one job
   channel TEXT NOT NULL DEFAULT 'whatsapp', -- 'whatsapp' | 'sms'
   status TEXT NOT NULL DEFAULT 'draft', -- 'draft' | 'approved' | 'sent' | 'replied' | 'declined' | 'no_reply'
   message TEXT NOT NULL,
   related_treatment_id TEXT REFERENCES treatments(id) ON DELETE SET NULL,
-  insight TEXT, -- reply distilled into patient understanding
   created_at TIMESTAMP DEFAULT NOW(),
   sent_at TIMESTAMP,
   responded_at TIMESTAMP
@@ -132,23 +129,6 @@ CREATE TABLE outreach (
 CREATE INDEX idx_outreach_clinic_id ON outreach(clinic_id);
 CREATE INDEX idx_outreach_patient_id ON outreach(patient_id);
 CREATE INDEX idx_outreach_status ON outreach(status);
-
--- ─────────────────────────────────────────────────────────────────────────────
--- Escalations — cases routed to a human
--- ─────────────────────────────────────────────────────────────────────────────
-
-CREATE TABLE escalations (
-  id TEXT PRIMARY KEY,
-  clinic_id TEXT NOT NULL REFERENCES clinics(id) ON DELETE CASCADE,
-  patient_id TEXT NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
-  reason TEXT NOT NULL, -- 'complex_question' | 'complaint' | 'medical_concern' | 'reschedule' | 'other'
-  status TEXT NOT NULL DEFAULT 'pending', -- 'pending' | 'handled'
-  snippet TEXT,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
-CREATE INDEX idx_escalations_clinic_id ON escalations(clinic_id);
-CREATE INDEX idx_escalations_status ON escalations(status);
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- Row Level Security — every clinic-owned table is isolated per tenant
@@ -160,7 +140,6 @@ ALTER TABLE patients      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE treatments    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payments      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE outreach      ENABLE ROW LEVEL SECURITY;
-ALTER TABLE escalations   ENABLE ROW LEVEL SECURITY;
 
 -- Helper: clinic ids the current authenticated user belongs to
 CREATE OR REPLACE FUNCTION auth_clinic_ids()
@@ -202,16 +181,9 @@ CREATE POLICY "members can write their clinic's outreach" ON outreach
 CREATE POLICY "members can update their clinic's outreach" ON outreach
   FOR UPDATE USING (clinic_id IN (SELECT auth_clinic_ids()));
 
-CREATE POLICY "members can read their clinic's escalations" ON escalations
-  FOR SELECT USING (clinic_id IN (SELECT auth_clinic_ids()));
-CREATE POLICY "members can write their clinic's escalations" ON escalations
-  FOR INSERT WITH CHECK (clinic_id IN (SELECT auth_clinic_ids()));
-CREATE POLICY "members can update their clinic's escalations" ON escalations
-  FOR UPDATE USING (clinic_id IN (SELECT auth_clinic_ids()));
-
--- NOTE: the WhatsApp webhook and AI routes run with the SERVICE ROLE key
--- (server-only, bypasses RLS by design) since they act on behalf of the
--- platform across tenants, keyed by wa_phone_number_id — never expose the
--- service-role key to the client.
+-- NOTE: the WhatsApp webhook runs with the SERVICE ROLE key (server-only,
+-- bypasses RLS by design) since it acts on behalf of the platform across
+-- tenants, keyed by wa_phone_number_id — never expose the service-role key
+-- to the client.
 
 -- ═══════════════════════════════════════════════════════════════════════════
