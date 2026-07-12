@@ -42,7 +42,6 @@ export default function PatientCard({ patient, lead, canAutoSend, sent, onSendLe
             {!isUpToDate && <span>{lead.reason}</span>}
           </div>
         </div>
-        {!isUpToDate && <span className="score" style={{ background: 'var(--cedar-soft)', color: 'var(--cedar)' }}>ליד</span>}
       </Link>
 
       <div className="cand-actions">

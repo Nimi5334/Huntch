@@ -520,7 +520,8 @@ a { text-decoration: none; color: inherit; }
 @media (max-width: 760px) {
   .hdr { padding: 0 18px; height: 56px; }
   .hdr-tabs-wrap { display: none; }
-  .hdr-end { display: none; }
+  /* .hdr-end holds the profile/menu avatar — keep it reachable on mobile. */
+  .hdr-end { display: flex; }
   .hdr-burger { display: flex; }
   .bottom-nav { display: flex; }
   .feed { padding: 0 14px 100px; }

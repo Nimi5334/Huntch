@@ -3,10 +3,8 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
-import { addToast } from '@/components/Toasts';
 import { CLINIC_TYPE_HE } from '@/lib/clinical';
-import { effectivePlan, isTrialActive, PLAN_PRICE_ILS } from '@/lib/plan';
-import type { Plan } from '@/lib/types';
+import { effectivePlan, isTrialActive, SUBSCRIPTION_PRICE_USD } from '@/lib/plan';
 
 const HMARK_WHITE = (
   <svg width="17" height="17" viewBox="0 0 80 80" fill="none">
@@ -34,11 +32,6 @@ export default function Header({
     store.logout();
     setProfile(false);
     router.replace('/login');
-  }
-
-  function choosePlan(plan: Plan) {
-    store.setPlan(plan);
-    addToast('g', plan === 'advanced' ? 'שודרג לתוכנית מתקדמת' : 'הועבר לתוכנית בסיסית');
   }
 
   return (
@@ -99,20 +92,18 @@ export default function Header({
         )}
 
         <div className="pp-plan">
-          {(['basic', 'advanced'] as Plan[]).map(plan => (
-            <div key={plan} className="pp-plan-row">
-              <div>
-                <div className="pp-plan-name">{plan === 'basic' ? 'בסיסי' : 'מתקדם'} · ₪{PLAN_PRICE_ILS[plan]}/חודש</div>
-              </div>
-              {clinic.plan === plan ? (
-                <span className="inv-badge2 b-yes">נוכחית</span>
-              ) : (
-                <button className="ico" style={{ width: 'auto', padding: '4px 10px', fontSize: 12 }} onClick={() => choosePlan(plan)}>
-                  {plan === 'advanced' ? 'שדרג' : 'עבור'}
-                </button>
-              )}
+          <Link
+            href="/profile"
+            className="pp-plan-row"
+            onClick={() => setProfile(false)}
+            style={{ textDecoration: 'none', cursor: 'pointer' }}
+          >
+            <div>
+              <div className="pp-plan-name">פרופיל וחיוב</div>
+              <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>ניהול המנוי · ${SUBSCRIPTION_PRICE_USD}/חודש</div>
             </div>
-          ))}
+            <span className="ico" style={{ width: 'auto', padding: '4px 10px', fontSize: 12 }}>פתח →</span>
+          </Link>
         </div>
 
         <div className="pp-actions">
